@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🗺️ 세계지도 색칠하기 v1.8</title>
+  <title>🗺️ 세계지도 색칠하기 v1.9</title>
   <style>
+    /* v1.4의 안정적인 스타일 유지 */
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
     body { display: flex; flex-direction: column; font-family: sans-serif; }
     #toolbar {
@@ -12,9 +13,14 @@
       gap: 12px; align-items: center; border-bottom: 1px solid #ddd; flex: 0 0 auto;
     }
     #map { flex: 1 1 auto; width: 100%; height: 100%; display: block; }
-    .country { cursor: pointer; stroke: #666; stroke-width: 0.3px; }
-    /* 국경 꺼도 남는 육지 외곽선 */
-    .outline { fill: none; stroke: #666; stroke-width: 0.3px; pointer-events: none; }
+    
+    /* 기본 국경 스타일 */
+    .country { cursor: pointer; stroke: #666; stroke-width: 0.3px; transition: stroke 0.2s; }
+    .selected { stroke: #333; }
+    
+    /* ◆ 국경 숨기기용 CSS 클래스 (가장 안전한 방식) */
+    .hide-borders .country { stroke: none !important; }
+    
     .labels { font-size: 10px; fill: #333; pointer-events: none; }
     .equator-line { fill: none; stroke: red; stroke-width: 0.3px; }
     .grid-line { stroke: #cccccc; stroke-width: 0.5px; stroke-dasharray: 2 2; fill: none; }
@@ -25,13 +31,13 @@
       color: #fff; background: rgba(0,0,0,0.8); border-radius: 4px;
       pointer-events: none; z-index: 9999;
     }
-    button { cursor: pointer; padding: 4px 8px; font-size: 13px; min-width: 80px; }
+    button { cursor: pointer; padding: 4px 10px; font-size: 13px; }
   </style>
 </head>
 <body>
 
 <header style="background: pink; color: #fff; padding: 10px; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
-  <span>세계지도 색칠하기 🎗️ v1.8</span>
+  <span>세계지도 색칠하기 🎗️ v1.9</span>
   <div id="iconLinks" style="display: flex; gap: 12px; align-items: center;">
     <a href="https://buymeacoffee.com/geotasoo" target="_blank" style="color: #fff; text-decoration: none;">☕</a>
     <a href="https://geotasoo.tistory.com" target="_blank" style="color: #fff; text-decoration: none;">🏃🏻‍♂️</a>
@@ -46,7 +52,7 @@
     <div class="palette-box" data-color="#FFFFFF" style="background:#FFFFFF;"></div>
   </div>
   
-  <label>바다:
+  <label>바다 색:
     <select id="oceanColorSelect">
       <option value="#ffffff">하얀색</option>
       <option value="#e0f0ff" selected>하늘색</option>
@@ -74,12 +80,15 @@
 <script>
 (async function () {
   const svg = d3.select("#map");
-  // 툴바 높이를 안전하게 계산
+  const toolbar = document.getElementById("toolbar");
+  
+  // v1.4의 안정적인 크기 계산 방식
   const vw = window.innerWidth;
-  const vh = window.innerHeight - 100; 
-  svg.attr("viewBox", `0 0 ${vw} ${vh}`);
+  const vh = window.innerHeight - 120; // 툴바와 헤더 높이를 충분히 제외
+  
+  svg.attr("width", vw).attr("height", vh).attr("viewBox", `0 0 ${vw} ${vh}`);
 
-  // 배경 (바다)
+  // 배경 (바다) - 스크립트가 실행되자마자 배경부터 그림
   const background = svg.append("rect")
     .attr("x", -vw * 2).attr("y", -vh * 2).attr("width", vw * 5).attr("height", vh * 5)
     .attr("fill", "#e0f0ff");
@@ -87,15 +96,13 @@
   const projection = d3.geoMercator().center([128, 36]).scale(vw / (2 * Math.PI)).translate([vw / 2, vh / 2]);
   const path = d3.geoPath().projection(projection);
 
-  // 그룹 생성
+  // v1.4와 동일한 레이어 구조
   const mapGroup1 = svg.append("g");
-  const mapGroup2 = svg.append("g").attr("transform", `translate(${vw},0)`);
-  const outlineGroup1 = svg.append("g");
-  const outlineGroup2 = svg.append("g").attr("transform", `translate(${vw},0)`);
+  const mapGroup2 = svg.append("g");
   const gridGroup1 = svg.append("g");
-  const gridGroup2 = svg.append("g").attr("transform", `translate(${vw},0)`);
+  const gridGroup2 = svg.append("g");
   const equatorGroup1 = svg.append("g");
-  const equatorGroup2 = svg.append("g").attr("transform", `translate(${vw},0)`);
+  const equatorGroup2 = svg.append("g");
   const labelsGroup1 = svg.append("g");
   const labelsGroup2 = svg.append("g");
 
@@ -104,40 +111,8 @@
   // 데이터 로드
   const world = await d3.json("https://unpkg.com/world-atlas@2/countries-50m.json");
   const features = topojson.feature(world, world.objects.countries).features;
-  const mergedLand = topojson.merge(world, world.objects.countries.geometries);
 
   const countryColors = new Map();
   const tooltip = d3.select('#tooltip');
 
-  // 1. 국가 그리기
-  [mapGroup1, mapGroup2].forEach(g => {
-    g.selectAll("path").data(features).enter().append("path")
-      .attr("class", "country")
-      .attr("d", path)
-      .attr("fill", "#ffffff")
-      .on("click", function(e, d) {
-        const id = d.id;
-        if (countryColors.has(id)) countryColors.delete(id);
-        else countryColors.set(id, document.getElementById("colorPicker").value);
-        updateAllColors();
-      })
-      .on("pointerenter", (e, d) => tooltip.style("display", "block").text(d.properties.name))
-      .on("pointermove", (e) => tooltip.style("left", (e.clientX + 15) + "px").style("top", (e.clientY + 15) + "px"))
-      .on("pointerleave", () => tooltip.style("display", "none"));
-  });
-
-  // 2. 외곽선 (국경 꺼도 남는 선)
-  [outlineGroup1, outlineGroup2].forEach(g => {
-    g.append("path").datum(mergedLand).attr("class", "outline").attr("d", path);
-  });
-
-  // 3. 위경도선
-  const graticule = d3.geoGraticule().step([30, 30]);
-  [gridGroup1, gridGroup2].forEach(g => {
-    g.append("path").datum(graticule()).attr("class", "grid-line").attr("d", path).style("display", "none");
-  });
-
-  // 4. 적도선 (v1.4 정밀 방식)
-  const equatorData = { type: "LineString", coordinates: d3.range(-180, 181, 1).map(lon => [lon, 0]) };
-  [equatorGroup1, equatorGroup2].forEach(g => {
-    g.append("path").datum(equatorData).attr("class", "equator
+  // 1. 국가 그리기 (v1
