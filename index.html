@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>??? 세계지도 색칠하기 v1.5</title>
+  <title>🗺️ 세계지도 색칠하기</title>
   <style>
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
     body { display: flex; flex-direction: column; font-family: sans-serif; }
@@ -22,12 +22,13 @@
       width: 100%;
       height: 100%;
     }
-    .country { cursor: pointer; stroke: #666; transition: stroke 0.2s; }
+    .country { cursor: pointer; stroke: #666; stroke-width: 0.3px; }
+    /* 국해선(육지 외곽선) 스타일 */
+    .outline { fill: none; stroke: #666; stroke-width: 0.3px; pointer-events: none; }
     .selected { stroke: #333; }
     .labels { font-size: 10px; fill: #333; pointer-events: none; }
     .equator-line { fill: none; stroke: red; stroke-width: 0.3px; }
     .grid-line { stroke: #cccccc; stroke-width: 0.5px; stroke-dasharray: 2 2; fill: none; }
-    .city-dot { fill: #ff4500; stroke: #fff; stroke-width: 0.5px; pointer-events: none; }
     .palette-box {
       width: 20px;
       height: 20px;
@@ -35,7 +36,10 @@
       cursor: pointer;
       transition: transform 0.15s ease, border-color 0.15s ease;
     }
-    .palette-box:hover { transform: scale(1.2); border-color: #333; }
+    .palette-box:hover {
+      transform: scale(1.2);
+      border-color: #333;
+    }
     header span { cursor: pointer; }
 
     #tooltip {
@@ -56,11 +60,12 @@
 </head>
 <body>
 <header style="background: pink; color: #fff; padding: 10px; font-size: 18px; display: flex; justify-content: space-between; align-items: center; position: relative;">
-  <span>세계지도 색칠하기 ????????? v1.5 20260409</span>
-  <div id="iconLinks" style="display: flex; gap: 12px; align-items: center;">
-    <a href="https://buymeacoffee.com/geotasoo" target="_blank" data-tip="커피보내기" style="color: #fff; font-size: 18px; text-decoration: none;">?</a>
-    <a href="https://geotasoo.tistory.com" target="_blank" data-tip="홈페이지" style="color: #fff; font-size: 18px; text-decoration: none;">??</a>
-    <div id="linkTooltip" style="display:none; position:fixed; background:rgba(0,0,0,0.8); color:#fff; font-size:12px; padding:4px 6px; border-radius:4px; pointer-events:none; z-index:9999;"></div>
+  <span>세계지도 색칠하기 🎗️🗺️🖌️ v1.5 20260409</span>
+  <div id="iconLinks" style="display: flex; gap: 12px; align-items: center; position: relative;">
+    <a href="https://buymeacoffee.com/geotasoo" target="_blank" data-tip="커피보내기" style="color: #fff; font-size: 18px; text-decoration: none;">☕</a>
+    <a href="https://geotasoo.tistory.com/entry/%EC%84%B8%EA%B3%84%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank" data-tip="사용법보기/생각나누기" style="color: #fff; font-size: 18px; text-decoration: none;">🏃🏻‍➡️</a>
+    <a href="https://geotasoo.tistory.com/entry/%EC%9A%B0%EB%A6%AC%EB%82%98%EB%9D%BC-%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank" data-tip="우리나라 지도 색칠하기" style="color: #fff; font-size: 18px; text-decoration: none;">🐯</a>
+    <div id="linkTooltip" style="display:none; position:fixed; background:rgba(0,0,0,0.8); color:#fff; font-size:12px; padding:4px 6px; border-radius:4px; white-space:nowrap; pointer-events:none; z-index:9999;"></div>
   </div>
 </header>
 
@@ -73,24 +78,31 @@
     <div class="palette-box" data-color="#BBBBBB" style="background:#BBBBBB;"></div>
     <div class="palette-box" data-color="#DDDDDD" style="background:#DDDDDD;"></div>
   </div>
-  <label>바다:
+  <label>육지 색상:
+    <select id="baseColorSelect">
+      <option value="#ffffff">하얀색</option>
+      <option value="#eeeeee">옅은 회색</option>
+    </select>
+  </label>
+  <label>바다 색상:
     <select id="oceanColorSelect">
       <option value="#ffffff">하얀색</option>
       <option value="#e0f0ff" selected>하늘색</option>
     </select>
   </label>
   <label>선 굵기:
-    <input type="range" id="strokeWidth" min="0" max="1.0" step="0.1" value="0.3">
+    <input type="range" id="strokeWidth" min="0.1" max="1.0" step="0.1" value="0.3">
+    <span id="strokeValue">0.3px</span>
   </label>
-  <button id="toggleBorders">국경 켬/끔</button>
-  <button id="toggleLabels">나라 이름</button>
-  <button id="toggleCities">주요 도시 켬/끔</button>
-  <label>도시 크기:
-    <input type="range" id="citySizeRange" min="0.5" max="5" step="0.5" value="1.5">
-  </label>
-  <button id="toggleGrids">그리드</button>
+  <button id="toggleBorders">국경 보이기/숨기기</button>
+  <button id="toggleLabels">나라이름 보이기/숨기기</button>
+  <button id="toggleGrids">위선경선 보이기/숨기기</button>
+  <button id="toggleEquator">적도선 보이기/숨기기</button>
+  <button id="zoomIn">＋</button>
+  <button id="zoomOut">－</button>
   <button id="resetZoom">초기화</button>
   <button id="savePng">PNG 저장</button>
+  <span id="zoomLevel">확대 레벨: 1.00</span>
 </div>
 
 <div id="tooltip"></div>
@@ -112,132 +124,44 @@
   const projection = d3.geoMercator().center([128, 36]).scale(vw / (2 * Math.PI)).translate([vw / 2, vh / 2]);
   const path = d3.geoPath().projection(projection);
 
-  // 그룹 생성 순서 (위에 있을수록 아래쪽 레이어)
-  const gridGroup1 = svg.append("g");
-  const gridGroup2 = svg.append("g");
-  const mapGroup1 = svg.append("g");
-  const mapGroup2 = svg.append("g");
-  const equatorGroup1 = svg.append("g");
-  const equatorGroup2 = svg.append("g");
-  const labelsGroup1 = svg.append("g");
-  const labelsGroup2 = svg.append("g");
-  const cityGroup1 = svg.append("g"); // 도시를 국가 레이어보다 위로 배치
-  const cityGroup2 = svg.append("g");
+  const mapGroup1 = svg.append("g").attr("class", "map1");
+  const mapGroup2 = svg.append("g").attr("class", "map2").attr("transform", `translate(${vw},0)`);
+  
+  // ◆ 국해선(외곽선) 그룹 추가
+  const outlineGroup1 = svg.append("g").attr("class", "outline1");
+  const outlineGroup2 = svg.append("g").attr("class", "outline2").attr("transform", `translate(${vw},0)`);
 
-  let gridVisible = false, labelsVisible = false, equatorVisible = true, bordersVisible = true, citiesVisible = false;
+  const labelsGroup1 = svg.append("g").attr("class", "labels1");
+  const labelsGroup2 = svg.append("g").attr("class", "labels2");
+  const gridGroup1 = svg.append("g").attr("class", "grids1");
+  const gridGroup2 = svg.append("g").attr("class", "grids2");
+  const equatorGroup1 = svg.append("g").attr("class", "equator1");
+  const equatorGroup2 = svg.append("g").attr("class", "equator2");
 
-  // 주요 도시 데이터 (위도, 경도)
-  const majorCities = [
-    {n: "Seoul", c: [126.97, 37.56]}, {n: "Tokyo", c: [139.69, 35.68]}, {n: "Beijing", c: [116.40, 39.90]},
-    {n: "Washington D.C.", c: [-77.03, 38.90]}, {n: "London", c: [-0.12, 51.50]}, {n: "Paris", c: [2.35, 48.85]},
-    {n: "Berlin", c: [13.40, 52.52]}, {n: "Moscow", c: [37.61, 55.75]}, {n: "New Delhi", c: [77.20, 28.61]},
-    {n: "Canberra", c: [149.13, -35.28]}, {n: "Brasilia", c: [-47.88, -15.79]}, {n: "Ottawa", c: [-75.69, 45.42]},
-    {n: "Cairo", c: [31.23, 30.04]}, {n: "Bangkok", c: [100.50, 13.75]}, {n: "Singapore", c: [103.81, 1.35]},
-    {n: "New York", c: [-74.00, 40.71]}, {n: "Los Angeles", c: [-118.24, 34.05]}, {n: "Sydney", c: [151.20, -33.86]}
-    // ... 더 많은 도시를 추가할 수 있습니다.
-  ];
+  let gridVisible = false;
+  let labelsVisible = false;
+  let equatorVisible = true;
+  let bordersVisible = true; // ◆ 국경 표시 상태 변수
 
-  // 그리드 & 적도선 초기화
   const graticule = d3.geoGraticule().step([30, 30]);
-  [gridGroup1, gridGroup2].forEach((g, i) => g.append("path").datum(graticule()).attr("class", "grid-line").attr("d", path).attr("transform", i===1?`translate(${vw},0)`:'').style("display", "none"));
+  gridGroup1.append("path").datum(graticule()).attr("class", "grid-line").attr("d", path).style("display", "none");
+  gridGroup2.append("path").datum(graticule()).attr("class", "grid-line").attr("d", path).attr("transform", `translate(${vw},0)`).style("display", "none");
+
   const equator = { type: "LineString", coordinates: d3.range(-180, 181, 1).map(lon => [lon, 0]) };
-  [equatorGroup1, equatorGroup2].forEach((g, i) => g.append("path").datum(equator).attr("class", "equator-line").attr("d", path).attr("transform", i===1?`translate(${vw},0)`:''));
+  equatorGroup1.append("path").datum(equator).attr("class", "equator-line").attr("d", path);
+  equatorGroup2.append("path").datum(equator).attr("class", "equator-line").attr("d", path).attr("transform", `translate(${vw},0)`);
 
   const world = await d3.json("https://unpkg.com/world-atlas@2/countries-50m.json");
   const features = topojson.feature(world, world.objects.countries).features;
+  
+  // ◆ 모든 국가를 합쳐 육지 외곽선(Coastline) 데이터 생성
+  const mergedLand = topojson.merge(world, world.objects.countries.geometries);
+  [outlineGroup1, outlineGroup2].forEach((group, i) => {
+    group.append("path").datum(mergedLand).attr("class", "outline").attr("d", path);
+  });
+
   const countryColors = new Map();
   const tooltip = d3.select('#tooltip');
 
-  // 국가 그리기
-  [mapGroup1, mapGroup2].forEach((group, i) => {
-    group.selectAll("path.country").data(features).enter().append("path").attr("class", "country")
-      .attr("d", path).attr("transform", i===1?`translate(${vw},0)`:'').attr("fill", "#ffffff").style("stroke-width", "0.3px")
-      .on("click", (e, d) => {
-        if (countryColors.has(d.id)) countryColors.delete(d.id);
-        else countryColors.set(d.id, document.getElementById("colorPicker").value);
-        updateColors();
-      })
-      .on("pointerenter", (e, d) => tooltip.style("display", "block").text(d.properties.name))
-      .on("pointermove", (e) => tooltip.style("transform", `translate(${e.clientX + 20}px, ${e.clientY + 20}px)`))
-      .on("pointerleave", () => tooltip.style("display", "none"));
-  });
-
-  // 도시 그리기 함수
-  function updateCities() {
-    [cityGroup1, cityGroup2].forEach((group, i) => {
-      group.selectAll("circle").remove();
-      if (!citiesVisible) return;
-      const size = document.getElementById("citySizeRange").value;
-      group.selectAll("circle").data(majorCities).enter().append("circle").attr("class", "city-dot")
-        .attr("cx", d => projection(d.c)[0] + (i===1 ? vw : 0))
-        .attr("cy", d => projection(d.c)[1])
-        .attr("r", size);
-    });
-  }
-
-  function updateColors() {
-    const base = "#ffffff";
-    [mapGroup1, mapGroup2].forEach(group => {
-      group.selectAll("path.country").attr("fill", d => countryColors.get(d.id) || base);
-    });
-  }
-
-  // 선 굵기 및 국경 제어
-  function updateBorders() {
-    const width = bordersVisible ? document.getElementById("strokeWidth").value : 0;
-    svg.selectAll("path.country").style("stroke-width", width + "px");
-  }
-
-  // 툴바 이벤트들
-  document.getElementById("toggleBorders").onclick = () => { bordersVisible = !bordersVisible; updateBorders(); };
-  document.getElementById("toggleCities").onclick = () => { citiesVisible = !citiesVisible; updateCities(); };
-  document.getElementById("citySizeRange").oninput = updateCities;
-  document.getElementById("strokeWidth").oninput = updateBorders;
-  document.getElementById("oceanColorSelect").onchange = () => background.attr("fill", document.getElementById("oceanColorSelect").value);
-  document.querySelectorAll('.palette-box').forEach(box => box.onclick = () => document.getElementById('colorPicker').value = box.dataset.color);
-
-  // 줌 설정
-  const zoomBehavior = d3.zoom().scaleExtent([0.5, 8]).on("zoom", ({transform}) => {
-    const {k, x, y} = transform;
-    const groups = [mapGroup1, labelsGroup1, gridGroup1, equatorGroup1, cityGroup1];
-    const groups2 = [mapGroup2, labelsGroup2, gridGroup2, equatorGroup2, cityGroup2];
-    groups.forEach(g => g.attr("transform", transform));
-    groups2.forEach(g => g.attr("transform", `translate(${vw * k + x},${y}) scale(${k})`));
-  });
-  svg.call(zoomBehavior).on("dblclick.zoom", null);
-
-  // 초기화 버튼
-  document.getElementById("resetZoom").onclick = () => {
-    svg.transition().duration(750).call(zoomBehavior.transform, d3.zoomIdentity);
-    countryColors.clear(); updateColors();
-    bordersVisible = true; citiesVisible = false;
-    document.getElementById("strokeWidth").value = 0.3;
-    updateBorders(); updateCities();
-  };
-
-  // PNG 저장 로직 (도시 포함)
-  document.getElementById('savePng').onclick = () => {
-    const svgNode = document.getElementById('map');
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svgNode);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
-    const url = URL.createObjectURL(svgBlob);
-    
-    img.onload = () => {
-      canvas.width = vw * 2; canvas.height = vh * 2;
-      ctx.fillStyle = "white"; ctx.fillRect(0,0,canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, vw * 2, vh * 2);
-      const pngUrl = canvas.toDataURL("image/png");
-      const a = document.createElement('a'); a.href = pngUrl; a.download = 'world-map.png'; a.click();
-    };
-    img.src = url;
-  };
-
-})();
-</script>
-<footer style="position: fixed; bottom: 6px; right: 10px; font-size: 9px; color: #999;">@geotasoo.com</footer>
-</body>
-</html>
+  [mapGroup1, mapGroup2].forEach(group => {
+    group.
