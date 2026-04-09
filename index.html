@@ -60,7 +60,7 @@
 </head>
 <body>
 <header style="background: pink; color: #fff; padding: 10px; font-size: 18px; display: flex; justify-content: space-between; align-items: center; position: relative;">
-  <span>세계지도 색칠하기 🎗️🗺️🖌️ v1.5 20260409</span>
+  <span>세계지도 색칠하기2 🎗️🗺️🖌️ v1.5 20260409</span>
   <div id="iconLinks" style="display: flex; gap: 12px; align-items: center; position: relative;">
     <a href="https://buymeacoffee.com/geotasoo" target="_blank" data-tip="커피보내기" style="color: #fff; font-size: 18px; text-decoration: none;">☕</a>
     <a href="https://geotasoo.tistory.com/entry/%EC%84%B8%EA%B3%84%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank" data-tip="사용법보기/생각나누기" style="color: #fff; font-size: 18px; text-decoration: none;">🏃🏻‍➡️</a>
@@ -164,4 +164,113 @@
   const tooltip = d3.select('#tooltip');
 
   [mapGroup1, mapGroup2].forEach(group => {
-    group.
+    group.selectAll("path.country")
+      .data(features)
+      .enter().append("path")
+      .attr("class", "country")
+      .attr("d", path)
+      .attr("fill", "#ffffff")
+      .on("click", (event, d) => {
+        const id = d.id;
+        if (countryColors.has(id)) countryColors.delete(id);
+        else countryColors.set(id, document.getElementById("colorPicker").value);
+        updateColors();
+      })
+      .on("pointerenter", (event, d) => tooltip.style("display", "block").text(d.properties.name))
+      .on("pointermove", (event) => tooltip.style("transform", `translate(${event.clientX + 26}px, ${event.clientY + 28}px)`))
+      .on("pointerleave", () => tooltip.style("display", "none"));
+  });
+
+  // ◆ 국경 보이기/숨기기 버튼 로직
+  document.getElementById("toggleBorders").onclick = () => {
+    bordersVisible = !bordersVisible;
+    svg.selectAll("path.country").style("stroke", bordersVisible ? "#666" : "none");
+  };
+
+  function updateColors() {
+    const base = document.getElementById("baseColorSelect").value;
+    [mapGroup1, mapGroup2].forEach(group => {
+      group.selectAll("path.country")
+        .attr("fill", d => countryColors.get(d.id) || base);
+    });
+  }
+
+  function updateLabels() {
+    [labelsGroup1, labelsGroup2].forEach((g, i) => {
+      g.selectAll("text").remove();
+      g.selectAll("text").data(features).enter().append("text")
+        .attr("class", "labels")
+        .attr("x", d => projection(d3.geoCentroid(d))[0] + (i===1 ? vw : 0))
+        .attr("y", d => projection(d3.geoCentroid(d))[1])
+        .text(d => d.properties.name)
+        .style("display", labelsVisible ? "block" : "none");
+    });
+  }
+
+  const zoomBehavior = d3.zoom().scaleExtent([0.5, 8]).on("zoom", ({transform}) => {
+    const {k, x, y} = transform;
+    const allGroups1 = [mapGroup1, outlineGroup1, labelsGroup1, gridGroup1, equatorGroup1];
+    const allGroups2 = [mapGroup2, outlineGroup2, labelsGroup2, gridGroup2, equatorGroup2];
+    allGroups1.forEach(g => g.attr("transform", transform));
+    allGroups2.forEach(g => g.attr("transform", `translate(${vw * k + x},${y}) scale(${k})`));
+    document.getElementById("zoomLevel").innerText = `확대 레벨: ${k.toFixed(2)}`;
+  });
+  svg.call(zoomBehavior).on("dblclick.zoom", null);
+
+  // 툴바 이벤트들
+  document.getElementById("strokeWidth").addEventListener("input", () => {
+    const w = document.getElementById("strokeWidth").value;
+    document.getElementById("strokeValue").textContent = w + 'px';
+    // ◆ 육지 외곽선(.outline)도 함께 굵어지게 설정
+    svg.selectAll("path.country, .equator-line, .grid-line, .outline").style("stroke-width", w + 'px');
+  });
+
+  document.getElementById("resetZoom").onclick = () => {
+    svg.transition().call(zoomBehavior.transform, d3.zoomIdentity);
+    countryColors.clear();
+    bordersVisible = true;
+    svg.selectAll("path.country").style("stroke", "#666");
+    updateColors(); updateLabels();
+    background.attr("fill", "#e0f0ff");
+    document.getElementById("oceanColorSelect").value = "#e0f0ff";
+    document.getElementById("strokeWidth").value = "0.3";
+    document.getElementById("strokeValue").textContent = "0.3px";
+    svg.selectAll("path.country, .equator-line, .grid-line, .outline").style("stroke-width", "0.3px");
+  };
+
+  // 나머지 버튼들
+  document.getElementById("toggleLabels").onclick = () => { labelsVisible = !labelsVisible; updateLabels(); };
+  document.getElementById("toggleGrids").onclick = () => { gridVisible = !gridVisible; gridGroup1.style("display", gridVisible?"block":"none"); gridGroup2.style("display", gridVisible?"block":"none"); };
+  document.getElementById("toggleEquator").onclick = () => { equatorVisible = !equatorVisible; equatorGroup1.style("display", equatorVisible?"block":"none"); equatorGroup2.style("display", equatorVisible?"block":"none"); };
+  document.getElementById("zoomIn").onclick = () => svg.transition().call(zoomBehavior.scaleBy, 1.3);
+  document.getElementById("zoomOut").onclick = () => svg.transition().call(zoomBehavior.scaleBy, 0.7);
+  document.getElementById("oceanColorSelect").onchange = () => background.attr("fill", document.getElementById("oceanColorSelect").value);
+  document.getElementById("baseColorSelect").onchange = updateColors;
+  document.querySelectorAll('.palette-box').forEach(box => box.onclick = () => document.getElementById('colorPicker').value = box.dataset.color);
+
+  updateColors();
+})();
+
+// PNG 저장 (기존 로직 유지하며 .outline 포함)
+document.getElementById('savePng').addEventListener('click', () => {
+  const svgNode = document.getElementById('map');
+  const serializer = new XMLSerializer();
+  const svgString = serializer.serializeToString(svgNode);
+  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const image = new Image();
+  image.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = svgNode.clientWidth * 2; canvas.height = svgNode.clientHeight * 2;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const pngUrl = canvas.toDataURL("image/png");
+    const a = document.createElement('a'); a.href = pngUrl; a.download = 'coloring-map.png'; a.click();
+  };
+  image.src = url;
+});
+</script>
+<footer style="position: fixed; bottom: 6px; right: 10px; font-size: 9px; color: #999; z-index: 999;"><a href="https://geotasoo.tistory.com" target="_blank" style="color: inherit; text-decoration: none;">@geotasoo.com</a></footer>
+</body>
+</html>
