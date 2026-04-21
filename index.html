@@ -170,7 +170,7 @@
 <body>
 
 <header id="header">
-  <span class="title">세계지도 색칠하기 & 점찍기 🎗️🗺️🖌️🙂🍖 v2.0 20260421</span>
+  <span class="title">세계지도 색칠하기 & 점찍기 🎗️🗺️🖌️🙂🍖 v2.1 20260421</span>
   <div id="iconLinks">
     <a href="https://buymeacoffee.com/geotasoo" target="_blank" data-tip="커피보내기">☕</a>
     <a href="https://geotasoo.tistory.com/entry/%EC%84%B8%EA%B3%84%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank" data-tip="사용법보기/생각나누기">🏃🏻‍➡️</a>
@@ -209,6 +209,7 @@
   </label>
   <label>점 색상: <input type="color" id="dotColor" value="#e53935"></label>
 
+  <button id="btn-lake-panel" class="tb-btn primary">💧 호수</button>
   <button id="btn-dot-panel" class="tb-btn primary">📍 점찍기</button>
   <button id="btn-manual-clear" class="tb-btn warning" style="display:none;">🗑️ 내가찍은 점 지우기</button>
 
@@ -260,6 +261,20 @@
     <div id="pin-selected-summary" class="panel-summary" style="color:#aaa;">찍은 점 없음</div>
     <div id="pin-list" class="panel-list"></div>
   </div>
+
+  <!-- 호수 패널 -->
+  <div id="lake-panel" class="side-panel">
+    <div class="panel-header">
+      <span>💧 호수</span>
+      <div class="ph-right">
+        <button id="btn-lake-deselect">전체 해제</button>
+        <button id="btn-lake-default">기본값</button>
+        <button id="btn-lake-panel-close" class="panel-close" title="닫기">✕</button>
+      </div>
+    </div>
+    <div id="lake-selected-summary" class="panel-summary">표시 중: 0개</div>
+    <div id="lake-list" class="panel-list"></div>
+  </div>
 </div>
 
 <footer id="footer"><a href="https://geotasoo.tistory.com" target="_blank">@geotasoo</a></footer>
@@ -267,6 +282,28 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3"></script>
 <script>
+// ========== 주요 호수 카탈로그 (15개) ==========
+// 주요 호수는 이름 매칭으로 개별 식별 (툴팁에 한글명 표시)
+// 그 외 모든 호수는 '전체 호수' 토글로 한 번에 표시 (툴팁 없음)
+const MAJOR_LAKES = [
+  {en:"Caspian Sea",     ko:"카스피해"},
+  {en:"Lake Baikal",     ko:"바이칼호"},
+  {en:"Aral Sea",        ko:"아랄해"},
+  {en:"Dead Sea",        ko:"사해"},
+  {en:"Lake Superior",   ko:"슈피리어호"},
+  {en:"Lake Michigan",   ko:"미시간호"},
+  {en:"Lake Huron",      ko:"휴런호"},
+  {en:"Lake Erie",       ko:"이리호"},
+  {en:"Lake Ontario",    ko:"온타리오호"},
+  {en:"Great Salt Lake", ko:"그레이트솔트레이크"},
+  {en:"Lake Victoria",   ko:"빅토리아호"},
+  {en:"Lake Tanganyika", ko:"탕가니카호"},
+  {en:"Lake Malawi",     ko:"말라위호"},
+  {en:"Lake Chad",       ko:"차드호"},
+  {en:"Lake Titicaca",   ko:"티티카카호"},
+];
+const MAJOR_LAKE_BY_EN = new Map(MAJOR_LAKES.map(l => [l.en, l]));
+
 // ========== 도시 데이터 ==========
 const CONTINENT_ORDER = ["아시아","유럽","북아메리카","남아메리카","아프리카","오세아니아"];
 
@@ -434,6 +471,10 @@ let CITIES = [
   // --- SVG 그룹 ---
   const mapGroup1     = svg.append("g").attr("class","map1");
   const mapGroup2     = svg.append("g").attr("class","map2").attr("transform",`translate(${vw},0)`);
+  const lakeGroup1    = svg.append("g").attr("class","lakes1");
+  const lakeGroup2    = svg.append("g").attr("class","lakes2").attr("transform",`translate(${vw},0)`);
+  const otherLakeGroup1 = svg.append("g").attr("class","other-lakes1");
+  const otherLakeGroup2 = svg.append("g").attr("class","other-lakes2").attr("transform",`translate(${vw},0)`);
   const labelsGroup1  = svg.append("g").attr("class","labels1");
   const labelsGroup2  = svg.append("g").attr("class","labels2");
   const gridGroup1    = svg.append("g").attr("class","grids1");
@@ -462,8 +503,11 @@ let CITIES = [
     box.addEventListener('click', () => { el.colorPicker.value = box.getAttribute('data-color'); });
   });
 
-  // --- 월드 데이터 로드 ---
-  const world = await d3.json("https://unpkg.com/world-atlas@2/countries-50m.json");
+  // --- 월드 데이터 로드 (국가 + 호수 병렬 로드) ---
+  const [world, lakesData] = await Promise.all([
+    d3.json("https://unpkg.com/world-atlas@2/countries-50m.json"),
+    d3.json("https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_lakes.geojson").catch(() => null)
+  ]);
   const features = topojson.feature(world, world.objects.countries).features;
   const landMesh   = topojson.mesh(world, world.objects.countries, (a,b) => a===b);
   const borderMesh = topojson.mesh(world, world.objects.countries, (a,b) => a!==b);
@@ -489,6 +533,64 @@ let CITIES = [
     group.append("path").datum(borderMesh).attr("class","border-mesh").attr("d",path)
       .attr("fill","none").attr("stroke","#666").attr("stroke-width","0.3px").attr("pointer-events","none");
   });
+
+  // --- 호수 데이터 분리 ---
+  // majorLakeFeatures: 주요 15개 (이름 매칭) — 개별 체크박스
+  // otherLakeFeatures: 나머지 전체 — 전체 토글 하나로만 제어 (툴팁 없음)
+  const majorLakeFeatures = new Map();   // 한글명 → GeoJSON feature
+  const otherLakeFeatures = [];
+  if (lakesData && lakesData.features) {
+    lakesData.features.forEach(f => {
+      const en = f.properties?.name || f.properties?.name_en;
+      if (en && MAJOR_LAKE_BY_EN.has(en)) {
+        majorLakeFeatures.set(MAJOR_LAKE_BY_EN.get(en).ko, f);
+      } else {
+        otherLakeFeatures.push(f);
+      }
+    });
+  }
+
+  // 선택 상태: 주요 호수 개별 on/off (기본: 전부 켜짐), 전체 호수 토글 (기본: 꺼짐)
+  const selectedMajorLakes = new Set(
+    MAJOR_LAKES.filter(l => majorLakeFeatures.has(l.ko)).map(l => l.ko)
+  );
+  let showAllLakes = false;
+
+  function renderMajorLakes() {
+    [lakeGroup1, lakeGroup2].forEach(group => {
+      group.selectAll("path.lake").remove();
+      const visibleFeatures = [...selectedMajorLakes]
+        .map(ko => majorLakeFeatures.get(ko))
+        .filter(Boolean);
+      group.selectAll("path.lake").data(visibleFeatures).enter().append("path")
+        .attr("class","lake").attr("d",path)
+        .attr("fill", el.oceanColor.value)
+        .attr("stroke","#888").attr("stroke-width", el.strokeWidth.value + "px")
+        .attr("pointer-events","all")
+        .on("pointerenter",(event,d) => {
+          const en = d.properties?.name || d.properties?.name_en;
+          const ko = MAJOR_LAKE_BY_EN.get(en)?.ko || en;
+          el.tooltip.style("display","block").text(ko);
+        })
+        .on("pointermove", event => { el.tooltip.style("transform",`translate(${event.clientX+26}px,${event.clientY+28}px)`); })
+        .on("pointerleave", () => { el.tooltip.style("display","none"); });
+    });
+  }
+
+  function renderOtherLakes() {
+    [otherLakeGroup1, otherLakeGroup2].forEach(group => {
+      group.selectAll("path.other-lake").remove();
+      if (!showAllLakes) return;
+      group.selectAll("path.other-lake").data(otherLakeFeatures).enter().append("path")
+        .attr("class","other-lake lake").attr("d",path)
+        .attr("fill", el.oceanColor.value)
+        .attr("stroke","#888").attr("stroke-width", el.strokeWidth.value + "px")
+        .attr("pointer-events","none");
+    });
+  }
+
+  renderMajorLakes();
+  renderOtherLakes();
 
   // --- 중심점 캐시 ---
   const centroids = new Map(features.map(f => [f.id, projection(d3.geoCentroid(f))]));
@@ -790,6 +892,10 @@ let CITIES = [
       const t2 = `translate(${vw*k+x},${y}) scale(${k})`;
       mapGroup1.attr("transform", transform);
       mapGroup2.attr("transform", t2);
+      lakeGroup1.attr("transform", transform);
+      lakeGroup2.attr("transform", t2);
+      otherLakeGroup1.attr("transform", transform);
+      otherLakeGroup2.attr("transform", t2);
       labelsGroup1.attr("transform", transform);
       labelsGroup2.attr("transform", t2);
       gridGroup1.attr("transform", transform);
@@ -882,12 +988,15 @@ let CITIES = [
   el.dotColor.addEventListener('input', () => { renderCityDots(); renderPins(); });
 
   // 바다 / 육지 / 선 굵기
-  el.oceanColor.addEventListener('change', () => background.attr("fill", el.oceanColor.value));
+  el.oceanColor.addEventListener('change', () => {
+    background.attr("fill", el.oceanColor.value);
+    svg.selectAll("path.lake").attr("fill", el.oceanColor.value);
+  });
   el.baseColor.addEventListener('change', updateColors);
   el.strokeWidth.addEventListener('input', () => {
     const w = el.strokeWidth.value;
     el.strokeValue.textContent = w + 'px';
-    svg.selectAll("path.country,.equator-line,.grid-line,.land-outline,.border-mesh")
+    svg.selectAll("path.country,.equator-line,.grid-line,.land-outline,.border-mesh,.lake")
       .style("stroke-width", w + 'px');
   });
 
@@ -906,6 +1015,153 @@ let CITIES = [
     equatorGroup2.style("display", equatorVisible ? "block" : "none");
     setToggleEmoji('toggleEquator', equatorVisible);
   };
+
+  // ========== 호수 패널 ==========
+  const lakePanel = $('lake-panel');
+  let lakePanelOpen = false;
+
+  function openLakePanel() {
+    lakePanelOpen = true;
+    lakePanel.classList.add('open');
+    $('btn-lake-panel').classList.add('active');
+    $('btn-lake-panel').textContent = '💧 호수 닫기';
+    buildLakeList();
+  }
+  function closeLakePanel() {
+    lakePanelOpen = false;
+    lakePanel.classList.remove('open');
+    $('btn-lake-panel').classList.remove('active');
+    $('btn-lake-panel').textContent = '💧 호수';
+  }
+  $('btn-lake-panel').addEventListener('click', () => lakePanelOpen ? closeLakePanel() : openLakePanel());
+  $('btn-lake-panel-close').addEventListener('click', closeLakePanel);
+
+  // 전체 해제: 주요호수 + 전체호수 둘 다 끔
+  $('btn-lake-deselect').addEventListener('click', () => {
+    selectedMajorLakes.clear();
+    showAllLakes = false;
+    buildLakeList();
+    renderMajorLakes();
+    renderOtherLakes();
+  });
+  // 기본값: 주요 호수 전부 켜기, 전체 호수 끄기
+  $('btn-lake-default').addEventListener('click', () => {
+    selectedMajorLakes.clear();
+    MAJOR_LAKES.forEach(l => { if (majorLakeFeatures.has(l.ko)) selectedMajorLakes.add(l.ko); });
+    showAllLakes = false;
+    buildLakeList();
+    renderMajorLakes();
+    renderOtherLakes();
+  });
+
+  function updateLakeSummary() {
+    const el2 = $('lake-selected-summary');
+    const majorCount = selectedMajorLakes.size;
+    const allLabel = showAllLakes ? ' + 전체 호수' : '';
+    if (majorCount === 0 && !showAllLakes) {
+      el2.textContent = '표시 중인 호수 없음';
+      el2.style.color = '#aaa';
+    } else {
+      el2.textContent = `✔ 주요 ${majorCount}개${allLabel}`;
+      el2.style.color = '#1a73e8';
+    }
+  }
+
+  function buildLakeList() {
+    const list = $('lake-list');
+    list.innerHTML = '';
+
+    // === 섹션 1: 주요 호수 헤더 ===
+    const header = document.createElement('div');
+    header.className = 'continent-label';
+    header.style.cursor = 'default';
+    const hLeft = document.createElement('span');
+    hLeft.innerHTML = '⭐ 주요 호수';
+    hLeft.style.color = '#1a73e8';
+    const hRight = document.createElement('span');
+    hRight.style.cssText = 'font-size:11px; color:#1a73e8; font-weight:bold;';
+    hRight.textContent = `✔${selectedMajorLakes.size}`;
+    header.appendChild(hLeft);
+    header.appendChild(hRight);
+    list.appendChild(header);
+
+    // 주요 호수 15개 — 카탈로그 순서대로 (지리적 의미가 있는 순서)
+    MAJOR_LAKES.forEach(lake => {
+      if (!majorLakeFeatures.has(lake.ko)) return;  // GeoJSON에 없는 건 스킵
+      const row = document.createElement('div');
+      row.className = 'city-row';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = selectedMajorLakes.has(lake.ko);
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'city-name' + (selectedMajorLakes.has(lake.ko) ? ' checked' : '');
+      nameEl.textContent = lake.ko;
+
+      const toggle = () => {
+        if (selectedMajorLakes.has(lake.ko)) {
+          selectedMajorLakes.delete(lake.ko);
+          cb.checked = false;
+          nameEl.classList.remove('checked');
+        } else {
+          selectedMajorLakes.add(lake.ko);
+          cb.checked = true;
+          nameEl.classList.add('checked');
+        }
+        hRight.textContent = `✔${selectedMajorLakes.size}`;
+        updateLakeSummary();
+        renderMajorLakes();
+      };
+      cb.addEventListener('change', toggle);
+      nameEl.addEventListener('click', toggle);
+
+      row.appendChild(cb);
+      row.appendChild(nameEl);
+      list.appendChild(row);
+    });
+
+    // === 섹션 2: 전체 호수 토글 ===
+    const spacer = document.createElement('div');
+    spacer.style.cssText = 'height:10px; background:#fafafa; border-top:1px solid #eee;';
+    list.appendChild(spacer);
+
+    const allHeader = document.createElement('div');
+    allHeader.className = 'continent-label';
+    allHeader.style.cursor = 'default';
+    allHeader.innerHTML = '<span>🌐 전체 호수</span>';
+    list.appendChild(allHeader);
+
+    const info = document.createElement('div');
+    info.style.cssText = 'padding:8px 12px; font-size:11px; color:#777; background:#fff; line-height:1.5;';
+    info.textContent = `전세계 호수를 한 번에 표시 (약 ${otherLakeFeatures.length + MAJOR_LAKES.length}개). 시각적 참고용이며 개별 선택은 불가합니다.`;
+    list.appendChild(info);
+
+    const toggleRow = document.createElement('div');
+    toggleRow.className = 'city-row';
+    const tcb = document.createElement('input');
+    tcb.type = 'checkbox';
+    tcb.checked = showAllLakes;
+    const tname = document.createElement('span');
+    tname.className = 'city-name' + (showAllLakes ? ' checked' : '');
+    tname.textContent = '전체 호수 표시';
+
+    const toggleAll = () => {
+      showAllLakes = !showAllLakes;
+      tcb.checked = showAllLakes;
+      tname.classList.toggle('checked', showAllLakes);
+      updateLakeSummary();
+      renderOtherLakes();
+    };
+    tcb.addEventListener('change', toggleAll);
+    tname.addEventListener('click', toggleAll);
+
+    toggleRow.appendChild(tcb);
+    toggleRow.appendChild(tname);
+    list.appendChild(toggleRow);
+
+    updateLakeSummary();
+  }
 
   // 줌 버튼
   $('zoomIn').onclick  = () => svg.transition().call(zoomBehavior.scaleTo, Math.min(8, d3.zoomTransform(el.svg).k + 0.1));
@@ -927,7 +1183,7 @@ let CITIES = [
     background.attr("fill", "#e0f0ff");
     el.strokeWidth.value = "0.3";
     el.strokeValue.textContent = "0.3px";
-    svg.selectAll("path.country,.equator-line,.grid-line,.land-outline,.border-mesh").style("stroke-width","0.3px");
+    svg.selectAll("path.country,.equator-line,.grid-line,.land-outline,.border-mesh,.lake").style("stroke-width","0.3px");
     gridVisible = false;   gridGroup1.style("display","none"); gridGroup2.style("display","none");
     labelsVisible = false; updateLabels();
     equatorVisible = true; equatorGroup1.style("display","block"); equatorGroup2.style("display","block");
@@ -937,6 +1193,13 @@ let CITIES = [
     setToggleEmoji('toggleBorders', bordersVisible);
     setToggleEmoji('toggleGrids',   gridVisible);
     setToggleEmoji('toggleEquator', equatorVisible);
+    // 호수: 주요 15개 모두 켜기, 전체 호수 끄기
+    selectedMajorLakes.clear();
+    MAJOR_LAKES.forEach(l => { if (majorLakeFeatures.has(l.ko)) selectedMajorLakes.add(l.ko); });
+    showAllLakes = false;
+    renderMajorLakes();
+    renderOtherLakes();
+    if (lakePanelOpen) buildLakeList();
     selectedCities.clear();
     updateSummary();
     buildPanelList('');
@@ -944,6 +1207,7 @@ let CITIES = [
     manualPins = []; pinCounter = 0;
     buildPinList(); renderPins();
     closePanels();
+    closeLakePanel();
   };
 
   // 타이틀 클릭으로 초기화
@@ -957,6 +1221,10 @@ let CITIES = [
     });
     clone.querySelectorAll('.land-outline').forEach(e => e.setAttribute('style','stroke:#666;stroke-width:0.3px;fill:none'));
     clone.querySelectorAll('.border-mesh').forEach(e => e.setAttribute('style',`stroke:#666;stroke-width:0.3px;fill:none;display:${e.style.display}`));
+    clone.querySelectorAll('.lake').forEach(e => {
+      const fill = e.getAttribute('fill') || '#e0f0ff';
+      e.setAttribute('style', `stroke:#888;stroke-width:${e.style.strokeWidth || '0.3px'};fill:${fill}`);
+    });
     clone.querySelectorAll('.equator-line').forEach(e => e.setAttribute('style','stroke:red;stroke-width:0.3px;fill:none'));
     clone.querySelectorAll('.grid-line').forEach(e => e.setAttribute('style','stroke:#ccc;stroke-width:0.5px;stroke-dasharray:2 2;fill:none'));
 
