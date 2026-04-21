@@ -125,9 +125,9 @@
     .side-panel {
       position: fixed;
       right: -350px;
-      top: 0;
+      top: 95px; /* 헤더+툴바 높이만큼 아래에 위치 */
       width: 340px;
-      height: 100vh;
+      height: calc(100vh - 95px);
       background: #fff;
       border-left: 2px solid #ddd;
       box-shadow: -2px 0 8px rgba(0,0,0,0.1);
@@ -148,6 +148,11 @@
       justify-content: space-between;
       align-items: center;
       font-weight: bold;
+    }
+    .panel-header .ph-right {
+      display: flex;
+      gap: 6px;
+      align-items: center;
     }
     .panel-close {
       background: #e0e0e0;
@@ -330,7 +335,7 @@
     <!-- 점찍기 관련 추가 -->
     <label>점 색상:<input type="color" id="dotColor" value="#e53935"></label>
     <label>점 크기:<input type="range" id="dotSize" min="3" max="12" step="0.5" value="5"><span class="value" id="dot-size-value">5.0</span></label>
-    <button id="btn-dot-panel" class="tb-btn primary">📍 점찍기</button>
+    <button id="btn-dot-panel" class="tb-btn primary" title="점찍기">📍</button>
     
     <label>시도 경계 굵기:<input type="range" id="slider-sd" min="1" max="10" step="0.5" value="1" aria-label="시도 경계 굵기 선택"><span class="value" id="sd-value">1.0</span>px</label>
     <label>시군 경계 굵기:<input type="range" id="slider-sg" min="0.5" max="10" step="0.5" value="0.5" aria-label="시군 경계 굵기 선택"><span class="value" id="sg-value">0.5</span>px</label>
@@ -350,11 +355,17 @@
   <!-- 점찍기 사이드 패널 -->
   <div id="dot-panel" class="side-panel">
     <div class="panel-header">
-      <span>📍 도시 점찍기</span>
-      <button id="btn-dot-panel-close" class="panel-close">✕</button>
+      <span>📍 점찍기</span>
+      <div class="ph-right">
+        <button id="btn-dot-panel-close" class="panel-close">점찍기 완료</button>
+      </div>
     </div>
     <div class="panel-search-wrap">
       <input type="text" id="dot-search" placeholder="🔍 도시 검색..." />
+    </div>
+    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; gap: 8px;">
+      <button id="btn-select-all-cities" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #f4f7fa; cursor: pointer; font-size: 13px;">전체 선택</button>
+      <button id="btn-deselect-all-cities" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #f4f7fa; cursor: pointer; font-size: 13px;">전체 해제</button>
     </div>
     <div id="dot-list" class="panel-list"></div>
     <div id="dot-summary" class="panel-summary">선택된 도시 없음</div>
@@ -544,11 +555,22 @@
       
       // 제주특별자치도 (2개)
       {name:"제주시", sido:"제주특별자치도", lat:33.4996, lng:126.5312},
-      {name:"서귀포시", sido:"제주특별자치도", lat:33.2541, lng:126.5601}
+      {name:"서귀포시", sido:"제주특별자치도", lat:33.2541, lng:126.5601},
+      
+      // 섬, 산, 고개
+      {name:"독도", sido:"섬, 산, 고개", lat:37.2414, lng:131.8642},
+      {name:"이어도", sido:"섬, 산, 고개", lat:32.1227, lng:125.1822},
+      {name:"설악산", sido:"섬, 산, 고개", lat:38.1197, lng:128.4655},
+      {name:"지리산", sido:"섬, 산, 고개", lat:35.3384, lng:127.7308},
+      {name:"한라산", sido:"섬, 산, 고개", lat:33.3616, lng:126.5292},
+      {name:"북한산", sido:"섬, 산, 고개", lat:37.6586, lng:126.9772},
+      {name:"문경새재", sido:"섬, 산, 고개", lat:36.7734, lng:128.0455},
+      {name:"대관령", sido:"섬, 산, 고개", lat:37.6773, lng:128.7188}
     ];
     
     const SIDO_ORDER = [
       "특별·광역·특별자치시",
+      "섬, 산, 고개",
       "경기도",
       "강원특별자치도",
       "충청북도",
@@ -564,7 +586,7 @@
     let selectedCities = new Set();
     let dotMarkers = [];
     let dotPanelOpen = false;
-    let sidoCollapsed = new Set();
+    let sidoCollapsed = new Set(SIDO_ORDER); // 모든 카테고리 기본 닫힘
     
     // --- 타이틀 클릭 시 초기화 버튼 클릭 ---
     document.querySelector('header span').addEventListener('click', function () {
@@ -680,6 +702,21 @@
     
     document.getElementById('btn-dot-panel-close').addEventListener('click', closeDotPanel);
     
+    // 전체 선택/해제 버튼
+    document.getElementById('btn-select-all-cities').addEventListener('click', () => {
+      KOREA_CITIES.forEach(c => selectedCities.add(c.name));
+      updateDotSummary();
+      renderDots();
+      buildDotList(document.getElementById('dot-search').value.toLowerCase());
+    });
+    
+    document.getElementById('btn-deselect-all-cities').addEventListener('click', () => {
+      selectedCities.clear();
+      updateDotSummary();
+      renderDots();
+      buildDotList(document.getElementById('dot-search').value.toLowerCase());
+    });
+    
     // 검색 기능
     document.getElementById('dot-search').addEventListener('input', e => {
       buildDotList(e.target.value.toLowerCase());
@@ -723,7 +760,10 @@
           </span>
         `;
         
-        label.addEventListener('click', () => {
+        label.addEventListener('click', (e) => {
+          // 버튼 클릭 시 이벤트 전파 방지
+          if (e.target.tagName === 'BUTTON') return;
+          
           if (sidoCollapsed.has(sido)) {
             sidoCollapsed.delete(sido);
           } else {
@@ -734,8 +774,36 @@
         
         list.appendChild(label);
         
-        // 도시 목록
+        // 카테고리별 전체 선택/해제 버튼 (펼쳐진 경우에만)
         if (!isCollapsed) {
+          const btnWrap = document.createElement('div');
+          btnWrap.style.cssText = 'display:flex; gap:6px; padding:4px 12px 8px; border-bottom:1px solid #f0f0f0;';
+          
+          const selectAllBtn = document.createElement('button');
+          selectAllBtn.textContent = '전체선택';
+          selectAllBtn.style.cssText = 'flex:1; padding:4px; font-size:11px; border:1px solid #ddd; border-radius:3px; background:#f9f9f9; cursor:pointer;';
+          selectAllBtn.addEventListener('click', () => {
+            filtered.forEach(c => selectedCities.add(c.name));
+            updateDotSummary();
+            renderDots();
+            buildDotList(searchTerm);
+          });
+          
+          const deselectAllBtn = document.createElement('button');
+          deselectAllBtn.textContent = '전체해제';
+          deselectAllBtn.style.cssText = 'flex:1; padding:4px; font-size:11px; border:1px solid #ddd; border-radius:3px; background:#f9f9f9; cursor:pointer;';
+          deselectAllBtn.addEventListener('click', () => {
+            filtered.forEach(c => selectedCities.delete(c.name));
+            updateDotSummary();
+            renderDots();
+            buildDotList(searchTerm);
+          });
+          
+          btnWrap.appendChild(selectAllBtn);
+          btnWrap.appendChild(deselectAllBtn);
+          list.appendChild(btnWrap);
+          
+          // 도시 목록
           filtered.forEach(city => {
             const row = document.createElement('div');
             row.className = 'city-row';
