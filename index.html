@@ -239,6 +239,7 @@
 <div id="main-container">
   <div id="map-wrap">
     <div id="helpLink">
+      <div>PC 환경에서 사용을 권장합니다</div>
       <a href="https://geotasoo.tistory.com/entry/%EC%84%B8%EA%B3%84%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank">사용법보기/생각나누기</a>
     </div>
     <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
@@ -294,11 +295,10 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3"></script>
 <script>
-// ========== 주요 호수 카탈로그 (15개) ==========
+// ========== 주요 호수 카탈로그 (14개) ==========
 // 주요 호수는 이름 매칭으로 개별 식별 (툴팁에 한글명 표시)
 // 그 외 모든 호수는 '전체 호수' 토글로 한 번에 표시 (툴팁 없음)
 const MAJOR_LAKES = [
-  {en:"Caspian Sea",     ko:"카스피해"},
   {en:"Lake Baikal",     ko:"바이칼호"},
   {en:"Aral Sea",        ko:"아랄해"},
   {en:"Dead Sea",        ko:"사해"},
@@ -314,6 +314,34 @@ const MAJOR_LAKES = [
   {en:"Lake Chad",       ko:"차드호"},
   {en:"Lake Titicaca",   ko:"티티카카호"},
 ];
+
+// Natural Earth 데이터에서 이름이 다를 수 있는 경우를 위한 별칭
+const LAKE_NAME_ALIASES = {
+  "L. Superior": "Lake Superior",
+  "L. Michigan": "Lake Michigan",
+  "L. Huron": "Lake Huron",
+  "L. Erie": "Lake Erie",
+  "Erie": "Lake Erie",
+  "L. Ontario": "Lake Ontario",
+  "Ontario": "Lake Ontario",
+  "L. Victoria": "Lake Victoria",
+  "Tanganyika": "Lake Tanganyika",
+  "L. Tanganyika": "Lake Tanganyika",
+  "Malawi": "Lake Malawi",
+  "L. Malawi": "Lake Malawi",
+  "Lake Nyasa": "Lake Malawi",
+  "L. Nyasa": "Lake Malawi",
+  "Chad": "Lake Chad",
+  "L. Chad": "Lake Chad",
+  "Titicaca": "Lake Titicaca",
+  "L. Titicaca": "Lake Titicaca",
+  "Lago Titicaca": "Lake Titicaca",
+  "Baikal": "Lake Baikal",
+  "L. Baikal": "Lake Baikal",
+  "Great Salt L.": "Great Salt Lake",
+  "Gt. Salt L.": "Great Salt Lake",
+};
+
 const MAJOR_LAKE_BY_EN = new Map(MAJOR_LAKES.map(l => [l.en, l]));
 
 // ========== 도시 데이터 ==========
@@ -554,8 +582,15 @@ let CITIES = [
   const otherLakeFeatures = [];
   if (lakesData && lakesData.features) {
     lakesData.features.forEach(f => {
-      const en = f.properties?.name || f.properties?.name_en;
-      if (en && MAJOR_LAKE_BY_EN.has(en)) {
+      let en = f.properties?.name || f.properties?.name_en;
+      if (!en) return;
+      
+      // 별칭 확인
+      if (LAKE_NAME_ALIASES[en]) {
+        en = LAKE_NAME_ALIASES[en];
+      }
+      
+      if (MAJOR_LAKE_BY_EN.has(en)) {
         majorLakeFeatures.set(MAJOR_LAKE_BY_EN.get(en).ko, f);
       } else {
         otherLakeFeatures.push(f);
@@ -581,7 +616,8 @@ let CITIES = [
         .attr("stroke","#888").attr("stroke-width", el.strokeWidth.value + "px")
         .attr("pointer-events","all")
         .on("pointerenter",(event,d) => {
-          const en = d.properties?.name || d.properties?.name_en;
+          let en = d.properties?.name || d.properties?.name_en;
+          if (LAKE_NAME_ALIASES[en]) en = LAKE_NAME_ALIASES[en];
           const ko = MAJOR_LAKE_BY_EN.get(en)?.ko || en;
           el.tooltip.style("display","block").text(ko);
         })
