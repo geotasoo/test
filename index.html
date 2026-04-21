@@ -335,7 +335,7 @@
     <!-- 점찍기 관련 추가 -->
     <label>점 색상:<input type="color" id="dotColor" value="#e53935"></label>
     <label>점 크기:<input type="range" id="dotSize" min="3" max="12" step="0.5" value="5"><span class="value" id="dot-size-value">5.0</span></label>
-    <button id="btn-dot-panel" class="tb-btn primary" title="점찍기">📍</button>
+    <button id="btn-dot-panel" class="tb-btn primary" title="점찍기">📍 점찍기</button>
     
     <label>시도 경계 굵기:<input type="range" id="slider-sd" min="1" max="10" step="0.5" value="1" aria-label="시도 경계 굵기 선택"><span class="value" id="sd-value">1.0</span>px</label>
     <label>시군 경계 굵기:<input type="range" id="slider-sg" min="0.5" max="10" step="0.5" value="0.5" aria-label="시군 경계 굵기 선택"><span class="value" id="sg-value">0.5</span>px</label>
@@ -367,6 +367,12 @@
       <button id="btn-select-all-cities" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #f4f7fa; cursor: pointer; font-size: 13px;">전체 선택</button>
       <button id="btn-deselect-all-cities" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #f4f7fa; cursor: pointer; font-size: 13px;">전체 해제</button>
     </div>
+    <div style="padding: 10px; border-bottom: 2px solid #ddd; background: #f9f9f9;">
+      <button id="btn-manual-pin-mode" style="width: 100%; padding: 8px; border: 2px solid #1a73e8; border-radius: 4px; background: white; color: #1a73e8; cursor: pointer; font-size: 13px; font-weight: 500;">
+        🖱️ 직접 점찍기 (클릭)
+      </button>
+      <div id="manual-pins-list" style="margin-top: 10px; max-height: 150px; overflow-y: auto;"></div>
+    </div>
     <div id="dot-list" class="panel-list"></div>
     <div id="dot-summary" class="panel-summary">선택된 도시 없음</div>
   </div>
@@ -376,15 +382,24 @@
     window.addEventListener('load', function() {
     // ========== 도시 데이터 ==========
     const KOREA_CITIES = [
-      // 특별,광역,특별자치시
-      {name:"서울특별시", sido:"특별·광역·특별자치시", lat:37.5665, lng:126.9780},
-      {name:"부산광역시", sido:"특별·광역·특별자치시", lat:35.1796, lng:129.0756},
-      {name:"대구광역시", sido:"특별·광역·특별자치시", lat:35.8714, lng:128.6014},
-      {name:"인천광역시", sido:"특별·광역·특별자치시", lat:37.4563, lng:126.7052},
-      {name:"광주광역시", sido:"특별·광역·특별자치시", lat:35.1595, lng:126.8526},
-      {name:"대전광역시", sido:"특별·광역·특별자치시", lat:36.3504, lng:127.3845},
-      {name:"울산광역시", sido:"특별·광역·특별자치시", lat:35.5384, lng:129.3114},
-      {name:"세종특별자치시", sido:"특별·광역·특별자치시", lat:36.4800, lng:127.2890},
+      // 광역자치시도청
+      {name:"서울특별시", sido:"광역자치시도청", lat:37.5665, lng:126.9780},
+      {name:"부산광역시", sido:"광역자치시도청", lat:35.1796, lng:129.0756},
+      {name:"대구광역시", sido:"광역자치시도청", lat:35.8714, lng:128.6014},
+      {name:"인천광역시", sido:"광역자치시도청", lat:37.4563, lng:126.7052},
+      {name:"광주광역시", sido:"광역자치시도청", lat:35.1595, lng:126.8526},
+      {name:"대전광역시", sido:"광역자치시도청", lat:36.3504, lng:127.3845},
+      {name:"울산광역시", sido:"광역자치시도청", lat:35.5384, lng:129.3114},
+      {name:"세종특별자치시", sido:"광역자치시도청", lat:36.4800, lng:127.2890},
+      {name:"경기도청", sido:"광역자치시도청", lat:37.2636, lng:127.0286}, // 수원
+      {name:"강원특별자치도청", sido:"광역자치시도청", lat:37.8813, lng:127.7300}, // 춘천
+      {name:"충청북도청", sido:"광역자치시도청", lat:36.6424, lng:127.4890}, // 청주
+      {name:"충청남도청", sido:"광역자치시도청", lat:36.6012, lng:126.6650}, // 홍성
+      {name:"전북특별자치도청", sido:"광역자치시도청", lat:35.8242, lng:127.1480}, // 전주
+      {name:"전라남도청", sido:"광역자치시도청", lat:34.8161, lng:126.4629}, // 무안
+      {name:"경상북도청", sido:"광역자치시도청", lat:36.5760, lng:128.5056}, // 안동
+      {name:"경상남도청", sido:"광역자치시도청", lat:35.2380, lng:128.6923}, // 창원
+      {name:"제주특별자치도청", sido:"광역자치시도청", lat:33.4890, lng:126.4983}, // 제주시
       
       // 경기도 (31개)
       {name:"수원시", sido:"경기도", lat:37.2636, lng:127.0286},
@@ -565,11 +580,11 @@
       {name:"한라산", sido:"섬, 산, 고개", lat:33.3616, lng:126.5292},
       {name:"북한산", sido:"섬, 산, 고개", lat:37.6586, lng:126.9772},
       {name:"문경새재", sido:"섬, 산, 고개", lat:36.7734, lng:128.0455},
-      {name:"대관령", sido:"섬, 산, 고개", lat:37.6773, lng:128.7188}
+      {name:"대관령", sido:"섬, 산, 고개", lat:37.6850, lng:128.7199}
     ];
     
     const SIDO_ORDER = [
-      "특별·광역·특별자치시",
+      "광역자치시도청",
       "섬, 산, 고개",
       "경기도",
       "강원특별자치도",
@@ -587,6 +602,8 @@
     let dotMarkers = [];
     let dotPanelOpen = false;
     let sidoCollapsed = new Set(SIDO_ORDER); // 모든 카테고리 기본 닫힘
+    let manualPinMode = false;
+    let manualPins = []; // {lat, lng, id}
     
     // --- 타이틀 클릭 시 초기화 버튼 클릭 ---
     document.querySelector('header span').addEventListener('click', function () {
@@ -716,6 +733,67 @@
       renderDots();
       buildDotList(document.getElementById('dot-search').value.toLowerCase());
     });
+    
+    // 직접 점찍기 모드
+    document.getElementById('btn-manual-pin-mode').addEventListener('click', () => {
+      manualPinMode = !manualPinMode;
+      const btn = document.getElementById('btn-manual-pin-mode');
+      if (manualPinMode) {
+        btn.style.background = '#1a73e8';
+        btn.style.color = 'white';
+        btn.textContent = '🖱️ 직접 점찍기 ON (지도 클릭)';
+        map.getContainer().style.cursor = 'crosshair';
+      } else {
+        btn.style.background = 'white';
+        btn.style.color = '#1a73e8';
+        btn.textContent = '🖱️ 직접 점찍기 (클릭)';
+        map.getContainer().style.cursor = '';
+      }
+    });
+    
+    // 지도 클릭 이벤트
+    map.on('click', function(e) {
+      if (!manualPinMode) return;
+      
+      const {lat, lng} = e.latlng;
+      const id = Date.now();
+      manualPins.push({lat, lng, id});
+      
+      renderDots();
+      updateManualPinsList();
+    });
+    
+    function updateManualPinsList() {
+      const list = document.getElementById('manual-pins-list');
+      if (manualPins.length === 0) {
+        list.innerHTML = '';
+        return;
+      }
+      
+      list.innerHTML = `<div style="font-size:11px; color:#666; margin-bottom:4px;">내가 찍은 점 (${manualPins.length}개)</div>`;
+      
+      manualPins.forEach((pin, idx) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:4px; font-size:12px; border-bottom:1px solid #f0f0f0;';
+        
+        const label = document.createElement('span');
+        label.textContent = `${idx + 1}번 점 (${pin.lat.toFixed(4)}, ${pin.lng.toFixed(4)})`;
+        label.style.color = '#555';
+        
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '✕';
+        delBtn.style.cssText = 'border:none; background:#ff5252; color:white; border-radius:3px; padding:2px 6px; cursor:pointer; font-size:11px;';
+        delBtn.addEventListener('click', () => {
+          manualPins = manualPins.filter(p => p.id !== pin.id);
+          renderDots();
+          updateManualPinsList();
+        });
+        
+        row.appendChild(label);
+        row.appendChild(delBtn);
+        list.appendChild(row);
+      });
+    }
     
     // 검색 기능
     document.getElementById('dot-search').addEventListener('input', e => {
@@ -852,7 +930,7 @@
       const radius = parseFloat(document.getElementById('dotSize').value);
       const color = document.getElementById('dotColor').value;
       
-      // 선택된 도시만 렌더
+      // 선택된 도시 렌더
       const selected = KOREA_CITIES.filter(c => selectedCities.has(c.name));
       
       selected.forEach(city => {
@@ -867,6 +945,24 @@
         
         marker.on('mouseover', e => showCustomTooltip(city.name, e));
         marker.on('mousemove', e => showCustomTooltip(city.name, e));
+        marker.on('mouseout', hideCustomTooltip);
+        
+        dotMarkers.push(marker);
+      });
+      
+      // 직접 찍은 점 렌더
+      manualPins.forEach((pin, idx) => {
+        const marker = L.circleMarker([pin.lat, pin.lng], {
+          radius: radius,
+          fillColor: color,
+          color: '#fff',
+          weight: Math.max(0.5, radius * 0.2),
+          fillOpacity: 1,
+          pane: 'markerPane'
+        }).addTo(map);
+        
+        marker.on('mouseover', e => showCustomTooltip(`내가 찍은 점 ${idx + 1}`, e));
+        marker.on('mousemove', e => showCustomTooltip(`내가 찍은 점 ${idx + 1}`, e));
         marker.on('mouseout', hideCustomTooltip);
         
         dotMarkers.push(marker);
