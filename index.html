@@ -34,7 +34,12 @@
     #btn-sg.mode-sd:hover { background:#c82333; }
     
     /* 점찍기 버튼 스타일 */
-    .tb-btn.primary { background:#1a73e8; color:#fff; border-color:#1a73e8; }
+    .tb-btn.primary { 
+      background:#1a73e8; 
+      color:#fff !important; 
+      border-color:#1a73e8; 
+      font-weight: 500;
+    }
     .tb-btn.primary:hover { background:#1557b0; }
     .tb-btn.primary.active { background:#0d47a1; }
     
@@ -125,10 +130,10 @@
     .side-panel {
       position: fixed;
       top: 95px;
-      width: 340px;
+      width: 300px;
       height: calc(100vh - 95px);
       background: #fff;
-      box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+      box-shadow: -2px 0 8px rgba(0,0,0,0.15);
       transition: transform 0.3s ease, opacity 0.3s ease;
       z-index: 10000;
       display: flex;
@@ -136,11 +141,11 @@
       font-size: 13px;
     }
     
-    /* 도시 목록 패널 (왼쪽) */
+    /* 장소 목록 패널 (오른쪽에서 나옴) */
     #city-panel {
-      left: 0;
-      border-right: 2px solid #ddd;
-      transform: translateX(-100%);
+      right: 0;
+      border-left: 2px solid #ddd;
+      transform: translateX(100%);
       opacity: 0;
     }
     #city-panel.open {
@@ -148,9 +153,9 @@
       opacity: 1;
     }
     
-    /* 내가 찍은 점 패널 (오른쪽) */
+    /* 내가 찍은 점 패널 (오른쪽에서 나옴, 장소 목록 옆) */
     #pin-panel {
-      right: 0;
+      right: 300px;
       border-left: 2px solid #ddd;
       transform: translateX(100%);
       opacity: 0;
@@ -341,7 +346,7 @@
 </script>
 
   <div id="toolbar">
-    <button id="btn-sg" class="mode-sg" aria-label="시군/시도 모드 토글" title="시군/시도 모드 토글">시군</button>
+    <button id="btn-sg" class="mode-sg" aria-label="시군/시도 모드 토글" title="시군/시도 모드 토글">시군↔시도</button>
     <div class="dropdown" id="provinceDropdown">
       <button type="button" class="dropdown-btn" id="provinceDropdownBtn">
         시도 선택 <span id="provinceSelectedCount" class="count">0</span> ▼
@@ -363,8 +368,8 @@
       <div class="palette-box" data-color="#f0f0f0" style="background:#f0f0f0" title="색상 #f0f0f0"></div>
     </div>
     
-    <label>시도 경계 굵기:<input type="range" id="slider-sd" min="1" max="10" step="0.5" value="1" aria-label="시도 경계 굵기 선택"><span class="value" id="sd-value">1.0</span>px</label>
-    <label>시군 경계 굵기:<input type="range" id="slider-sg" min="0.5" max="10" step="0.5" value="0.5" aria-label="시군 경계 굵기 선택"><span class="value" id="sg-value">0.5</span>px</label>
+    <label>시도 경계 굵기:<input type="range" id="slider-sd" min="1" max="10" step="0.5" value="1" aria-label="시도 경계 굵기 선택"><span class="value" id="sd-value">1.0</span></label>
+    <label>시군 경계 굵기:<input type="range" id="slider-sg" min="0.5" max="10" step="0.5" value="0.5" aria-label="시군 경계 굵기 선택"><span class="value" id="sg-value">0.5</span></label>
     <label>점 크기:<input type="range" id="dotSize" min="3" max="12" step="0.5" value="5"><span class="value" id="dot-size-value">5.0</span></label>
     <label>점 색상:<input type="color" id="dotColor" value="#e53935"></label>
     <label style="display:flex; align-items:center; gap:4px;">
@@ -389,7 +394,7 @@
   <!-- 도시 목록 패널 (왼쪽) -->
   <div id="city-panel" class="side-panel">
     <div class="panel-header">
-      <span>🏙️ 도시 목록</span>
+      <span>🏙️ 장소 목록</span>
       <div class="ph-right">
         <button id="btn-city-deselect">전체 해제</button>
         <button id="btn-city-panel-close" class="panel-close">✕</button>
@@ -397,6 +402,7 @@
     </div>
     <div class="panel-search-wrap">
       <input type="text" id="dot-search" placeholder="🔍 도시 검색..." />
+      <button id="btn-clear-search" style="display:none; margin-top:6px; padding:4px 8px; border:1px solid #ccc; border-radius:3px; background:#f9f9f9; cursor:pointer; font-size:12px;">← 목록으로</button>
     </div>
     <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; gap: 8px;">
       <button id="btn-select-all-cities" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #f4f7fa; cursor: pointer; font-size: 13px;">전체 선택</button>
@@ -855,7 +861,21 @@
     
     // 검색 기능
     document.getElementById('dot-search').addEventListener('input', e => {
-      buildDotList(e.target.value.toLowerCase());
+      const term = e.target.value.toLowerCase();
+      const clearBtn = document.getElementById('btn-clear-search');
+      if (term) {
+        clearBtn.style.display = 'block';
+      } else {
+        clearBtn.style.display = 'none';
+      }
+      buildDotList(term);
+    });
+    
+    // 목록으로 버튼
+    document.getElementById('btn-clear-search').addEventListener('click', () => {
+      document.getElementById('dot-search').value = '';
+      document.getElementById('btn-clear-search').style.display = 'none';
+      buildDotList('');
     });
     
     function updateDotSummary() {
@@ -1259,12 +1279,11 @@
         animateMapFade(() => {
           sgVisible = !sgVisible;
           const btn = document.getElementById('btn-sg');
+          btn.textContent = '시군↔시도';
           if (sgVisible) {
-            btn.textContent = '시군';
             btn.classList.add('mode-sg');
             btn.classList.remove('mode-sd');
           } else {
-            btn.textContent = '시도';
             btn.classList.add('mode-sd');
             btn.classList.remove('mode-sg');
           }
