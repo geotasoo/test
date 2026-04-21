@@ -165,15 +165,20 @@
       font-size:9px; color:#999; z-index:999;
     }
     #footer a { color:inherit; text-decoration:none; }
+    #helpLink {
+      position:absolute; top:6px; left:10px;
+      font-size:9px; color:#999; z-index:999;
+    }
+    #helpLink a { color:inherit; text-decoration:none; }
+    #helpLink a:hover { text-decoration:underline; }
   </style>
 </head>
 <body>
 
 <header id="header">
-  <span class="title">세계지도 색칠하기 & 점찍기 🎗️🗺️🖌️🙂🍖 v2.1 20260421</span>
+  <span class="title">세계지도 색칠하기 & 점찍기 🎗️🗺️🖌️🙂🍖 v2.1 20260421(어머! 지리데이!)</span>
   <div id="iconLinks">
     <a href="https://buymeacoffee.com/geotasoo" target="_blank" data-tip="커피보내기">☕</a>
-    <a href="https://geotasoo.tistory.com/entry/%EC%84%B8%EA%B3%84%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank" data-tip="사용법보기/생각나누기">🏃🏻‍➡️</a>
     <a href="https://geotasoo.tistory.com/entry/%EC%9A%B0%EB%A6%AC%EB%82%98%EB%9D%BC-%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank" data-tip="우리나라 지도 색칠하기">🐯</a>
   </div>
 </header>
@@ -208,9 +213,13 @@
     <span id="dotSizeValue">5px</span>
   </label>
   <label>점 색상: <input type="color" id="dotColor" value="#e53935"></label>
+  <label style="display:flex; align-items:center; gap:4px;">
+    <input type="checkbox" id="dotStroke" checked style="margin:0;">
+    <span>점 테두리</span>
+  </label>
 
-  <button id="btn-lake-panel" class="tb-btn primary">💧 호수</button>
   <button id="btn-dot-panel" class="tb-btn primary">📍 점찍기</button>
+  <button id="btn-lake-panel" class="tb-btn primary">💧 호수</button>
   <button id="btn-manual-clear" class="tb-btn warning" style="display:none;">🗑️ 내가찍은 점 지우기</button>
 
   <button id="toggleLabels"  class="tb-btn">🌚 나라이름</button>
@@ -229,6 +238,9 @@
 
 <div id="main-container">
   <div id="map-wrap">
+    <div id="helpLink">
+      <a href="https://geotasoo.tistory.com/entry/%EC%84%B8%EA%B3%84%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank">사용법보기/생각나누기</a>
+    </div>
     <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
   </div>
 
@@ -415,6 +427,7 @@ let CITIES = [
     dotSize: $('dotSize'),
     dotSizeValue: $('dotSizeValue'),
     dotColor: $('dotColor'),
+    dotStroke: $('dotStroke'),
     zoomLevel: $('zoomLevel'),
     cityPanel: $('city-panel'),
     pinPanel: $('pin-panel'),
@@ -625,6 +638,7 @@ let CITIES = [
   function renderCityDots() {
     const r = parseFloat(el.dotSize.value);
     const color = el.dotColor.value;
+    const useStroke = el.dotStroke.checked;
     const selected = CITIES.filter(c => selectedCities.has(c.name));
     [cityGroup1, cityGroup2].forEach(g => {
       g.selectAll("circle.city-dot").remove();
@@ -634,8 +648,8 @@ let CITIES = [
         .attr("cy", d => projection([d.lng, d.lat])[1])
         .attr("r", r)
         .attr("fill", color)
-        .attr("stroke","#fff")
-        .attr("stroke-width", Math.max(0.5, r * 0.2))
+        .attr("stroke", useStroke ? "#fff" : "none")
+        .attr("stroke-width", useStroke ? Math.max(0.5, r * 0.2) : 0)
         .attr("pointer-events","all")
         .on("pointerenter",(event,d) => { el.tooltip.style("display","block").text(d.name); })
         .on("pointermove", event => { el.tooltip.style("transform",`translate(${event.clientX+26}px,${event.clientY+28}px)`); })
@@ -646,19 +660,19 @@ let CITIES = [
   function renderPins() {
     const r = parseFloat(el.dotSize.value);
     const color = el.dotColor.value;
+    const useStroke = el.dotStroke.checked;
     const visible = manualPins.filter(p => p.visible);
     [pinGroup1, pinGroup2].forEach(g => {
-      g.selectAll('*').remove();
+      g.selectAll("circle.pin-dot").remove();
       visible.forEach(pin => {
         const [cx, cy] = projection([pin.lng, pin.lat]);
-        const grp = g.append('g').attr('class','pin-grp');
-        grp.append('circle')
+        g.append('circle')
+          .attr('class', 'pin-dot')
           .attr('cx', cx).attr('cy', cy)
-          .attr('r', r + 1.5).attr('fill','#fff').attr('pointer-events','none');
-        grp.append('circle')
-          .attr('cx', cx).attr('cy', cy)
-          .attr('r', r).attr('fill', color)
-          .attr('stroke','#fff').attr('stroke-width', Math.max(0.5, r*0.15))
+          .attr('r', r)
+          .attr('fill', color)
+          .attr('stroke', useStroke ? '#fff' : 'none')
+          .attr('stroke-width', useStroke ? Math.max(0.5, r * 0.2) : 0)
           .attr('pointer-events','all')
           .on('pointerenter', () => { el.tooltip.style('display','block').text(`📍 #${pin.num}`); })
           .on('pointermove', ev => { el.tooltip.style('transform',`translate(${ev.clientX+26}px,${ev.clientY+28}px)`); })
@@ -986,6 +1000,7 @@ let CITIES = [
     renderCityDots(); renderPins();
   });
   el.dotColor.addEventListener('input', () => { renderCityDots(); renderPins(); });
+  el.dotStroke.addEventListener('change', () => { renderCityDots(); renderPins(); });
 
   // 바다 / 육지 / 선 굵기
   el.oceanColor.addEventListener('change', () => {
