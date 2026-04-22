@@ -304,7 +304,7 @@ function renderDots(){
   const r=parseFloat($('dotSize').value),color=$('dotColor').value,stroke=$('dotStroke').checked;
   // circle은 미터 단위 - 슬라이더 값을 미터로 변환 (1→3000m, 12→36000m)
   const radiusM = r * 3000;
-  const strokeW = stroke ? Math.max(1, r * 0.4) : 0;
+  const strokeW = stroke ? Math.max(1.5, r * 1.2) : 0;
   const opts={radius:radiusM,fillColor:color,color:stroke?'#fff':'none',weight:strokeW,fillOpacity:1,pane:'markerPane'};
   KOREA_CITIES.filter(c=>selectedCities.has(c.name)).forEach(c=>{const m=L.circle([c.lat,c.lng],opts).addTo(map);m.on('mouseover',e=>showTT(c.name,e));m.on('mousemove',e=>showTT(c.name,e));m.on('mouseout',hideTT);dotMarkers.push(m);});
   manualPins.forEach((p,i)=>{const m=L.circle([p.lat,p.lng],opts).addTo(map);m.on('mouseover',e=>showTT('내가 찍은 점 '+(i+1),e));m.on('mousemove',e=>showTT('내가 찍은 점 '+(i+1),e));m.on('mouseout',hideTT);dotMarkers.push(m);});
