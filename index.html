@@ -28,6 +28,13 @@
     #main-container { display:flex; flex:1 1 auto; overflow:hidden; }
     #map-wrap { flex:1 1 auto; overflow:hidden; position:relative; }
     #map { width:100%; height:100%; }
+    #helpLink {
+      position:absolute; top:6px; left:10px;
+      font-size:9px; color:#999; z-index:999;
+      line-height:1.6;
+    }
+    #helpLink a { color:inherit; text-decoration:none; }
+    #helpLink a:hover { text-decoration:underline; }
 
     /* 사이드 패널 (세계지도 동일) */
     .side-panel { width:0; min-width:0; background:#fff; border-left:none; display:flex; flex-direction:column; overflow:hidden; transition:width .25s ease, min-width .25s ease; font-size:13px; flex-shrink:0; }
@@ -126,7 +133,15 @@
 </div>
 
 <div id="main-container">
-  <div id="map-wrap"><div id="map"></div><div id="map-custom-tooltip" class="map-custom-tooltip"></div></div>
+  <div id="map-wrap">
+    <div id="helpLink">
+      PC에서 사용을 권장합니다. 모바일에서는 점찍기가 힘들어요.<br>
+      이 웹페이지는 모두 황병삼쌤 덕분입니다. 고맙습니다.<br>
+      <a href="https://geotasoo.tistory.com/entry/%EC%9A%B0%EB%A6%AC%EB%82%98%EB%9D%BC-%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank">사용법보기/생각나누기</a>
+    </div>
+    <div id="map"></div>
+    <div id="map-custom-tooltip" class="map-custom-tooltip"></div>
+  </div>
 
   <div id="city-panel" class="side-panel">
     <div class="panel-header"><span>🏙️ 장소 목록</span><div class="ph-right"><button id="btn-city-deselect">전체 해제</button><button id="btn-city-panel-close" class="panel-close" title="닫기">✕</button></div></div>
@@ -210,7 +225,7 @@ $('colorPicker').addEventListener('input',e=>{highlightFill=e.target.value;});
 $('dotSize').addEventListener('input',e=>{$('dot-size-value').textContent=parseFloat(e.target.value).toFixed(1);renderDots();});
 $('dotColor').addEventListener('input',renderDots);
 $('dotStroke').addEventListener('change',renderDots);
-map.on('zoomend',()=>{ renderDots(); });
+map.on('zoomend',()=>{});
 $('btn-base').addEventListener('click',()=>{baseOn=!baseOn;if(baseOn){map.addLayer(baseLayer);$('btn-base').textContent='🌝 배경지도';}else{map.removeLayer(baseLayer);$('btn-base').textContent='🌚 배경지도';}});
 
 // 패널
@@ -304,8 +319,7 @@ function renderDots(){
   const r=parseFloat($('dotSize').value),color=$('dotColor').value,stroke=$('dotStroke').checked;
   // circle은 미터 단위 - 슬라이더 값을 미터로 변환 (1→3000m, 12→36000m)
   const radiusM = r * 3000;
-  const zoom = map.getZoom();
-  const strokeW = stroke ? Math.max(1.5, r * 1.2 * (zoom / 7)) : 0;
+  const strokeW = stroke ? Math.max(1.5, r * 2.0) : 0;
   const opts={radius:radiusM,fillColor:color,color:stroke?'#fff':'none',weight:strokeW,fillOpacity:1,pane:'markerPane'};
   KOREA_CITIES.filter(c=>selectedCities.has(c.name)).forEach(c=>{const m=L.circle([c.lat,c.lng],opts).addTo(map);m.on('mouseover',e=>showTT(c.name,e));m.on('mousemove',e=>showTT(c.name,e));m.on('mouseout',hideTT);dotMarkers.push(m);});
   manualPins.forEach((p,i)=>{const m=L.circle([p.lat,p.lng],opts).addTo(map);m.on('mouseover',e=>showTT('내가 찍은 점 '+(i+1),e));m.on('mousemove',e=>showTT('내가 찍은 점 '+(i+1),e));m.on('mouseout',hideTT);dotMarkers.push(m);});
