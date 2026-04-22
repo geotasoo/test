@@ -117,7 +117,7 @@
   <label>점 크기:<input type="range" id="dotSize" min="3" max="12" step="0.5" value="5"><span class="value" id="dot-size-value">5.0</span></label>
   <label>점 색상:<input type="color" id="dotColor" value="#e53935"></label>
   <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" id="dotStroke" checked style="margin:0;"><span>점 테두리</span></label>
-  <button id="btn-nk" class="tb-btn" style="background:#ccc;color:#888;">🇰🇵 북한</button>
+  <button id="btn-nk" class="tb-btn" style="background:#ccc;color:#888;">🇰🇵 북측</button>
   <button id="btn-dot-panel" class="tb-btn primary">📍 점찍기</button>
   <button id="btn-base">🌚 배경지도</button>
   <div style="display:flex; border:1px solid #ccc; border-radius:4px; overflow:hidden;">
@@ -165,15 +165,32 @@ const KOREA_CITIES=[
 {name:"목포시",sido:"전라남도",lat:34.8118,lng:126.3922},{name:"여수시",sido:"전라남도",lat:34.7604,lng:127.6622},{name:"순천시",sido:"전라남도",lat:34.9507,lng:127.4872},{name:"나주시",sido:"전라남도",lat:35.0160,lng:126.7107},{name:"광양시",sido:"전라남도",lat:34.9406,lng:127.6956},{name:"담양군",sido:"전라남도",lat:35.3208,lng:126.9882},{name:"곡성군",sido:"전라남도",lat:35.2818,lng:127.2925},{name:"구례군",sido:"전라남도",lat:35.2023,lng:127.4632},{name:"고흥군",sido:"전라남도",lat:34.6114,lng:127.2751},{name:"보성군",sido:"전라남도",lat:34.7714,lng:127.0800},{name:"화순군",sido:"전라남도",lat:35.0640,lng:126.9865},{name:"장흥군",sido:"전라남도",lat:34.6816,lng:126.9067},{name:"강진군",sido:"전라남도",lat:34.6420,lng:126.7672},{name:"해남군",sido:"전라남도",lat:34.5732,lng:126.5987},{name:"영암군",sido:"전라남도",lat:34.8004,lng:126.6967},{name:"무안군",sido:"전라남도",lat:34.9903,lng:126.4819},{name:"함평군",sido:"전라남도",lat:35.0664,lng:126.5158},{name:"영광군",sido:"전라남도",lat:35.2773,lng:126.5121},{name:"장성군",sido:"전라남도",lat:35.3017,lng:126.7846},{name:"완도군",sido:"전라남도",lat:34.3113,lng:126.7552},{name:"진도군",sido:"전라남도",lat:34.4868,lng:126.2633},{name:"신안군",sido:"전라남도",lat:34.8267,lng:126.1097},
 {name:"포항시",sido:"경상북도",lat:36.0190,lng:129.3435},{name:"경주시",sido:"경상북도",lat:35.8562,lng:129.2247},{name:"김천시",sido:"경상북도",lat:36.1399,lng:128.1137},{name:"안동시",sido:"경상북도",lat:36.5684,lng:128.7294},{name:"구미시",sido:"경상북도",lat:36.1195,lng:128.3446},{name:"영주시",sido:"경상북도",lat:36.8056,lng:128.6239},{name:"영천시",sido:"경상북도",lat:35.9733,lng:128.9386},{name:"상주시",sido:"경상북도",lat:36.4109,lng:128.1589},{name:"문경시",sido:"경상북도",lat:36.5865,lng:128.1867},{name:"경산시",sido:"경상북도",lat:35.8251,lng:128.7414},{name:"의성군",sido:"경상북도",lat:36.3526,lng:128.6970},{name:"청송군",sido:"경상북도",lat:36.4364,lng:129.0568},{name:"영양군",sido:"경상북도",lat:36.6666,lng:129.1124},{name:"영덕군",sido:"경상북도",lat:36.4150,lng:129.3655},{name:"청도군",sido:"경상북도",lat:35.6477,lng:128.7362},{name:"고령군",sido:"경상북도",lat:35.7272,lng:128.2626},{name:"성주군",sido:"경상북도",lat:35.9192,lng:128.2827},{name:"칠곡군",sido:"경상북도",lat:35.9950,lng:128.4014},{name:"예천군",sido:"경상북도",lat:36.6575,lng:128.4518},{name:"봉화군",sido:"경상북도",lat:36.8930,lng:128.7324},{name:"울진군",sido:"경상북도",lat:36.9930,lng:129.4006},{name:"울릉군",sido:"경상북도",lat:37.4845,lng:130.9058},
 {name:"창원시",sido:"경상남도",lat:35.2280,lng:128.6811},{name:"진주시",sido:"경상남도",lat:35.1800,lng:128.1076},{name:"통영시",sido:"경상남도",lat:34.8544,lng:128.4332},{name:"사천시",sido:"경상남도",lat:35.0036,lng:128.0642},{name:"김해시",sido:"경상남도",lat:35.2285,lng:128.8894},{name:"밀양시",sido:"경상남도",lat:35.5038,lng:128.7461},{name:"거제시",sido:"경상남도",lat:34.8806,lng:128.6211},{name:"양산시",sido:"경상남도",lat:35.3350,lng:129.0374},{name:"의령군",sido:"경상남도",lat:35.3223,lng:128.2618},{name:"함안군",sido:"경상남도",lat:35.2725,lng:128.4061},{name:"창녕군",sido:"경상남도",lat:35.5445,lng:128.4926},{name:"고성군",sido:"경상남도",lat:34.9732,lng:128.3229},{name:"남해군",sido:"경상남도",lat:34.8376,lng:127.8924},{name:"하동군",sido:"경상남도",lat:35.0673,lng:127.7514},{name:"산청군",sido:"경상남도",lat:35.4154,lng:127.8734},{name:"함양군",sido:"경상남도",lat:35.5203,lng:127.7251},{name:"거창군",sido:"경상남도",lat:35.6868,lng:127.9095},{name:"합천군",sido:"경상남도",lat:35.5664,lng:128.1656},
-{name:"제주시",sido:"제주특별자치도",lat:33.4996,lng:126.5312},{name:"서귀포시",sido:"제주특별자치도",lat:33.2541,lng:126.5601}
+{name:"제주시",sido:"제주특별자치도",lat:33.4996,lng:126.5312},{name:"서귀포시",sido:"제주특별자치도",lat:33.2541,lng:126.5601},
+
+// 북측
+{name:"평양",sido:"북측",lat:39.0392,lng:125.7625},
+{name:"함흥",sido:"북측",lat:39.9186,lng:127.5367},
+{name:"청진",sido:"북측",lat:41.7956,lng:129.7750},
+{name:"남포",sido:"북측",lat:38.7373,lng:125.4077},
+{name:"원산",sido:"북측",lat:39.1479,lng:127.4350},
+{name:"신의주",sido:"북측",lat:40.0990,lng:124.3988},
+{name:"개성",sido:"북측",lat:37.9710,lng:126.5560},
+{name:"사리원",sido:"북측",lat:38.5067,lng:125.9560},
+{name:"해주",sido:"북측",lat:38.0370,lng:125.7197},
+{name:"강계",sido:"북측",lat:40.9697,lng:126.5842},
+{name:"나선",sido:"북측",lat:42.4150,lng:130.3226},
+{name:"중강진",sido:"북측",lat:41.7833,lng:126.9000},
+{name:"백두산",sido:"북측",lat:42.0046,lng:128.0550},
+{name:"금강산",sido:"북측",lat:38.6530,lng:128.1520},
+{name:"철령",sido:"북측",lat:39.3667,lng:127.0500}
 ];
 
-const SIDO_ORDER=["특별·광역·특별자치시","도·특별자치도청","섬, 산, 고개","경기도","강원특별자치도","충청북도","충청남도","전북특별자치도","전라남도","경상북도","경상남도","제주특별자치도"];
+const SIDO_ORDER=["특별·광역·특별자치시","도·특별자치도청","북측","섬, 산, 고개","경기도","강원특별자치도","충청북도","충청남도","전북특별자치도","전라남도","경상북도","경상남도","제주특별자치도"];
 
 let selectedCities=new Set(), dotMarkers=[], dotMode=false, sidoCollapsed=new Set(SIDO_ORDER), manualPins=[];
 let nkVisible=false; // 기본값: 북한 꺼짐
 // 경계 모드: 0=없애기, 1=나라, 2=시도, 3=시군 (기본: 3=시군)
-const BORDER_MODES=['없애기','나라','시도','시군'];
+const BORDER_MODES=['경계없음','남측','시도','시군'];
 let borderMode=3;
 const $=id=>document.getElementById(id);
 document.querySelector('header span').addEventListener('click',()=>$('btn-reset').click());
@@ -320,8 +337,8 @@ Promise.all([
         coloredSd.set('nk',on);
         ly.setStyle(on?{color:'#444',weight:2,fillColor:highlightFill,fillOpacity:0.7,opacity:1}:{color:'#444',weight:1,fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1});
       });
-      ly.on('mouseover',e=>showTT('북한',e));
-      ly.on('mousemove',e=>showTT('북한',e));
+      ly.on('mouseover',e=>showTT('북측',e));
+      ly.on('mousemove',e=>showTT('북측',e));
       ly.on('mouseout',hideTT);
     }
   }); // 기본 숨김 - addTo(map) 안 함
@@ -396,7 +413,7 @@ Promise.all([
   // 경계 버튼: 없애기 → 나라 → 시도 → 시군 순환
   function updateBorderBtn(){
     const btn=$('btn-sg');
-    const labels=['없애기','나라','시도','시군'];
+    const labels=['경계없음 →','남측 →','시도 →','시군 →'];
     const colors=['#6c757d','#17a2b8','#dc3545','#007bff'];
     btn.textContent=labels[borderMode];
     btn.style.background=colors[borderMode];
