@@ -112,12 +112,13 @@
     <div class="palette-box" data-color="#dddddd" style="background:#dddddd"></div>
     <div class="palette-box" data-color="#f0f0f0" style="background:#f0f0f0"></div>
   </div>
+  <label>나라 경계 굵기:<input type="range" id="slider-nk" min="1" max="10" step="0.5" value="1"><span class="value" id="nk-value">1.0</span></label>
   <label>시도 경계 굵기:<input type="range" id="slider-sd" min="1" max="10" step="0.5" value="1"><span class="value" id="sd-value">1.0</span></label>
   <label>시군 경계 굵기:<input type="range" id="slider-sg" min="0.5" max="10" step="0.5" value="0.5"><span class="value" id="sg-value">0.5</span></label>
   <label>점 크기:<input type="range" id="dotSize" min="3" max="12" step="0.5" value="5"><span class="value" id="dot-size-value">5.0</span></label>
   <label>점 색상:<input type="color" id="dotColor" value="#e53935"></label>
   <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" id="dotStroke" checked style="margin:0;"><span>점 테두리</span></label>
-  <button id="btn-nk" class="tb-btn" style="background:#ccc;color:#888;">북측</button>
+  <button id="btn-nk" class="tb-btn" style="background:#ccc;color:#888;">🌑🌕 북측</button>
   <button id="btn-dot-panel" class="tb-btn primary">📍 점찍기</button>
   <button id="btn-base">🌚 배경지도</button>
   <div style="display:flex; border:1px solid #ccc; border-radius:4px; overflow:hidden;">
@@ -182,7 +183,7 @@ const KOREA_CITIES=[
 {name:"중강진",sido:"북측",lat:41.7833,lng:126.9000},
 {name:"백두산",sido:"북측",lat:42.0046,lng:128.0550},
 {name:"금강산",sido:"북측",lat:38.6530,lng:128.1520},
-{name:"철령",sido:"북측",lat:39.3032944,lng:127.0464884}
+{name:"철령",sido:"북측",lat:38.8103322,lng:127.4961655}
 ];
 
 const SIDO_ORDER=["특별·광역·특별자치시","도·특별자치도청","북측","섬, 산, 고개","경기도","강원특별자치도","충청북도","충청남도","전북특별자치도","전라남도","경상북도","경상남도","제주특별자치도"];
@@ -329,7 +330,7 @@ Promise.all([
 
   // 북한 레이어 (토글 가능, 색칠 가능) - 기본 숨김
   nkLayer = L.geoJSON(nkJson,{
-    style: ()=>({color:'#444', weight:1, fillColor:'#ffffff', fillOpacity:defaultLandOpacity, opacity:1}),
+    style: ()=>({color:'#444', weight:parseFloat($('slider-nk').value), fillColor:'#ffffff', fillOpacity:defaultLandOpacity, opacity:1}),
     onEachFeature:(ft,ly)=>{
       ly.on('click',()=>{
         if(dotMode)return;
@@ -337,8 +338,6 @@ Promise.all([
         coloredSd.set('nk',on);
         ly.setStyle(on?{color:'#444',weight:2,fillColor:highlightFill,fillOpacity:0.7,opacity:1}:{color:'#444',weight:1,fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1});
       });
-      ly.on('mouseover',e=>showTT('🌑🌕',e));
-      ly.on('mousemove',e=>showTT('🌑🌕',e));
       ly.on('mouseout',hideTT);
     }
   }); // 기본 숨김 - addTo(map) 안 함
@@ -382,7 +381,7 @@ Promise.all([
       // 나라: 남한 전체 윤곽(sk) + 나라 경계
       if(skLayer)map.removeLayer(skLayer);
       skLayer=L.geoJSON(skJson,{
-        style:()=>({color:'#222',weight:parseFloat($('slider-sd').value),fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1}),
+        style:()=>({color:'#222',weight:parseFloat($('slider-nk').value),fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1}),
         onEachFeature:(ft,ly)=>{ly.on('click',()=>{if(dotMode)return;const on=!coloredSd.get('sk');coloredSd.set('sk',on);ly.setStyle(on?{color:'#222',weight:2,fillColor:highlightFill,fillOpacity:0.7,opacity:1}:{color:'#222',weight:parseFloat($('slider-sd').value),fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1});});}
       }).addTo(map);
       sdLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
@@ -430,7 +429,12 @@ Promise.all([
     });
   });
 
-  $('slider-sd').addEventListener('input',e=>{$('sd-value').textContent=(+e.target.value).toFixed(1);if(sdBorderLayer)sdBorderLayer.setStyle({weight:+e.target.value});sdBorderLayer.bringToFront();});
+  $('slider-sd').addEventListener('input',e=>{$('sd-value').textContent=(+e.target.value).toFixed(1);if(sdBorderLayer)sdBorderLayer.setStyle({weight:+e.target.value});if(sdBorderLayer)sdBorderLayer.bringToFront();});
+  $('slider-nk').addEventListener('input',e=>{
+    $('nk-value').textContent=(+e.target.value).toFixed(1);
+    if(nkLayer)nkLayer.setStyle({weight:+e.target.value});
+    if(skLayer)skLayer.setStyle({weight:+e.target.value});
+  });
   $('slider-sg').addEventListener('input',e=>{$('sg-value').textContent=(+e.target.value).toFixed(1);if(sgLayer)sgLayer.setStyle({weight:+e.target.value});if(sdBorderLayer)sdBorderLayer.bringToFront();});
   $('btn-reset').addEventListener('click',()=>location.reload());
   $('savePng').addEventListener('click',()=>alert('저장 기능을 만들다가 계속 실패. 😢😡😵‍💫 [shift]+[win]+[s]를 이용해주세요.'));
