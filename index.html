@@ -224,7 +224,7 @@ $('colorPicker').addEventListener('input',e=>{highlightFill=e.target.value;});
 $('dotSize').addEventListener('input',e=>{$('dot-size-value').textContent=parseFloat(e.target.value).toFixed(1);renderDots();});
 $('dotColor').addEventListener('input',renderDots);
 $('dotStroke').addEventListener('change',renderDots);
-map.on('zoomend',()=>{});
+map.on('zoomend',()=>{ if(dotMarkers.length>0) renderDots(); });
 $('btn-base').addEventListener('click',()=>{baseOn=!baseOn;if(baseOn){map.addLayer(baseLayer);$('btn-base').textContent='🌝 배경지도';}else{map.removeLayer(baseLayer);$('btn-base').textContent='🌚 배경지도';}});
 
 // 패널
@@ -318,7 +318,12 @@ function renderDots(){
   const r=parseFloat($('dotSize').value),color=$('dotColor').value,stroke=$('dotStroke').checked;
   // circle은 미터 단위 - 슬라이더 값을 미터로 변환 (1→3000m, 12→36000m)
   const radiusM = r * 3000;
-  const strokeW = stroke ? Math.max(2, r * 1.5) : 0;
+  // 현재 줌에서 반지름이 몇 픽셀인지 계산해서 테두리 비율 맞춤
+  const c = map.getCenter();
+  const p1 = map.latLngToContainerPoint(c);
+  const p2 = map.latLngToContainerPoint(L.latLng(c.lat, c.lng + radiusM / (111320 * Math.cos(c.lat * Math.PI / 180))));
+  const radiusPx = Math.abs(p2.x - p1.x);
+  const strokeW = stroke ? Math.max(1.5, radiusPx * 0.15) : 0;
   const opts={radius:radiusM,fillColor:color,color:stroke?'#fff':'none',weight:strokeW,fillOpacity:1,pane:'markerPane'};
   KOREA_CITIES.filter(c=>selectedCities.has(c.name)).forEach(c=>{const m=L.circle([c.lat,c.lng],opts).addTo(map);m.on('mouseover',e=>showTT(c.name,e));m.on('mousemove',e=>showTT(c.name,e));m.on('mouseout',hideTT);dotMarkers.push(m);});
   manualPins.forEach((p,i)=>{const m=L.circle([p.lat,p.lng],opts).addTo(map);m.on('mouseover',e=>showTT('내가 찍은 점 '+(i+1),e));m.on('mousemove',e=>showTT('내가 찍은 점 '+(i+1),e));m.on('mouseout',hideTT);dotMarkers.push(m);});
