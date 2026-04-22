@@ -187,7 +187,7 @@ let baseOn=false;const baseLayer=L.tileLayer('https://{s}.tile.openstreetmap.org
 let highlightFill='#FFD700',sgVisible=true,defaultLandOpacity=0.3;
 const defaultStyle={sd:{color:'#444',weight:1,fillColor:'#fff',fillOpacity:defaultLandOpacity,opacity:1},sg:{color:'#444',weight:0.5,fillOpacity:0,opacity:1}};
 const coloredSd=new Map(),coloredSg=new Map();
-let sdLayer,sgLayer,sdBorderLayer,nkLayer,selectedProvinces=new Set(),provinceNames=[];
+let sdLayer,sgLayer,sdBorderLayer,nkLayer,skLayer,selectedProvinces=new Set(),provinceNames=[];
 
 map.createPane('seaPane');map.getPane('seaPane').style.zIndex=100;
 L.rectangle([[-90,-180],[90,180]],{pane:'seaPane',interactive:false,fillColor:'#fff',fillOpacity:1,stroke:false}).addTo(map);
@@ -224,10 +224,13 @@ $('btn-nk').addEventListener('click',()=>{
 // 화면 맞춤 함수
 function fitMapBounds(){
   const layers=[];
-  if(sdLayer)layers.push(sdLayer);
-  if(sdBorderLayer)layers.push(sdBorderLayer);
+  if(borderMode===1 && skLayer) layers.push(skLayer);
+  else {
+    if(sdLayer)layers.push(sdLayer);
+    if(sdBorderLayer)layers.push(sdBorderLayer);
+    if(borderMode===3 && sgLayer)layers.push(sgLayer);
+  }
   if(nkVisible && nkLayer)layers.push(nkLayer);
-  if(borderMode===3 && sgLayer)layers.push(sgLayer);
   if(layers.length>0){
     try{ map.fitBounds(L.featureGroup(layers).getBounds(),{padding:[20,20]}); }catch(e){}
   }
@@ -303,8 +306,9 @@ $('provinceDropdownBtn').addEventListener('click',e=>{e.stopPropagation();$('pro
 Promise.all([
   fetch('202604_sd.geojson').then(r=>r.json()),
   fetch('202604_sg.geojson').then(r=>r.json()),
-  fetch('202604_nk.geojson').then(r=>r.json())
-]).then(([sdJson,sgJson,nkJson])=>{
+  fetch('202604_nk.geojson').then(r=>r.json()),
+  fetch('202604_sk.geojson').then(r=>r.json())
+]).then(([sdJson,sgJson,nkJson,skJson])=>{
 
   // 북한 레이어 (토글 가능, 색칠 가능) - 기본 숨김
   nkLayer = L.geoJSON(nkJson,{
@@ -346,6 +350,7 @@ Promise.all([
     if(sdLayer)map.removeLayer(sdLayer);
     if(sgLayer)map.removeLayer(sgLayer);
     if(sdBorderLayer)map.removeLayer(sdBorderLayer);
+    if(skLayer)map.removeLayer(skLayer);
 
     const sel=Array.from(selectedProvinces);
     const ff=sel.length===0?(f=>false):(f=>sel.includes(f.properties.NL_NAME_1));
@@ -357,12 +362,15 @@ Promise.all([
       sgLayer=L.geoJSON({type:'FeatureCollection',features:[]});
       sdBorderLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
     } else if(borderMode===1){
-      // 나라: 남한 전체 흰 fill + 나라 경계만
-      sdLayer=createSdLayer(ff).addTo(map);
+      // 나라: 남한 전체 윤곽(sk) + 나라 경계
+      if(skLayer)map.removeLayer(skLayer);
+      skLayer=L.geoJSON(skJson,{
+        style:()=>({color:'#222',weight:parseFloat($('slider-sd').value),fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1}),
+        onEachFeature:(ft,ly)=>{ly.on('click',()=>{if(dotMode)return;const on=!coloredSd.get('sk');coloredSd.set('sk',on);ly.setStyle(on?{color:'#222',weight:2,fillColor:highlightFill,fillOpacity:0.7,opacity:1}:{color:'#222',weight:parseFloat($('slider-sd').value),fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1});});}
+      }).addTo(map);
+      sdLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
       sgLayer=L.geoJSON({type:'FeatureCollection',features:[]});
-      sdBorderLayer=L.geoJSON(sdJson,{filter:ff,style:()=>({color:'#222',weight:parseFloat($('slider-sd').value),fillOpacity:0,opacity:1}),interactive:false}).addTo(map);
-      sdLayer.setStyle({fillOpacity:defaultLandOpacity,opacity:1});
-      sdBorderLayer.bringToFront();
+      sdBorderLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
     } else if(borderMode===2){
       // 시도: sd fill + 시도 경계
       sdLayer=createSdLayer(ff).addTo(map);
