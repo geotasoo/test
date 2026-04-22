@@ -22,7 +22,7 @@
     .tb-btn { border:1px solid #ccc; border-radius:4px; padding:5px 10px; cursor:pointer; background:#f8f8f8; font-size:13px; }
     .tb-btn.primary { background:#1a73e8; color:#000; border-color:#1a73e8; }
     .tb-btn.primary:hover { background:#1557b0; }
-    .tb-btn.primary.active { background:#4caf50; border-color:#4caf50; color:#fff; }
+    .tb-btn.primary.active { background:#4caf50; border-color:#4caf50; color:#000; }
 
     /* 메인 레이아웃 */
     #main-container { display:flex; flex:1 1 auto; overflow:hidden; }
@@ -104,6 +104,7 @@
       <div id="provinceCheckboxes"></div>
     </div>
   </div>
+  <button id="btn-nk" class="tb-btn">🌑 북측</button>
   <label>색상:<input type="color" id="colorPicker" value="#FFD700"></label>
   <div style="display:flex; gap:4px;">
     <div class="palette-box" data-color="#444444" style="background:#444444"></div>
@@ -118,16 +119,10 @@
   <label>점 크기:<input type="range" id="dotSize" min="3" max="12" step="0.5" value="5"><span class="value" id="dot-size-value">5.0</span></label>
   <label>점 색상:<input type="color" id="dotColor" value="#e53935"></label>
   <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" id="dotStroke" checked style="margin:0;"><span>점 테두리</span></label>
-  <button id="btn-nk" class="tb-btn" style="background:#ccc;color:#888;">🌑🌕 북측</button>
   <button id="btn-dot-panel" class="tb-btn primary">📍 점찍기</button>
   <button id="btn-base">🌚 배경지도</button>
-  <div style="display:flex; border:1px solid #ccc; border-radius:4px; overflow:hidden;">
-    <button id="zoom-in" style="border:none;padding:4px 8px;background:white;cursor:pointer;">+</button>
-    <button id="zoom-out" style="border:none;padding:4px 8px;background:white;cursor:pointer;">–</button>
-  </div>
   <button id="btn-reset">초기화</button>
   <button id="savePng">PNG 저장</button>
-  <label>확대 레벨:<span id="zoom-level">6.5</span></label>
 </div>
 
 <div id="main-container">
@@ -215,9 +210,7 @@ $('colorPicker').addEventListener('input',e=>{highlightFill=e.target.value;});
 $('dotSize').addEventListener('input',e=>{$('dot-size-value').textContent=parseFloat(e.target.value).toFixed(1);renderDots();});
 $('dotColor').addEventListener('input',renderDots);
 $('dotStroke').addEventListener('change',renderDots);
-$('zoom-in').addEventListener('click',()=>map.zoomIn(0.1));
-$('zoom-out').addEventListener('click',()=>map.zoomOut(0.1));
-map.on('zoomend',()=>$('zoom-level').textContent=map.getZoom().toFixed(1));
+map.on('zoomend',()=>{});
 $('btn-base').addEventListener('click',()=>{baseOn=!baseOn;if(baseOn){map.addLayer(baseLayer);$('btn-base').textContent='🌝 배경지도';}else{map.removeLayer(baseLayer);$('btn-base').textContent='🌚 배경지도';}});
 
 // 패널
@@ -225,16 +218,18 @@ function openPanels(){dotMode=true;$('city-panel').classList.add('open');$('pin-
 function closePanels(){dotMode=false;$('city-panel').classList.remove('open');$('pin-panel').classList.remove('open');$('btn-dot-panel').textContent='📍 점찍기';$('btn-dot-panel').classList.remove('active');map.getContainer().style.cursor='';}
 $('btn-dot-panel').addEventListener('click',()=>{if(dotMode)closePanels();else openPanels();});
 
-// 북한 토글: ON/OFF + 화면 맞춤
+// 북측 토글: ON/OFF + 화면 맞춤
 $('btn-nk').addEventListener('click',()=>{
   nkVisible=!nkVisible;
   const btn=$('btn-nk');
   if(nkVisible){
     if(nkLayer)map.addLayer(nkLayer);
+    btn.textContent='🌕 북측';
     btn.style.background='';btn.style.color='';
   } else {
     if(nkLayer)map.removeLayer(nkLayer);
-    btn.style.background='#ccc';btn.style.color='#888';
+    btn.textContent='🌑 북측';
+    btn.style.background='';btn.style.color='';
   }
   fitMapBounds();
 });
@@ -330,7 +325,7 @@ Promise.all([
 
   // 북한 레이어 (토글 가능, 색칠 가능) - 기본 숨김
   nkLayer = L.geoJSON(nkJson,{
-    style: ()=>({color:'#444', weight:parseFloat($('slider-nk').value), fillColor:'#ffffff', fillOpacity:defaultLandOpacity, opacity:1}),
+    style: ()=>({color:'#333', weight:parseFloat($('slider-nk').value), fillColor:'#ffffff', fillOpacity:defaultLandOpacity, opacity:1}),
     onEachFeature:(ft,ly)=>{
       ly.on('click',()=>{
         if(dotMode)return;
@@ -381,7 +376,7 @@ Promise.all([
       // 나라: 남한 전체 윤곽(sk) + 나라 경계
       if(skLayer)map.removeLayer(skLayer);
       skLayer=L.geoJSON(skJson,{
-        style:()=>({color:'#222',weight:parseFloat($('slider-nk').value),fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1}),
+        style:()=>({color:'#333',weight:parseFloat($('slider-nk').value),fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1}),
         onEachFeature:(ft,ly)=>{ly.on('click',()=>{if(dotMode)return;const on=!coloredSd.get('sk');coloredSd.set('sk',on);ly.setStyle(on?{color:'#222',weight:2,fillColor:highlightFill,fillOpacity:0.7,opacity:1}:{color:'#222',weight:parseFloat($('slider-sd').value),fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1});});}
       }).addTo(map);
       sdLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
