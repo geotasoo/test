@@ -96,7 +96,7 @@
 </script>
 
 <div id="toolbar">
-  <button id="btn-sg" class="mode-sg">시군↔시도</button>
+  <button id="btn-sg" class="mode-sg">시군</button>
   <div class="dropdown" id="provinceDropdown">
     <button type="button" class="dropdown-btn" id="provinceDropdownBtn">시도 선택 <span id="provinceSelectedCount" class="count">0</span> ▼</button>
     <div class="dropdown-content" id="provinceDropdownContent">
@@ -117,7 +117,7 @@
   <label>점 크기:<input type="range" id="dotSize" min="3" max="12" step="0.5" value="5"><span class="value" id="dot-size-value">5.0</span></label>
   <label>점 색상:<input type="color" id="dotColor" value="#e53935"></label>
   <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" id="dotStroke" checked style="margin:0;"><span>점 테두리</span></label>
-  <button id="btn-nk" class="tb-btn">🇰🇵 북한</button>
+  <button id="btn-nk" class="tb-btn" style="background:#ccc;color:#888;">🇰🇵 북한</button>
   <button id="btn-dot-panel" class="tb-btn primary">📍 점찍기</button>
   <button id="btn-base">🌚 배경지도</button>
   <div style="display:flex; border:1px solid #ccc; border-radius:4px; overflow:hidden;">
@@ -171,7 +171,10 @@ const KOREA_CITIES=[
 const SIDO_ORDER=["특별·광역·특별자치시","도·특별자치도청","섬, 산, 고개","경기도","강원특별자치도","충청북도","충청남도","전북특별자치도","전라남도","경상북도","경상남도","제주특별자치도"];
 
 let selectedCities=new Set(), dotMarkers=[], dotMode=false, sidoCollapsed=new Set(SIDO_ORDER), manualPins=[];
-let nkVisible=true;
+let nkVisible=false; // 기본값: 북한 꺼짐
+// 경계 모드: 0=없애기, 1=나라, 2=시도, 3=시군 (기본: 3=시군)
+const BORDER_MODES=['없애기','나라','시도','시군'];
+let borderMode=3;
 const $=id=>document.getElementById(id);
 document.querySelector('header span').addEventListener('click',()=>$('btn-reset').click());
 
@@ -203,6 +206,8 @@ $('btn-base').addEventListener('click',()=>{baseOn=!baseOn;if(baseOn){map.addLay
 function openPanels(){dotMode=true;$('city-panel').classList.add('open');$('pin-panel').classList.add('open');$('btn-dot-panel').textContent='✅ 점찍기 완료';$('btn-dot-panel').classList.add('active');map.getContainer().style.cursor='crosshair';buildDotList('');buildPinList();}
 function closePanels(){dotMode=false;$('city-panel').classList.remove('open');$('pin-panel').classList.remove('open');$('btn-dot-panel').textContent='📍 점찍기';$('btn-dot-panel').classList.remove('active');map.getContainer().style.cursor='';}
 $('btn-dot-panel').addEventListener('click',()=>{if(dotMode)closePanels();else openPanels();});
+
+// 북한 토글: ON/OFF + 화면 맞춤
 $('btn-nk').addEventListener('click',()=>{
   nkVisible=!nkVisible;
   const btn=$('btn-nk');
@@ -213,7 +218,20 @@ $('btn-nk').addEventListener('click',()=>{
     if(nkLayer)map.removeLayer(nkLayer);
     btn.style.background='#ccc';btn.style.color='#888';
   }
+  fitMapBounds();
 });
+
+// 화면 맞춤 함수
+function fitMapBounds(){
+  const layers=[];
+  if(sdLayer)layers.push(sdLayer);
+  if(sdBorderLayer)layers.push(sdBorderLayer);
+  if(nkVisible && nkLayer)layers.push(nkLayer);
+  if(borderMode===3 && sgLayer)layers.push(sgLayer);
+  if(layers.length>0){
+    try{ map.fitBounds(L.featureGroup(layers).getBounds(),{padding:[20,20]}); }catch(e){}
+  }
+}
 $('btn-city-panel-close').addEventListener('click',closePanels);
 $('btn-pin-panel-close').addEventListener('click',closePanels);
 $('btn-city-deselect').addEventListener('click',()=>{selectedCities.clear();renderDots();buildDotList($('dot-search').value.toLowerCase());});
@@ -288,7 +306,7 @@ Promise.all([
   fetch('202604_nk.geojson').then(r=>r.json())
 ]).then(([sdJson,sgJson,nkJson])=>{
 
-  // 북한 레이어 (토글 가능, 색칠 가능)
+  // 북한 레이어 (토글 가능, 색칠 가능) - 기본 숨김
   nkLayer = L.geoJSON(nkJson,{
     style: ()=>({color:'#444', weight:1, fillColor:'#ffffff', fillOpacity:defaultLandOpacity, opacity:1}),
     onEachFeature:(ft,ly)=>{
@@ -302,7 +320,7 @@ Promise.all([
       ly.on('mousemove',e=>showTT('북한',e));
       ly.on('mouseout',hideTT);
     }
-  }).addTo(map);
+  }); // 기본 숨김 - addTo(map) 안 함
 
   // 속성명: NL_NAME_1 (시도), NL_NAME_2 (시군)
   provinceNames=[...new Set(sdJson.features.map(f=>f.properties.NL_NAME_1))].sort();
@@ -325,23 +343,70 @@ Promise.all([
   }});}
 
   function updateLayers(){
-    if(sdLayer)map.removeLayer(sdLayer);if(sgLayer)map.removeLayer(sgLayer);if(sdBorderLayer)map.removeLayer(sdBorderLayer);
+    if(sdLayer)map.removeLayer(sdLayer);
+    if(sgLayer)map.removeLayer(sgLayer);
+    if(sdBorderLayer)map.removeLayer(sdBorderLayer);
+
     const sel=Array.from(selectedProvinces);
     const ff=sel.length===0?(f=>false):(f=>sel.includes(f.properties.NL_NAME_1));
-    sdLayer=createSdLayer(ff).addTo(map);sgLayer=createSgLayer(ff);
-    sdBorderLayer=L.geoJSON(sdJson,{filter:ff,style:()=>({color:'#222',weight:parseFloat($('slider-sd').value),fillOpacity:0,opacity:1}),interactive:false}).addTo(map);
-    sdBorderLayer.bringToFront();
-    if(sgVisible){sdLayer.setStyle({fillOpacity:0,opacity:0.5});map.addLayer(sgLayer);}
-    else{map.removeLayer(sgLayer);sdLayer.setStyle({fillOpacity:defaultLandOpacity,opacity:1});}
-    // 북한은 항상 맨 아래에 유지
-    nkLayer.bringToBack();
-    try{map.fitBounds(L.featureGroup([sdLayer,sdBorderLayer,nkLayer,...(sgVisible?[sgLayer]:[])]).getBounds(),{padding:[20,20]});}catch(e){}
+
+    // borderMode: 0=없애기, 1=나라(sd fill만), 2=시도(sd fill+border), 3=시군(sg)
+    if(borderMode===0){
+      // 없애기: 아무것도 안 그림
+      sdLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
+      sgLayer=L.geoJSON({type:'FeatureCollection',features:[]});
+      sdBorderLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
+    } else if(borderMode===1){
+      // 나라: 남한 전체 흰 fill + 나라 경계만
+      sdLayer=createSdLayer(ff).addTo(map);
+      sgLayer=L.geoJSON({type:'FeatureCollection',features:[]});
+      sdBorderLayer=L.geoJSON(sdJson,{filter:ff,style:()=>({color:'#222',weight:parseFloat($('slider-sd').value),fillOpacity:0,opacity:1}),interactive:false}).addTo(map);
+      sdLayer.setStyle({fillOpacity:defaultLandOpacity,opacity:1});
+      sdBorderLayer.bringToFront();
+    } else if(borderMode===2){
+      // 시도: sd fill + 시도 경계
+      sdLayer=createSdLayer(ff).addTo(map);
+      sgLayer=L.geoJSON({type:'FeatureCollection',features:[]});
+      sdBorderLayer=L.geoJSON(sdJson,{filter:ff,style:()=>({color:'#222',weight:parseFloat($('slider-sd').value),fillOpacity:0,opacity:1}),interactive:false}).addTo(map);
+      sdLayer.setStyle({fillOpacity:defaultLandOpacity,opacity:1});
+      sdBorderLayer.bringToFront();
+    } else {
+      // 시군(3): sg + sd border
+      sdLayer=createSdLayer(ff).addTo(map);
+      sgLayer=createSgLayer(ff);
+      sdBorderLayer=L.geoJSON(sdJson,{filter:ff,style:()=>({color:'#222',weight:parseFloat($('slider-sd').value),fillOpacity:0,opacity:1}),interactive:false}).addTo(map);
+      sdBorderLayer.bringToFront();
+      sdLayer.setStyle({fillOpacity:0,opacity:0.5});
+      map.addLayer(sgLayer);
+    }
+
+    if(nkVisible) nkLayer.bringToBack();
+    fitMapBounds();
   }
   updateLayers();
 
-  $('btn-sg').addEventListener('click',()=>{animateMapFade(()=>{sgVisible=!sgVisible;const b=$('btn-sg');b.textContent='시군↔시도';if(sgVisible){b.classList.add('mode-sg');b.classList.remove('mode-sd');}else{b.classList.add('mode-sd');b.classList.remove('mode-sg');}updateLayers();});});
-  $('slider-sd').addEventListener('input',e=>{$('sd-value').textContent=(+e.target.value).toFixed(1);sdBorderLayer.setStyle({weight:+e.target.value});sdBorderLayer.bringToFront();});
-  $('slider-sg').addEventListener('input',e=>{$('sg-value').textContent=(+e.target.value).toFixed(1);sgLayer.setStyle({weight:+e.target.value});sdBorderLayer.bringToFront();});
+  // 경계 버튼: 없애기 → 나라 → 시도 → 시군 순환
+  function updateBorderBtn(){
+    const btn=$('btn-sg');
+    const labels=['없애기','나라','시도','시군'];
+    const colors=['#6c757d','#17a2b8','#dc3545','#007bff'];
+    btn.textContent=labels[borderMode];
+    btn.style.background=colors[borderMode];
+    btn.style.color='#fff';
+    btn.style.borderColor=colors[borderMode];
+  }
+  updateBorderBtn();
+
+  $('btn-sg').addEventListener('click',()=>{
+    animateMapFade(()=>{
+      borderMode=(borderMode+1)%4;
+      updateBorderBtn();
+      updateLayers();
+    });
+  });
+
+  $('slider-sd').addEventListener('input',e=>{$('sd-value').textContent=(+e.target.value).toFixed(1);if(sdBorderLayer)sdBorderLayer.setStyle({weight:+e.target.value});sdBorderLayer.bringToFront();});
+  $('slider-sg').addEventListener('input',e=>{$('sg-value').textContent=(+e.target.value).toFixed(1);if(sgLayer)sgLayer.setStyle({weight:+e.target.value});if(sdBorderLayer)sdBorderLayer.bringToFront();});
   $('btn-reset').addEventListener('click',()=>location.reload());
   $('savePng').addEventListener('click',()=>alert('저장 기능을 만들다가 계속 실패. 😢😡😵‍💫 [shift]+[win]+[s]를 이용해주세요.'));
 });
