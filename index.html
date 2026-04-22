@@ -116,7 +116,7 @@
   <label>나라 경계 굵기:<input type="range" id="slider-nk" min="1" max="10" step="0.5" value="1"><span class="value" id="nk-value">1.0</span></label>
   <label>시도 경계 굵기:<input type="range" id="slider-sd" min="1" max="10" step="0.5" value="1"><span class="value" id="sd-value">1.0</span></label>
   <label>시군 경계 굵기:<input type="range" id="slider-sg" min="0.5" max="10" step="0.5" value="0.5"><span class="value" id="sg-value">0.5</span></label>
-  <label>점 크기:<input type="range" id="dotSize" min="1" max="20" step="0.5" value="5"><span class="value" id="dot-size-value">5.0</span></label>
+  <label>점 크기:<input type="range" id="dotSize" min="1" max="20" step="0.5" value="1"><span class="value" id="dot-size-value">1.0</span></label>
   <label>점 색상:<input type="color" id="dotColor" value="#e53935"></label>
   <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" id="dotStroke" checked style="margin:0;"><span>점 테두리</span></label>
   <button id="btn-dot-panel" class="tb-btn primary">📍 점찍기</button>
@@ -304,7 +304,8 @@ function renderDots(){
   const r=parseFloat($('dotSize').value),color=$('dotColor').value,stroke=$('dotStroke').checked;
   // circle은 미터 단위 - 슬라이더 값을 미터로 변환 (1→3000m, 12→36000m)
   const radiusM = r * 3000;
-  const opts={radius:radiusM,fillColor:color,color:stroke?'#fff':'none',weight:stroke?Math.max(0.5,r*0.2):0,fillOpacity:1,pane:'markerPane'};
+  const strokeW = stroke ? Math.max(1, r * 0.4) : 0;
+  const opts={radius:radiusM,fillColor:color,color:stroke?'#fff':'none',weight:strokeW,fillOpacity:1,pane:'markerPane'};
   KOREA_CITIES.filter(c=>selectedCities.has(c.name)).forEach(c=>{const m=L.circle([c.lat,c.lng],opts).addTo(map);m.on('mouseover',e=>showTT(c.name,e));m.on('mousemove',e=>showTT(c.name,e));m.on('mouseout',hideTT);dotMarkers.push(m);});
   manualPins.forEach((p,i)=>{const m=L.circle([p.lat,p.lng],opts).addTo(map);m.on('mouseover',e=>showTT('내가 찍은 점 '+(i+1),e));m.on('mousemove',e=>showTT('내가 찍은 점 '+(i+1),e));m.on('mouseout',hideTT);dotMarkers.push(m);});
 }
