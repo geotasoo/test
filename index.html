@@ -2,461 +2,2435 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>🗺️ 우리나라 지도 색칠하기</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🗺️ 세계지도 색칠하기 & 점찍기 & 게임</title>
   <style>
-    html, body { height:100vh; margin:0; padding:0; background:#fff; }
-    body { display:flex; flex-direction:column; }
-    header { background:pink; color:#fff; padding:10px; font-size:18px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
-    header span { cursor:pointer; }
-    #toolbar { background:#f8f8f8; padding:8px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; border-bottom:1px solid #ddd; flex:0 0 auto; font-family:sans-serif; }
-    #toolbar button, #toolbar input[type=color] { border:1px solid #ccc; background:white; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:13px; }
-    #toolbar label { font-size:0.9rem; display:flex; align-items:center; gap:2px; }
-    #toolbar span.value { min-width:20px; text-align:right; display:inline-block; }
-    #toolbar input[type=range] { width:100px; }
-    #toolbar .palette-box { width:20px; height:20px; border:1px solid #aaa; cursor:pointer; transition:transform .15s; }
-    #toolbar .palette-box:hover { transform:scale(1.2); border-color:#333; }
-    #btn-sg.mode-sg { background:#007bff; color:#fff; font-weight:bold; border-color:#007bff; }
-    #btn-sg.mode-sd { background:#dc3545; color:#fff; font-weight:bold; border-color:#dc3545; }
-    .tb-btn { border:1px solid #ccc; border-radius:4px; padding:5px 10px; cursor:pointer; background:#f8f8f8; font-size:13px; }
-    .tb-btn.primary { background:#1a73e8; color:#000; border-color:#1a73e8; }
-    .tb-btn.primary:hover { background:#1557b0; }
-    .tb-btn.primary.active { background:#4caf50; border-color:#4caf50; color:#000; }
+    html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; }
+    body { display:flex; flex-direction:column; font-family:sans-serif; }
 
-    /* 메인 레이아웃 */
+    #header {
+      background:#0F6E56; color:#fff; padding:10px; font-size:18px;
+      display:flex; justify-content:space-between; align-items:center;
+      flex-shrink:0;
+    }
+    #header span.title { cursor:pointer; }
+    #iconLinks { display:flex; gap:12px; align-items:center; position:relative; }
+    #iconLinks a { color:#fff; font-size:18px; text-decoration:none; }
+
+    #toolbar {
+      background:#f8f8f8; padding:8px;
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+      border-bottom:1px solid #ddd; flex:0 0 auto;
+    }
+
+    .tb-btn {
+      border:1px solid #ccc; border-radius:4px;
+      padding:5px 10px; cursor:pointer;
+      background:#f8f8f8; font-size:13px;
+    }
+    .tb-btn:hover { background:#eee; }
+    .tb-btn.primary {
+      background:#e8f0fe; border-color:#aac; font-weight:500; padding:5px 11px;
+    }
+    .tb-btn.primary.active {
+      background:#1a73e8; color:#fff; border-color:#1a73e8; font-weight:bold;
+    }
+    .tb-btn.warning {
+      background:#fff3e0; border-color:#f5a623;
+    }
+
     #main-container { display:flex; flex:1 1 auto; overflow:hidden; }
     #map-wrap { flex:1 1 auto; overflow:hidden; position:relative; }
-    #map { width:100%; height:100%; }
+    #map { width:100%; height:100%; display:block; }
+
+    .side-panel {
+      width:0; min-width:0;
+      background:#fff; border-left:none;
+      display:flex; flex-direction:column; overflow:hidden;
+      transition: width .25s ease, min-width .25s ease;
+      font-size:13px; flex-shrink:0;
+    }
+    .side-panel.open {
+      width:230px; min-width:230px;
+      border-left:1px solid #ddd;
+    }
+    .panel-header {
+      padding:9px 12px 6px;
+      font-weight:bold; font-size:13px;
+      border-bottom:1px solid #eee;
+      display:flex; justify-content:space-between; align-items:center;
+      flex-shrink:0; background:#f8f8f8;
+    }
+    .panel-header .ph-right { display:flex; gap:6px; align-items:center; }
+    .panel-header button {
+      font-size:11px; padding:2px 8px;
+      border:1px solid #bbb; border-radius:4px;
+      background:#fff; cursor:pointer;
+    }
+    .panel-header button:hover { background:#f0f0f0; }
+    .panel-close {
+      border:none !important; background:none !important;
+      font-size:16px !important; color:#999; padding:0 2px !important;
+    }
+
+    #panel-search-wrap {
+      flex-shrink:0; display:flex; align-items:center;
+      border-bottom:1px solid #eee; background:#fafafa;
+    }
+    #panel-search {
+      flex:1; padding:6px 10px;
+      border:none; font-size:12px; outline:none; background:transparent;
+    }
+    #panel-search:focus { background:#fff; }
+    #btn-search-clear {
+      display:none;
+      padding:4px 10px; margin-right:4px;
+      font-size:11px; color:#1a73e8; cursor:pointer; white-space:nowrap;
+      border:1px solid #aac; border-radius:4px; background:#e8f0fe;
+    }
+    #btn-search-clear:hover { background:#c5d8fd; }
+
+    .panel-summary {
+      flex-shrink:0; padding:5px 10px;
+      font-size:11px;
+      border-bottom:1px solid #eee; background:#f0f4ff;
+      min-height:22px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+
+    .panel-list { overflow-y:auto; flex:1 1 auto; }
+    .continent-label {
+      padding:5px 10px; background:#efefef;
+      font-size:11px; font-weight:bold; color:#555;
+      position:sticky; top:0; z-index:1; letter-spacing:.5px;
+      cursor:pointer; display:flex; justify-content:space-between;
+      align-items:center; user-select:none;
+    }
+    .city-row {
+      display:flex; align-items:center; gap:7px;
+      padding:5px 10px; cursor:pointer;
+      transition:background .1s; border-bottom:1px solid #f5f5f5;
+    }
+    .city-row:hover { background:#f0f4ff; }
+    .city-row input[type=checkbox] { cursor:pointer; flex-shrink:0; margin:0; }
+    .city-row .city-name { flex:1; font-size:13px; line-height:1.3; cursor:pointer; }
+    .city-row .city-name.checked { font-weight:bold; color:#1a73e8; }
+    .city-row .del-btn {
+      color:#ddd; font-size:12px; cursor:pointer;
+      padding:0 2px; line-height:1; flex-shrink:0;
+    }
+    .city-row .del-btn:hover { color:#e53935; }
+    .no-result { padding:20px; text-align:center; color:#bbb; font-size:12px; }
+    .pin-empty { padding:20px; text-align:center; color:#bbb; font-size:12px; line-height:1.8; }
+
+    .tooltip {
+      position:fixed; display:none;
+      padding:4px 8px; font-size:12px;
+      color:#fff; background:rgba(0,0,0,.8);
+      border-radius:4px; pointer-events:none;
+      z-index:9999; white-space:nowrap; will-change:transform;
+    }
+
+    .country { cursor:pointer; stroke:#666; stroke-width:0.3px; }
+    .selected { stroke:#333; }
+    .labels {
+      font-size:10px; fill:#222; pointer-events:none;
+      paint-order: stroke fill;
+      stroke:#fff; stroke-width:2.5px; stroke-linejoin:round;
+    }
+    .equator-line { fill:none; stroke:red; stroke-width:0.3px; }
+    .grid-line { stroke:#6baed6; stroke-width:0.6px; stroke-dasharray:4 3; fill:none; }
+
+    .palette-box {
+      width:20px; height:20px; border:1px solid #aaa; cursor:pointer;
+      transition:transform .15s, border-color .15s;
+    }
+    .palette-box:hover { transform:scale(1.2); border-color:#333; }
+
+    #footer {
+      position:fixed; bottom:6px; right:10px;
+      font-size:9px; color:#999; z-index:999;
+    }
+    #footer a { color:inherit; text-decoration:none; }
     #helpLink {
       position:absolute; top:6px; left:10px;
       font-size:9px; color:#999; z-index:999;
-      line-height:1.6;
     }
     #helpLink a { color:inherit; text-decoration:none; }
     #helpLink a:hover { text-decoration:underline; }
 
-    /* 사이드 패널 (세계지도 동일) */
-    .side-panel { width:0; min-width:0; background:#fff; border-left:none; display:flex; flex-direction:column; overflow:hidden; transition:width .25s ease, min-width .25s ease; font-size:13px; flex-shrink:0; }
-    .side-panel.open { width:230px; min-width:230px; border-left:1px solid #ddd; }
-    .panel-header { padding:9px 12px 6px; font-weight:bold; font-size:13px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; background:#f8f8f8; }
-    .panel-header .ph-right { display:flex; gap:6px; align-items:center; }
-    .panel-header button { font-size:11px; padding:2px 8px; border:1px solid #bbb; border-radius:4px; background:#fff; cursor:pointer; }
-    .panel-header button:hover { background:#f0f0f0; }
-    .panel-close { border:none !important; background:none !important; font-size:16px !important; color:#999; padding:0 2px !important; }
-    .panel-search-wrap { flex-shrink:0; display:flex; align-items:center; border-bottom:1px solid #eee; background:#fafafa; }
-    .panel-search-wrap input { flex:1; padding:6px 10px; border:none; font-size:12px; outline:none; background:transparent; }
-    .btn-search-clear { display:none; font-size:11px; color:#1a73e8; cursor:pointer; white-space:nowrap; padding-right:8px; }
-    .panel-summary { padding:6px 12px; font-size:11px; color:#aaa; border-bottom:1px solid #eee; flex-shrink:0; }
-    .panel-list { flex:1; overflow-y:auto; padding:6px; }
-    .sido-label { background:#f0f0f0; padding:6px 8px; margin-bottom:3px; border-radius:4px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-weight:bold; font-size:12px; }
-    .sido-label:hover { background:#e8e8e8; }
-    .city-row { padding:4px 10px; display:flex; align-items:center; gap:6px; }
-    .city-row input[type=checkbox] { margin:0; }
-    .city-name { flex:1; cursor:pointer; font-size:12px; }
-    .city-name.checked { color:#1a73e8; font-weight:500; }
-    .cat-btns { display:flex; gap:4px; padding:3px 10px 6px; border-bottom:1px solid #f0f0f0; }
-    .cat-btns button { flex:1; padding:3px; font-size:10px; border:1px solid #ddd; border-radius:3px; background:#f9f9f9; cursor:pointer; }
-    .cat-btns button:hover { background:#e0e0e0; }
-    .pin-row { display:flex; justify-content:space-between; align-items:center; padding:5px 8px; font-size:12px; border-bottom:1px solid #f0f0f0; }
-    .pin-del { border:none; background:#ff5252; color:#fff; border-radius:3px; padding:2px 6px; cursor:pointer; font-size:11px; }
+    /* ===== 게임 ===== */
+    #game-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.72);align-items:center;justify-content:center;}
+    #game-overlay.active{display:flex;}
+    .gbox{background:#fff;border-radius:16px;padding:32px 38px;width:460px;max-width:94vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3);text-align:center;}
+    .gbox h2{margin:0 0 10px;font-size:24px;}
+    .grules{background:#f8f8f8;border-radius:8px;padding:12px 16px;font-size:13px;color:#555;line-height:1.9;text-align:left;margin-bottom:16px;}
+    .grules b{color:#0F6E56;}
+    .epick-title{font-size:13px;color:#666;margin-bottom:8px;}
+    .egrid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px;}
+    .eopt{font-size:24px;background:#f5f5f5;border:2px solid transparent;border-radius:8px;padding:4px 7px;cursor:pointer;transition:all .15s;line-height:1.3;}
+    .eopt:hover{background:#e8f5e9;transform:scale(1.1);}
+    .eopt.sel{border-color:#0F6E56;background:#e8f5e9;}
+    #gbtn{background:#0F6E56;color:#fff;border:none;border-radius:8px;padding:12px 36px;font-size:16px;cursor:pointer;font-weight:bold;transition:background .2s;}
+    #gbtn:hover{background:#0a5240;}
 
-    /* 드롭다운 */
-    .dropdown { position:relative; display:inline-block; min-width:100px; z-index:1000; }
-    .dropdown-btn { min-width:110px; display:flex; align-items:center; gap:6px; border:1px solid #ccc; border-radius:4px; background:white; cursor:pointer; padding:4px 12px; font-size:1em; }
-    .dropdown-btn span.count { color:#444; font-size:0.97em; background:#e6f1fa; border-radius:8px; padding:2px 8px; margin-left:4px; }
-    .dropdown-content { display:none; position:absolute; top:120%; left:0; min-width:190px; max-height:310px; overflow-y:auto; background:#fff; border:1.5px solid #bbb; border-radius:7px; box-shadow:0 6px 22px rgba(0,0,0,0.13); padding:10px; z-index:9999; }
-    .dropdown.open .dropdown-content { display:block; }
-    .dropdown-content label { display:flex; align-items:center; margin-bottom:5px; cursor:pointer; }
-    .dropdown-content input[type=checkbox] { margin-right:6px; }
-    .dropdown-content .dropdown-actions { display:flex; gap:8px; margin-bottom:8px; }
-    .dropdown-content .dropdown-actions button { font-size:0.97em; padding:2px 10px; border:1px solid #ccd; border-radius:3px; background:#f4f7fa; cursor:pointer; }
+    #ghud{display:none;position:fixed;top:0;left:0;right:0;z-index:5500;background:rgba(15,110,86,.96);color:#fff;height:76px;padding:0 20px;box-shadow:0 2px 10px rgba(0,0,0,.3);}
+    #ghud.on{display:grid;grid-template-columns:180px 1fr 240px;align-items:center;}
+    .hl{display:flex;gap:18px;}
+    .hc{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+    .hr{display:flex;align-items:center;gap:8px;justify-content:flex-end;}
+    .hbtns{display:flex;gap:8px;}
+    .hc-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px;}
+    .hblk{display:flex;flex-direction:column;align-items:center;}
+    .hlbl{font-size:10px;opacity:.7;margin-bottom:1px;}
+    #gtimer{font-size:28px;font-weight:bold;line-height:1;transition:color .3s;}
+    #gtimer.red{color:#ff5252;}
+    
+    /* 10초 미만 화면 전체 깜빡임 */
+    #danger-flash { display:none; position:fixed; inset:0; pointer-events:none; z-index:9999; background:rgba(255,23,68,0.15); }
+    #danger-flash.on { display:block; animation:dangerFlash 1s infinite; }
+    @keyframes dangerFlash {
+      0%, 100% { opacity:1; }
+      50% { opacity:0; }
+    }
+    #gscore{font-size:24px;font-weight:bold;line-height:1;}
+    #gq{font-size:26px;font-weight:bold;letter-spacing:.3px;}
+    #gqlbl{font-size:10px;opacity:.7;margin-bottom:3px;}
+    #gwrong{font-size:16px;margin-top:4px;letter-spacing:4px;}
+    #ghint-btn{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap;}
+    #ghint-btn:hover{background:rgba(255,213,0,.3);}
+    #ghint-btn:disabled{opacity:.4;cursor:not-allowed;}
+    #gpass-btn{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;}
+    #gpass-btn:hover{background:rgba(255,255,255,.26);}
+    #gpass-btn:disabled{opacity:.4;cursor:not-allowed;}
+    #gexit-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer;}
+    #gexit-btn:hover{background:rgba(255,255,255,.2);}
 
-    .leaflet-control-zoom { display:none; }
-    #map.animated-fade { transition:opacity .4s; opacity:0.25; pointer-events:none; }
-    #map.animated-fade-in { transition:opacity .4s; opacity:1; pointer-events:auto; }
-    .leaflet-interactive:focus { outline:none !important; }
-    .map-custom-tooltip { position:fixed; pointer-events:none; background:rgba(255,255,255,0.97); border:1.5px solid #333; border-radius:6px; padding:5px 16px; font-size:17px; color:#222; white-space:nowrap; box-shadow:2px 4px 12px rgba(0,0,0,0.09); z-index:9999; opacity:0; }
-    .map-custom-tooltip.visible { opacity:1; }
-    @media (max-width:700px) { header{font-size:15px; padding:8px;} #toolbar{gap:8px; padding:6px; font-size:0.95em;} .side-panel.open{width:180px; min-width:180px;} }
+    #ghint-pop{display:none;position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:5600;background:rgba(20,20,20,.9);color:#ffe066;padding:8px 18px;border-radius:8px;font-size:14px;font-weight:bold;pointer-events:none;white-space:nowrap;}
+    #gfb{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6000;font-size:54px;pointer-events:none;animation:gbounce .6s ease forwards;}
+    @keyframes gbounce{0%{opacity:0;transform:translate(-50%,-64%) scale(.5)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-44%) scale(.9)}}
+
+    #gresult{display:none;position:fixed;inset:0;z-index:6000;background:transparent;justify-content:flex-start;align-items:center;flex-direction:column;padding-top:12px;overflow-y:auto;pointer-events:none;}
+    #gresult.on{display:flex;}
+    #gresult .grbox, #gresult .lbbox{pointer-events:auto;}
+    .grbox{background:#37474f;color:#fff;border-radius:12px;padding:20px 28px;width:auto;max-width:600px;box-shadow:0 8px 40px rgba(0,0,0,.6);margin-bottom:8px;}
+    .grbox h2{margin:0 0 3px;font-size:18px;text-align:center;}
+    .grsub{text-align:center;color:#b0bec5;font-size:12px;margin-bottom:10px;}
+    .grbadges{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;}
+    .grbadge{border-radius:10px;padding:8px 16px;text-align:center;min-width:75px;}
+    .grbadge .n{font-size:28px;font-weight:bold;}
+    .grbadge .l{font-size:12px;font-weight:600;}
+    .bc{background:#e8f5e9;color:#2e7d32;}
+    .bw{background:#ffebee;color:#c62828;}
+    .bp{background:#fff8e1;color:#e65100;}
+    .grsec{font-size:11px;font-weight:bold;color:#aaa;margin:8px 0 4px;border-top:1px solid #eee;padding-top:6px;}
+    .grtags{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;}
+    .gtag{padding:3px 9px;border-radius:20px;font-size:12px;}
+    .tc{background:#e8f5e9;color:#2e7d32;}
+    .tw{background:#ffebee;color:#c62828;}
+    .tp{background:#fff8e1;color:#e65100;}
+    .grbtns{display:flex;gap:10px;margin-top:12px;justify-content:center;}
+    .grbtn{border:none;border-radius:8px;padding:10px 22px;font-size:14px;cursor:pointer;font-weight:bold;}
+    .grbtn-go{background:#0F6E56;color:#fff;}
+    .grbtn-go:hover{background:#0a5240;}
+    .grbtn-cl{background:#eee;color:#333;}
+    .grbtn-cl:hover{background:#ddd;}
+    .lbbox{background:#fff;border-radius:12px;padding:14px 20px;width:90vw;max-width:1200px;box-shadow:0 4px 20px rgba(0,0,0,.15);margin-bottom:16px;}
+    .lbbox h3{margin:0 0 10px;font-size:15px;}
+    .lbrow{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:14px;}
+    .lbrow:last-child{border-bottom:none;}
+    .lbrnk{min-width:22px;font-weight:bold;color:#bbb;font-size:13px;}
+    .lbrnk.r1{color:#f6a000;}.lbrnk.r2{color:#888;}.lbrnk.r3{color:#cd7f32;}
+    .lbem{font-size:20px;}
+    .lbsc{margin-left:auto;font-weight:bold;color:#0F6E56;}
+    .lbnew{font-size:10px;background:#e8f5e9;color:#2e7d32;border-radius:10px;padding:1px 6px;margin-left:4px;}
+    .lbmt{color:#bbb;font-size:13px;text-align:center;padding:10px 0;}
+    .gcor{fill:#66bb6a!important;}
+    .grid-coord-label{
+      font-family:sans-serif;
+      font-size:10px;
+      font-weight:bold;
+      fill:#1565c0;
+      paint-order:stroke fill;
+      stroke:#fff;
+      stroke-width:3px;
+      stroke-linejoin:round;
+      pointer-events:none;
+    }
+    .gwfl{fill:#ef5350!important;}
+    .gpas{fill:#ffa726!important;}
+    
+    /* ==========================================================
+       📱 모바일 반응형 (768px 이하)
+       ========================================================== */
+    @media (max-width: 768px) {
+      /* 헤더 */
+      #header {
+        height: 44px;
+        padding: 0 8px;
+      }
+      #header span.title {
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: calc(100vw - 130px);
+      }
+      #iconLinks {
+        gap: 8px;
+      }
+      #iconLinks a, #iconLinks button {
+        font-size: 18px;
+      }
+      
+      /* 툴바 - 두 줄로 정리 + 가로 스크롤 */
+      #toolbar {
+        position: fixed;
+        top: 44px;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        padding: 6px 8px;
+        gap: 4px 6px;
+        flex-wrap: wrap;
+        max-height: 90px;
+        overflow-y: auto;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+        font-size: 12px;
+      }
+      #toolbar label {
+        font-size: 12px;
+      }
+      #toolbar input[type="color"] {
+        width: 32px;
+        height: 28px;
+      }
+      .palette-box {
+        width: 22px !important;
+        height: 22px !important;
+      }
+      .tb-btn, #toolbar button {
+        font-size: 12px !important;
+        padding: 6px 8px !important;
+        min-height: 32px;
+      }
+      
+      /* 지도 영역 - 툴바 만큼 마진 */
+      #map {
+        margin-top: 134px !important; /* 헤더 44 + 툴바 90 */
+      }
+      
+      /* 사이드 패널 - 화면 전체 너비 */
+      .side-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 70vh !important;
+        max-height: 70vh !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        border-radius: 16px 16px 0 0 !important;
+        transform: translateY(100%) !important;
+        transition: transform 0.3s ease !important;
+      }
+      .side-panel.open {
+        transform: translateY(0) !important;
+      }
+      .panel-close {
+        font-size: 20px !important;
+        padding: 6px 10px !important;
+      }
+      
+      /* 게임 안내 박스 - 화면에 맞게 */
+      .gbox {
+        padding: 16px 18px !important;
+        width: 94vw !important;
+        max-width: 94vw !important;
+        max-height: 88vh !important;
+        font-size: 13px;
+      }
+      .gbox h2 {
+        font-size: 18px !important;
+        margin: 0 0 6px !important;
+      }
+      .grules {
+        font-size: 12px !important;
+      }
+      .gbox button {
+        font-size: 14px !important;
+        padding: 10px 20px !important;
+      }
+      
+      /* 게임 안내 - 대륙 체크박스 2열로 */
+      #continent-checkboxes {
+        grid-template-columns: repeat(2, 1fr) !important;
+        font-size: 12px !important;
+      }
+      
+      /* 게임 HUD */
+      #ghud {
+        height: auto !important;
+        min-height: 70px;
+        padding: 6px 10px !important;
+      }
+      #ghud.on {
+        grid-template-columns: auto 1fr auto !important;
+        gap: 6px;
+      }
+      #gtimer {
+        font-size: 24px !important;
+      }
+      #gq {
+        font-size: 16px !important;
+      }
+      #gscore {
+        font-size: 14px !important;
+      }
+      .ghud-btn {
+        font-size: 12px !important;
+        padding: 6px 8px !important;
+      }
+      
+      /* 결과 박스 */
+      #gresult {
+        padding: 16px !important;
+        max-width: 94vw !important;
+      }
+      
+      /* 호수 패널 카테고리 그리드 */
+      #lake-panel .lake-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    
+    /* 작은 모바일 (480px 이하) */
+    @media (max-width: 480px) {
+      #header span.title {
+        font-size: 11px;
+        max-width: calc(100vw - 110px);
+      }
+      .gbox {
+        padding: 12px 14px !important;
+      }
+    }
   </style>
 </head>
 <body>
-<header style="background:#2E7D5E; color:#fff; padding:10px; font-size:18px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
-  <span>우리나라 지도 색칠하기 & 점찍기 🎗️🗺️🖌️🍺🍗🤪 v2.0 20260422</span>
-  <div id="iconLinks" style="display:flex; gap:12px; align-items:center;">
-    <a href="https://buymeacoffee.com/geotasoo" target="_blank" data-tip="커피보내기" style="color:#fff; font-size:18px; text-decoration:none;">☕</a>
-    <a href="https://geotasoo.tistory.com/entry/%EC%84%B8%EA%B3%84%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank" data-tip="세계지도 색칠하기" style="color:#fff; font-size:18px; text-decoration:none;">🗺️</a>
-    <div id="linkTooltip" style="display:none; position:fixed; background:rgba(0,0,0,0.85); color:#fff; font-size:12px; padding:4px 6px; border-radius:4px; white-space:nowrap; pointer-events:none; z-index:9999;"></div>
+
+<header id="header">
+  <span class="title">세계지도 색칠하기 & 점찍기 & 게임 🎗️🗺️🍖 v2.2 20260424</span>
+  <div id="iconLinks">
+    <button id="btn-game-egg" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0;line-height:1;" title="나라 찾기 게임">🎮</button>
+    <a href="https://buymeacoffee.com/geotasoo" target="_blank" data-tip="커피보내기">☕</a>
+    <a href="https://geotasoo.tistory.com/entry/%EC%9A%B0%EB%A6%AC%EB%82%98%EB%9D%BC-%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank" data-tip="우리나라 지도 색칠하기">🐯</a>
   </div>
 </header>
-<script>
-(function(){
-  const links=document.querySelectorAll('#iconLinks a'), tt=document.getElementById('linkTooltip');
-  links.forEach(l=>{
-    l.addEventListener('pointerenter',()=>{tt.textContent=l.dataset.tip||'';tt.style.display='block';});
-    l.addEventListener('pointermove',e=>{let x=e.clientX-tt.offsetWidth-10,y=e.clientY+20;if(x<0)x=e.clientX+15;tt.style.left=Math.max(5,x)+'px';tt.style.top=Math.max(5,y)+'px';});
-    l.addEventListener('pointerleave',()=>{tt.style.display='none';});
-  });
-})();
-</script>
 
 <div id="toolbar">
-  <button id="btn-sg" class="mode-sg" title="클릭할 때마다 변경: 경계없음 → 남측 → 시도 → 시군">시군</button>
-  <div class="dropdown" id="provinceDropdown">
-    <button type="button" class="dropdown-btn" id="provinceDropdownBtn">시도 선택 <span id="provinceSelectedCount" class="count">0</span> ▼</button>
-    <div class="dropdown-content" id="provinceDropdownContent">
-      <div class="dropdown-actions"><button type="button" id="btn-province-all">전체 선택</button><button type="button" id="btn-province-none">전체 해제</button></div>
-      <div id="provinceCheckboxes"></div>
-    </div>
+  <label>색상: <input type="color" id="colorPicker" value="#FFD700"></label>
+  <div style="display:flex;gap:6px;">
+    <div class="palette-box" data-color="#222222" style="background:#222222;"></div>
+    <div class="palette-box" data-color="#555555" style="background:#555555;"></div>
+    <div class="palette-box" data-color="#888888" style="background:#888888;"></div>
+    <div class="palette-box" data-color="#BBBBBB" style="background:#BBBBBB;"></div>
+    <div class="palette-box" data-color="#DDDDDD" style="background:#DDDDDD;"></div>
   </div>
-  <button id="btn-nk" class="tb-btn">🌑 북측</button>
-  <label>색상:<input type="color" id="colorPicker" value="#FFD700"></label>
-  <div style="display:flex; gap:4px;">
-    <div class="palette-box" data-color="#444444" style="background:#444444"></div>
-    <div class="palette-box" data-color="#777777" style="background:#777777"></div>
-    <div class="palette-box" data-color="#aaaaaa" style="background:#aaaaaa"></div>
-    <div class="palette-box" data-color="#dddddd" style="background:#dddddd"></div>
-    <div class="palette-box" data-color="#f0f0f0" style="background:#f0f0f0"></div>
-  </div>
-  <label>나라 경계 굵기:<input type="range" id="slider-nk" min="1" max="10" step="0.5" value="1"><span class="value" id="nk-value">1.0</span></label>
-  <label>시도 경계 굵기:<input type="range" id="slider-sd" min="1" max="10" step="0.5" value="1"><span class="value" id="sd-value">1.0</span></label>
-  <label>시군 경계 굵기:<input type="range" id="slider-sg" min="0.5" max="10" step="0.5" value="0.5"><span class="value" id="sg-value">0.5</span></label>
-  <label>점 크기:<input type="range" id="dotSize" min="1" max="20" step="0.5" value="1"><span class="value" id="dot-size-value">1.0</span></label>
-  <label>점 색상:<input type="color" id="dotColor" value="#e53935"></label>
-  <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" id="dotStroke" checked style="margin:0;"><span>점 테두리</span></label>
+  <label>육지 색상:
+    <select id="baseColorSelect">
+      <option value="#ffffff">하얀색</option>
+      <option value="#eeeeee">옅은 회색</option>
+    </select>
+  </label>
+  <label>바다 색상:
+    <select id="oceanColorSelect">
+      <option value="#ffffff">하얀색</option>
+      <option value="#e0f0ff" selected>하늘색</option>
+    </select>
+  </label>
+  <label>선 굵기:
+    <input type="range" id="strokeWidth" min="0.1" max="1.0" step="0.1" value="0.3">
+    <span id="strokeValue">0.3</span>
+  </label>
+  <label>점 크기:
+    <input type="range" id="dotSize" min="2" max="14" step="1" value="5">
+    <span id="dotSizeValue">5</span>
+  </label>
+  <label>점 색상: <input type="color" id="dotColor" value="#e53935"></label>
+  <label style="display:flex; align-items:center; gap:4px;">
+    <input type="checkbox" id="dotStroke" checked style="margin:0;">
+    <span>점 테두리</span>
+  </label>
+
   <button id="btn-dot-panel" class="tb-btn primary">📍 점찍기</button>
-  <button id="btn-base">🌚 배경지도</button>
-  <button id="btn-reset">초기화</button>
-  <button id="savePng">PNG 저장</button>
+  <button id="btn-lake-panel" class="tb-btn primary">💧 호수</button>
+  <button id="btn-manual-clear" class="tb-btn warning" style="display:none;">🗑️ 내가찍은 점 지우기</button>
+
+  <button id="toggleLabels"  class="tb-btn">🌚 나라이름</button>
+  <button id="toggleBorders" class="tb-btn">🌝 국경선</button>
+  <button id="toggleGrids"   class="tb-btn">🌚 위선경선</button>
+  <button id="toggleEquator" class="tb-btn">🌝 적도</button>
+  <button id="resetZoom" class="tb-btn">초기화</button>
+  <button id="savePng"   class="tb-btn">PNG 저장</button>
+  <span id="zoomLevel">확대 레벨: 1.00</span>
 </div>
+
+<div id="tooltip" class="tooltip"></div>
+<div id="linkTooltip" class="tooltip"></div>
 
 <div id="main-container">
   <div id="map-wrap">
     <div id="helpLink">
-      PC에서 사용을 권장합니다. 모바일에서는 점찍기가 힘들어요.<br>
-      이 웹페이지는 모두 황병삼쌤 덕분입니다. 고맙습니다.<br>
-      <a href="https://geotasoo.tistory.com/entry/%EC%9A%B0%EB%A6%AC%EB%82%98%EB%9D%BC-%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank">사용법보기/생각나누기</a>
+      <div>PC에서 사용을 권장합니다.<br> 점찍기가 힘들어요. 게임도 힘들어요.</div>
+      <a href="https://geotasoo.tistory.com/entry/%EC%84%B8%EA%B3%84%EC%A7%80%EB%8F%84-%EC%83%89%EC%B9%A0%ED%95%98%EA%B8%B0-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80" target="_blank">사용법보기/생각나누기</a>
     </div>
-    <div id="map"></div>
-    <div id="map-custom-tooltip" class="map-custom-tooltip"></div>
+    <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
   </div>
 
+  <!-- 도시 선택 패널 -->
   <div id="city-panel" class="side-panel">
-    <div class="panel-header"><span>🏙️ 장소 목록</span><div class="ph-right"><button id="btn-city-deselect">전체 해제</button><button id="btn-city-panel-close" class="panel-close" title="닫기">✕</button></div></div>
-    <div class="panel-search-wrap"><input type="text" id="dot-search" placeholder="🔍  도시 검색..." /><span id="btn-search-clear" class="btn-search-clear">← 목록으로</span></div>
-    <div id="dot-summary" class="panel-summary">선택된 도시 없음</div>
-    <div id="dot-list" class="panel-list"></div>
+    <div class="panel-header">
+      <span>🏙️ 도시 목록</span>
+      <div class="ph-right">
+        <button id="btn-panel-deselect">전체 해제</button>
+        <button id="btn-panel-close" class="panel-close" title="닫기">✕</button>
+      </div>
+    </div>
+    <div id="panel-search-wrap">
+      <input type="text" id="panel-search" placeholder="🔍  도시 검색..." />
+      <span id="btn-search-clear">← 목록으로</span>
+    </div>
+    <div id="panel-selected-summary" class="panel-summary">선택된 도시 없음</div>
+    <div id="panel-list" class="panel-list"></div>
   </div>
 
+  <!-- 핀 패널 -->
   <div id="pin-panel" class="side-panel">
-    <div class="panel-header"><span>📍 내가 찍은 점</span><div class="ph-right"><button id="btn-pin-deselect">전체 해제</button><button id="btn-pin-panel-close" class="panel-close" title="닫기">✕</button></div></div>
-    <div id="pin-summary" class="panel-summary" style="color:#aaa;">찍은 점 없음</div>
+    <div class="panel-header">
+      <span>📍 내가 찍은 점</span>
+      <div class="ph-right">
+        <button id="btn-pin-deselect">전체 해제</button>
+        <button id="btn-pin-panel-close" class="panel-close" title="닫기">✕</button>
+      </div>
+    </div>
+    <div id="pin-selected-summary" class="panel-summary" style="color:#aaa;">찍은 점 없음</div>
     <div id="pin-list" class="panel-list"></div>
+  </div>
+
+  <!-- 호수 패널 -->
+  <div id="lake-panel" class="side-panel">
+    <div class="panel-header">
+      <span>💧 호수</span>
+      <div class="ph-right">
+        <button id="btn-lake-deselect">전체 해제</button>
+        <button id="btn-lake-default">기본값</button>
+        <button id="btn-lake-panel-close" class="panel-close" title="닫기">✕</button>
+      </div>
+    </div>
+    <div id="lake-selected-summary" class="panel-summary">표시 중: 0개</div>
+    <div id="lake-list" class="panel-list"></div>
   </div>
 </div>
 
-<footer style="position:fixed;bottom:8px;right:12px;font-size:9px;color:#888;z-index:9999;background:rgba(255,255,255,0.6);padding:2px 6px;border-radius:4px;">
-  <a href="https://geotasoo.tistory.com" target="_blank" style="color:inherit;text-decoration:none;">@geotasoo</a>
-</footer>
+<div id="game-overlay">
+  <div class="gbox">
+    <h2>🍳 나라 찾기</h2>
+    <div class="grules">
+      <b>📌 게임 방법</b><br>
+      • 1분 안에 나라 이름을 보고 지도에서 찾아 클릭!<br>
+      • 3번 틀리면 자동으로 다음 나라로 넘어가요<br>
+      • 패스 3회 사용 가능<br>
+      • <b>💡 힌트</b>: 수도 좌표 표시 (단, <b>-1초</b> 패널티!)<br>
+      • <b>🖱️ 조작법</b>: 마우스 스크롤로 확대/축소, 드래그하여 지도 이동
+    </div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- 출제 모드 선택 -->
+    <div style="background:#fff8e1;border:1px solid #ffa726;border-radius:8px;padding:12px 14px;margin:12px 0;">
+      <div style="font-size:13px;font-weight:bold;color:#e65100;margin-bottom:8px;">📚 출제 범위 (대륙별 또는 수준별 중 선택)</div>
+      
+      <!-- 대륙별 -->
+      <div style="margin-bottom:10px;">
+        <div style="font-weight:bold;font-size:13px;color:#1565c0;margin-bottom:6px;text-align:center;">🌍 대륙별 (복수 선택 가능)</div>
+        <div id="continent-checkboxes" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:13px;padding-left:20px;">
+          <label style="cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="continent-cb" value="아시아" checked> 🌏 아시아</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="continent-cb" value="유럽" checked> 🌍 유럽</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="continent-cb" value="아프리카" checked> 🌍 아프리카</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="continent-cb" value="북아메리카" checked> 🌎 북아메리카</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="continent-cb" value="남아메리카" checked> 🌎 남아메리카</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="continent-cb" value="오세아니아" checked> 🌏 오세아니아</label>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px;font-size:11px;justify-content:center;">
+          <button type="button" id="cb-all" style="background:#e3f2fd;border:1px solid #2196f3;border-radius:4px;padding:2px 8px;cursor:pointer;color:#1565c0;">전체 선택</button>
+          <button type="button" id="cb-none" style="background:#fff;border:1px solid #ccc;border-radius:4px;padding:2px 8px;cursor:pointer;color:#666;">전체 해제</button>
+        </div>
+      </div>
+
+      <!-- 수준별 -->
+      <div style="border-top:1px solid #ffe0b2;padding-top:10px;">
+        <div style="font-weight:bold;font-size:13px;color:#1565c0;margin-bottom:6px;text-align:center;">📖 수준별</div>
+        <div style="display:flex;flex-direction:column;gap:4px;font-size:13px;padding-left:20px;">
+          <label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="game-mode" value="middle"> 🎒 중학교 지리 교과서에 나오는 30개 나라</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="game-mode" value="high"> 🎓 고등학교 지리 교과서에 나오는 70개 나라</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="game-mode" value="all"> 🌐 모든 나라</label>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#ffebee;border:1px solid #ef5350;border-radius:8px;padding:10px 14px;margin:12px 0;font-size:12px;color:#c62828;line-height:1.6;">
+      <b>⚠️ 주의:</b> 게임 종료 후 지도로 돌아올 때 모든 색칠과 점이 초기화됩니다!
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+      <button id="gbtn" style="background:#0F6E56;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:16px;cursor:pointer;font-weight:bold;">🎮 시작!</button>
+      <button id="gcancel-btn" style="background:#eee;color:#333;border:none;border-radius:8px;padding:12px 32px;font-size:16px;cursor:pointer;font-weight:bold;">나가기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 게임 HUD -->
+<div id="ghud">
+  <div class="hl">
+    <div class="hblk"><div class="hlbl">남은 시간</div><div id="gtimer">60</div></div>
+    <div class="hblk"><div class="hlbl">점수</div><div id="gscore">0</div></div>
+  </div>
+  <div class="hc">
+    <div id="gq">—</div>
+    <div class="hc-row">
+      <div id="gwrong">○○○</div>
+      <div class="hbtns">
+        <button id="ghint-btn">💡 힌트 (-1초)</button>
+        <button id="gpass-btn">⏭️ 패스 (3)</button>
+      </div>
+    </div>
+  </div>
+  <div class="hr">
+    <button id="gexit-btn">나가기</button>
+  </div>
+</div>
+<div id="ghint-pop"></div>
+<div id="gfb"></div>
+<div id="gresult"></div>
+
+<!-- 10초 남았을 때 화면 전체 빨간 깜빡임 -->
+<div id="danger-flash"></div>
+<footer id="footer"><a href="https://geotasoo.tistory.com" target="_blank">@geotasoo</a></footer>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://unpkg.com/topojson-client@3"></script>
 <script>
-window.addEventListener('load', function(){
-const KOREA_CITIES=[
-{name:"서울특별시",sido:"특별·광역·특별자치시",lat:37.5665,lng:126.9780},{name:"부산광역시",sido:"특별·광역·특별자치시",lat:35.1796,lng:129.0756},{name:"대구광역시",sido:"특별·광역·특별자치시",lat:35.8714,lng:128.6014},{name:"인천광역시",sido:"특별·광역·특별자치시",lat:37.4563,lng:126.7052},{name:"광주광역시",sido:"특별·광역·특별자치시",lat:35.1595,lng:126.8526},{name:"대전광역시",sido:"특별·광역·특별자치시",lat:36.3504,lng:127.3845},{name:"울산광역시",sido:"특별·광역·특별자치시",lat:35.5384,lng:129.3114},{name:"세종특별자치시",sido:"특별·광역·특별자치시",lat:36.4800,lng:127.2890},
-{name:"경기도청",sido:"도·특별자치도청",lat:37.2636,lng:127.0286},{name:"강원특별자치도청",sido:"도·특별자치도청",lat:37.8813,lng:127.7300},{name:"충청북도청",sido:"도·특별자치도청",lat:36.6424,lng:127.4890},{name:"충청남도청",sido:"도·특별자치도청",lat:36.6012,lng:126.6650},{name:"전북특별자치도청",sido:"도·특별자치도청",lat:35.8242,lng:127.1480},{name:"전라남도청",sido:"도·특별자치도청",lat:34.8161,lng:126.4629},{name:"경상북도청",sido:"도·특별자치도청",lat:36.5760,lng:128.5056},{name:"경상남도청",sido:"도·특별자치도청",lat:35.2380,lng:128.6923},{name:"제주특별자치도청",sido:"도·특별자치도청",lat:33.4890,lng:126.4983},
-{name:"독도",sido:"섬, 산, 고개",lat:37.2414,lng:131.8642},{name:"이어도",sido:"섬, 산, 고개",lat:32.1227,lng:125.1822},{name:"설악산",sido:"섬, 산, 고개",lat:38.1197,lng:128.4655},{name:"지리산",sido:"섬, 산, 고개",lat:35.3384,lng:127.7308},{name:"한라산",sido:"섬, 산, 고개",lat:33.3616,lng:126.5292},{name:"북한산",sido:"섬, 산, 고개",lat:37.6586,lng:126.9772},{name:"문경새재",sido:"섬, 산, 고개",lat:36.7734,lng:128.0455},{name:"대관령",sido:"섬, 산, 고개",lat:37.6850,lng:128.7199},
-{name:"수원시",sido:"경기도",lat:37.2636,lng:127.0286},{name:"성남시",sido:"경기도",lat:37.4449,lng:127.1388},{name:"의정부시",sido:"경기도",lat:37.7382,lng:127.0338},{name:"안양시",sido:"경기도",lat:37.3943,lng:126.9568},{name:"부천시",sido:"경기도",lat:37.5034,lng:126.7660},{name:"광명시",sido:"경기도",lat:37.4786,lng:126.8644},{name:"평택시",sido:"경기도",lat:36.9921,lng:127.1128},{name:"동두천시",sido:"경기도",lat:37.9034,lng:127.0605},{name:"안산시",sido:"경기도",lat:37.3219,lng:126.8309},{name:"고양시",sido:"경기도",lat:37.6584,lng:126.8320},{name:"과천시",sido:"경기도",lat:37.4292,lng:126.9876},{name:"구리시",sido:"경기도",lat:37.5943,lng:127.1296},{name:"남양주시",sido:"경기도",lat:37.6361,lng:127.2168},{name:"오산시",sido:"경기도",lat:37.1498,lng:127.0773},{name:"시흥시",sido:"경기도",lat:37.3804,lng:126.8028},{name:"군포시",sido:"경기도",lat:37.3615,lng:126.9352},{name:"의왕시",sido:"경기도",lat:37.3449,lng:126.9684},{name:"하남시",sido:"경기도",lat:37.5390,lng:127.2149},{name:"용인시",sido:"경기도",lat:37.2411,lng:127.1776},{name:"파주시",sido:"경기도",lat:37.7599,lng:126.7800},{name:"이천시",sido:"경기도",lat:37.2720,lng:127.4350},{name:"안성시",sido:"경기도",lat:37.0079,lng:127.2797},{name:"김포시",sido:"경기도",lat:37.6152,lng:126.7156},{name:"화성시",sido:"경기도",lat:37.1994,lng:126.8310},{name:"광주시",sido:"경기도",lat:37.4293,lng:127.2555},{name:"양주시",sido:"경기도",lat:37.7852,lng:127.0458},{name:"포천시",sido:"경기도",lat:37.8948,lng:127.2004},{name:"여주시",sido:"경기도",lat:37.2982,lng:127.6377},{name:"연천군",sido:"경기도",lat:38.0964,lng:127.0748},{name:"가평군",sido:"경기도",lat:37.8315,lng:127.5096},{name:"양평군",sido:"경기도",lat:37.4913,lng:127.4874},
-{name:"춘천시",sido:"강원특별자치도",lat:37.8813,lng:127.7300},{name:"원주시",sido:"강원특별자치도",lat:37.3422,lng:127.9202},{name:"강릉시",sido:"강원특별자치도",lat:37.7519,lng:128.8761},{name:"동해시",sido:"강원특별자치도",lat:37.5247,lng:129.1144},{name:"태백시",sido:"강원특별자치도",lat:37.1640,lng:128.9856},{name:"속초시",sido:"강원특별자치도",lat:38.2070,lng:128.5918},{name:"삼척시",sido:"강원특별자치도",lat:37.4500,lng:129.1656},{name:"홍천군",sido:"강원특별자치도",lat:37.6969,lng:127.8886},{name:"횡성군",sido:"강원특별자치도",lat:37.4828,lng:127.9846},{name:"영월군",sido:"강원특별자치도",lat:37.1836,lng:128.4614},{name:"평창군",sido:"강원특별자치도",lat:37.3708,lng:128.3903},{name:"정선군",sido:"강원특별자치도",lat:37.3805,lng:128.6609},{name:"철원군",sido:"강원특별자치도",lat:38.1467,lng:127.3133},{name:"화천군",sido:"강원특별자치도",lat:38.1063,lng:127.7084},{name:"양구군",sido:"강원특별자치도",lat:38.1098,lng:127.9897},{name:"인제군",sido:"강원특별자치도",lat:38.0695,lng:128.1706},{name:"고성군",sido:"강원특별자치도",lat:38.3805,lng:128.4677},{name:"양양군",sido:"강원특별자치도",lat:38.0754,lng:128.6190},
-{name:"청주시",sido:"충청북도",lat:36.6424,lng:127.4890},{name:"충주시",sido:"충청북도",lat:36.9910,lng:127.9260},{name:"제천시",sido:"충청북도",lat:37.1323,lng:128.1908},{name:"보은군",sido:"충청북도",lat:36.4894,lng:127.7294},{name:"옥천군",sido:"충청북도",lat:36.3012,lng:127.5721},{name:"영동군",sido:"충청북도",lat:36.1751,lng:127.7834},{name:"증평군",sido:"충청북도",lat:36.7847,lng:127.5816},{name:"진천군",sido:"충청북도",lat:36.8551,lng:127.4358},{name:"괴산군",sido:"충청북도",lat:36.8155,lng:127.7864},{name:"음성군",sido:"충청북도",lat:36.9402,lng:127.6924},{name:"단양군",sido:"충청북도",lat:36.9846,lng:128.3659},
-{name:"천안시",sido:"충청남도",lat:36.8151,lng:127.1139},{name:"공주시",sido:"충청남도",lat:36.4465,lng:127.1195},{name:"보령시",sido:"충청남도",lat:36.3330,lng:126.6128},{name:"아산시",sido:"충청남도",lat:36.7898,lng:127.0016},{name:"서산시",sido:"충청남도",lat:36.7847,lng:126.4503},{name:"논산시",sido:"충청남도",lat:36.1869,lng:127.0987},{name:"계룡시",sido:"충청남도",lat:36.2744,lng:127.2478},{name:"당진시",sido:"충청남도",lat:36.8930,lng:126.6474},{name:"금산군",sido:"충청남도",lat:36.1088,lng:127.4881},{name:"부여군",sido:"충청남도",lat:36.2756,lng:126.9099},{name:"서천군",sido:"충청남도",lat:36.0808,lng:126.6917},{name:"청양군",sido:"충청남도",lat:36.4592,lng:126.8024},{name:"홍성군",sido:"충청남도",lat:36.6012,lng:126.6650},{name:"예산군",sido:"충청남도",lat:36.6821,lng:126.8469},{name:"태안군",sido:"충청남도",lat:36.7456,lng:126.2979},
-{name:"전주시",sido:"전북특별자치도",lat:35.8242,lng:127.1480},{name:"군산시",sido:"전북특별자치도",lat:35.9676,lng:126.7368},{name:"익산시",sido:"전북특별자치도",lat:35.9483,lng:126.9576},{name:"정읍시",sido:"전북특별자치도",lat:35.5699,lng:126.8560},{name:"남원시",sido:"전북특별자치도",lat:35.4164,lng:127.3903},{name:"김제시",sido:"전북특별자치도",lat:35.8038,lng:126.8808},{name:"완주군",sido:"전북특별자치도",lat:35.9045,lng:127.1644},{name:"진안군",sido:"전북특별자치도",lat:35.7918,lng:127.4246},{name:"무주군",sido:"전북특별자치도",lat:36.0069,lng:127.6609},{name:"장수군",sido:"전북특별자치도",lat:35.6478,lng:127.5211},{name:"임실군",sido:"전북특별자치도",lat:35.6177,lng:127.2861},{name:"순창군",sido:"전북특별자치도",lat:35.3742,lng:127.1375},{name:"고창군",sido:"전북특별자치도",lat:35.4352,lng:126.7020},{name:"부안군",sido:"전북특별자치도",lat:35.7318,lng:126.7330},
-{name:"목포시",sido:"전라남도",lat:34.8118,lng:126.3922},{name:"여수시",sido:"전라남도",lat:34.7604,lng:127.6622},{name:"순천시",sido:"전라남도",lat:34.9507,lng:127.4872},{name:"나주시",sido:"전라남도",lat:35.0160,lng:126.7107},{name:"광양시",sido:"전라남도",lat:34.9406,lng:127.6956},{name:"담양군",sido:"전라남도",lat:35.3208,lng:126.9882},{name:"곡성군",sido:"전라남도",lat:35.2818,lng:127.2925},{name:"구례군",sido:"전라남도",lat:35.2023,lng:127.4632},{name:"고흥군",sido:"전라남도",lat:34.6114,lng:127.2751},{name:"보성군",sido:"전라남도",lat:34.7714,lng:127.0800},{name:"화순군",sido:"전라남도",lat:35.0640,lng:126.9865},{name:"장흥군",sido:"전라남도",lat:34.6816,lng:126.9067},{name:"강진군",sido:"전라남도",lat:34.6420,lng:126.7672},{name:"해남군",sido:"전라남도",lat:34.5732,lng:126.5987},{name:"영암군",sido:"전라남도",lat:34.8004,lng:126.6967},{name:"무안군",sido:"전라남도",lat:34.9903,lng:126.4819},{name:"함평군",sido:"전라남도",lat:35.0664,lng:126.5158},{name:"영광군",sido:"전라남도",lat:35.2773,lng:126.5121},{name:"장성군",sido:"전라남도",lat:35.3017,lng:126.7846},{name:"완도군",sido:"전라남도",lat:34.3113,lng:126.7552},{name:"진도군",sido:"전라남도",lat:34.4868,lng:126.2633},{name:"신안군",sido:"전라남도",lat:34.8267,lng:126.1097},
-{name:"포항시",sido:"경상북도",lat:36.0190,lng:129.3435},{name:"경주시",sido:"경상북도",lat:35.8562,lng:129.2247},{name:"김천시",sido:"경상북도",lat:36.1399,lng:128.1137},{name:"안동시",sido:"경상북도",lat:36.5684,lng:128.7294},{name:"구미시",sido:"경상북도",lat:36.1195,lng:128.3446},{name:"영주시",sido:"경상북도",lat:36.8056,lng:128.6239},{name:"영천시",sido:"경상북도",lat:35.9733,lng:128.9386},{name:"상주시",sido:"경상북도",lat:36.4109,lng:128.1589},{name:"문경시",sido:"경상북도",lat:36.5865,lng:128.1867},{name:"경산시",sido:"경상북도",lat:35.8251,lng:128.7414},{name:"의성군",sido:"경상북도",lat:36.3526,lng:128.6970},{name:"청송군",sido:"경상북도",lat:36.4364,lng:129.0568},{name:"영양군",sido:"경상북도",lat:36.6666,lng:129.1124},{name:"영덕군",sido:"경상북도",lat:36.4150,lng:129.3655},{name:"청도군",sido:"경상북도",lat:35.6477,lng:128.7362},{name:"고령군",sido:"경상북도",lat:35.7272,lng:128.2626},{name:"성주군",sido:"경상북도",lat:35.9192,lng:128.2827},{name:"칠곡군",sido:"경상북도",lat:35.9950,lng:128.4014},{name:"예천군",sido:"경상북도",lat:36.6575,lng:128.4518},{name:"봉화군",sido:"경상북도",lat:36.8930,lng:128.7324},{name:"울진군",sido:"경상북도",lat:36.9930,lng:129.4006},{name:"울릉군",sido:"경상북도",lat:37.4845,lng:130.9058},
-{name:"창원시",sido:"경상남도",lat:35.2280,lng:128.6811},{name:"진주시",sido:"경상남도",lat:35.1800,lng:128.1076},{name:"통영시",sido:"경상남도",lat:34.8544,lng:128.4332},{name:"사천시",sido:"경상남도",lat:35.0036,lng:128.0642},{name:"김해시",sido:"경상남도",lat:35.2285,lng:128.8894},{name:"밀양시",sido:"경상남도",lat:35.5038,lng:128.7461},{name:"거제시",sido:"경상남도",lat:34.8806,lng:128.6211},{name:"양산시",sido:"경상남도",lat:35.3350,lng:129.0374},{name:"의령군",sido:"경상남도",lat:35.3223,lng:128.2618},{name:"함안군",sido:"경상남도",lat:35.2725,lng:128.4061},{name:"창녕군",sido:"경상남도",lat:35.5445,lng:128.4926},{name:"고성군",sido:"경상남도",lat:34.9732,lng:128.3229},{name:"남해군",sido:"경상남도",lat:34.8376,lng:127.8924},{name:"하동군",sido:"경상남도",lat:35.0673,lng:127.7514},{name:"산청군",sido:"경상남도",lat:35.4154,lng:127.8734},{name:"함양군",sido:"경상남도",lat:35.5203,lng:127.7251},{name:"거창군",sido:"경상남도",lat:35.6868,lng:127.9095},{name:"합천군",sido:"경상남도",lat:35.5664,lng:128.1656},
-{name:"제주시",sido:"제주특별자치도",lat:33.4996,lng:126.5312},{name:"서귀포시",sido:"제주특별자치도",lat:33.2541,lng:126.5601},
-
-// 북측
-{name:"평양",sido:"북측",lat:39.0392,lng:125.7625},
-{name:"함흥",sido:"북측",lat:39.9186,lng:127.5367},
-{name:"청진",sido:"북측",lat:41.7956,lng:129.7750},
-{name:"남포",sido:"북측",lat:38.7373,lng:125.4077},
-{name:"원산",sido:"북측",lat:39.1479,lng:127.4350},
-{name:"신의주",sido:"북측",lat:40.0990,lng:124.3988},
-{name:"개성",sido:"북측",lat:37.9710,lng:126.5560},
-{name:"사리원",sido:"북측",lat:38.5067,lng:125.9560},
-{name:"해주",sido:"북측",lat:38.0370,lng:125.7197},
-{name:"강계",sido:"북측",lat:40.9697,lng:126.5842},
-{name:"나선",sido:"북측",lat:42.4150,lng:130.3226},
-{name:"중강진",sido:"북측",lat:41.7833,lng:126.9000},
-{name:"백두산",sido:"북측",lat:42.0046,lng:128.0550},
-{name:"금강산",sido:"북측",lat:38.6530,lng:128.1520},
-{name:"철령",sido:"북측",lat:38.8103322,lng:127.4961655}
+// ========== 주요 호수 카탈로그 (14개) ==========
+const MAJOR_LAKES = [
+  {en:"Lake Baikal",     ko:"바이칼호"},
+  {en:"Aral Sea",        ko:"아랄해"},
+  {en:"Dead Sea",        ko:"사해"},
+  {en:"Lake Superior",   ko:"슈피리어호"},
+  {en:"Lake Michigan",   ko:"미시간호"},
+  {en:"Lake Huron",      ko:"휴런호"},
+  {en:"Lake Erie",       ko:"이리호"},
+  {en:"Lake Ontario",    ko:"온타리오호"},
+  {en:"Great Salt Lake", ko:"그레이트솔트레이크"},
+  {en:"Lake Victoria",   ko:"빅토리아호"},
+  {en:"Lake Tanganyika", ko:"탕가니카호"},
+  {en:"Lake Malawi",     ko:"말라위호"},
+  {en:"Lake Chad",       ko:"차드호"},
+  {en:"Lake Titicaca",   ko:"티티카카호"},
 ];
 
-const SIDO_ORDER=["특별·광역·특별자치시","도·특별자치도청","북측","섬, 산, 고개","경기도","강원특별자치도","충청북도","충청남도","전북특별자치도","전라남도","경상북도","경상남도","제주특별자치도"];
+// 디폴트에서 꺼둘 호수
+const LAKE_DEFAULT_OFF = new Set(["사해", "그레이트솔트레이크", "티티카카호"]);
 
-let selectedCities=new Set(), dotMarkers=[], dotMode=false, sidoCollapsed=new Set(SIDO_ORDER), manualPins=[];
-let nkVisible=false; // 기본값: 북한 꺼짐
-// 경계 모드: 0=없애기, 1=나라, 2=시도, 3=시군 (기본: 3=시군)
-const BORDER_MODES=['경계없음','남측','시도','시군'];
-let borderMode=3;
-const $=id=>document.getElementById(id);
-document.querySelector('header span').addEventListener('click',()=>$('btn-reset').click());
+const LAKE_NAME_ALIASES = {
+  "L. Superior": "Lake Superior",
+  "L. Michigan": "Lake Michigan",
+  "L. Huron": "Lake Huron",
+  "L. Erie": "Lake Erie",
+  "Erie": "Lake Erie",
+  "L. Ontario": "Lake Ontario",
+  "Ontario": "Lake Ontario",
+  "L. Victoria": "Lake Victoria",
+  "Tanganyika": "Lake Tanganyika",
+  "L. Tanganyika": "Lake Tanganyika",
+  "Malawi": "Lake Malawi",
+  "L. Malawi": "Lake Malawi",
+  "Lake Nyasa": "Lake Malawi",
+  "L. Nyasa": "Lake Malawi",
+  "Chad": "Lake Chad",
+  "L. Chad": "Lake Chad",
+  "Titicaca": "Lake Titicaca",
+  "L. Titicaca": "Lake Titicaca",
+  "Lago Titicaca": "Lake Titicaca",
+  "Baikal": "Lake Baikal",
+  "L. Baikal": "Lake Baikal",
+  "Great Salt L.": "Great Salt Lake",
+  "Gt. Salt L.": "Great Salt Lake",
+};
 
-const tooltipDiv=$('map-custom-tooltip');
-function showTT(h,e){tooltipDiv.innerHTML=h;tooltipDiv.classList.add('visible');tooltipDiv.style.left=(e.originalEvent.clientX+15)+'px';tooltipDiv.style.top=(e.originalEvent.clientY+8)+'px';}
-function hideTT(){tooltipDiv.classList.remove('visible');}
+const MAJOR_LAKE_BY_EN = new Map(MAJOR_LAKES.map(l => [l.en, l]));
 
-const map=L.map('map',{center:[36.5,127.8],zoom:6.5,zoomSnap:0,zoomDelta:0.1,zoomControl:false,attributionControl:false});
-let baseOn=false;const baseLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19});
-let highlightFill='#FFD700',sgVisible=true,defaultLandOpacity=0.3;
-const defaultStyle={sd:{color:'#444',weight:1,fillColor:'#fff',fillOpacity:defaultLandOpacity,opacity:1},sg:{color:'#444',weight:0.5,fillOpacity:0,opacity:1}};
-const coloredSd=new Map(),coloredSg=new Map();
-let sdLayer,sgLayer,sdBorderLayer,nkLayer,skLayer,selectedProvinces=new Set(),provinceNames=[];
+// ========== 도시 데이터 ==========
+const CONTINENT_ORDER = ["아시아","유럽","북아메리카","남아메리카","아프리카","오세아니아"];
 
-map.createPane('seaPane');map.getPane('seaPane').style.zIndex=100;
-L.rectangle([[-90,-180],[90,180]],{pane:'seaPane',interactive:false,fillColor:'#fff',fillOpacity:1,stroke:false}).addTo(map);
+let CITIES = [
+  {name:"가오슝",continent:"아시아",lat:22.6273,lng:120.3014},
+  {name:"광저우",continent:"아시아",lat:23.1291,lng:113.2644},
+  {name:"나고야",continent:"아시아",lat:35.1815,lng:136.9066},
+  {name:"뉴델리",continent:"아시아",lat:28.6139,lng:77.2090},
+  {name:"도쿄",continent:"아시아",lat:35.6762,lng:139.6503},
+  {name:"두바이",continent:"아시아",lat:25.2048,lng:55.2708},
+  {name:"마닐라",continent:"아시아",lat:14.5995,lng:120.9842},
+  {name:"방콕",continent:"아시아",lat:13.7563,lng:100.5018},
+  {name:"베이징",continent:"아시아",lat:39.9042,lng:116.4074},
+  {name:"부산",continent:"아시아",lat:35.1796,lng:129.0756},
+  {name:"상하이",continent:"아시아",lat:31.2304,lng:121.4737},
+  {name:"서울",continent:"아시아",lat:37.5665,lng:126.9780},
+  {name:"싱가포르",continent:"아시아",lat:1.3521,lng:103.8198},
+  {name:"양곤",continent:"아시아",lat:16.8661,lng:96.1951},
+  {name:"오사카",continent:"아시아",lat:34.6937,lng:135.5023},
+  {name:"이스탄불",continent:"아시아",lat:41.0082,lng:28.9784},
+  {name:"자카르타",continent:"아시아",lat:-6.2088,lng:106.8456},
+  {name:"카라치",continent:"아시아",lat:24.8607,lng:67.0011},
+  {name:"카트만두",continent:"아시아",lat:27.7172,lng:85.3240},
+  {name:"쿠알라룸푸르",continent:"아시아",lat:3.1390,lng:101.6869},
+  {name:"타이베이",continent:"아시아",lat:25.0330,lng:121.5654},
+  {name:"테헤란",continent:"아시아",lat:35.6892,lng:51.3890},
+  {name:"하노이",continent:"아시아",lat:21.0285,lng:105.8542},
+  {name:"홍콩",continent:"아시아",lat:22.3193,lng:114.1694},
+  {name:"그라나다",continent:"유럽",lat:37.1773,lng:-3.5986},
+  {name:"로마",continent:"유럽",lat:41.9028,lng:12.4964},
+  {name:"런던",continent:"유럽",lat:51.5074,lng:-0.1278},
+  {name:"리스본",continent:"유럽",lat:38.7169,lng:-9.1395},
+  {name:"마드리드",continent:"유럽",lat:40.4168,lng:-3.7038},
+  {name:"마르세유",continent:"유럽",lat:43.2965,lng:5.3698},
+  {name:"모스크바",continent:"유럽",lat:55.7558,lng:37.6173},
+  {name:"뮌헨",continent:"유럽",lat:48.1351,lng:11.5820},
+  {name:"바르셀로나",continent:"유럽",lat:41.3851,lng:2.1734},
+  {name:"바르샤바",continent:"유럽",lat:52.2297,lng:21.0122},
+  {name:"베를린",continent:"유럽",lat:52.5200,lng:13.4050},
+  {name:"베오그라드",continent:"유럽",lat:44.8176,lng:20.4569},
+  {name:"브뤼셀",continent:"유럽",lat:50.8503,lng:4.3517},
+  {name:"빈",continent:"유럽",lat:48.2082,lng:16.3738},
+  {name:"아테네",continent:"유럽",lat:37.9838,lng:23.7275},
+  {name:"암스테르담",continent:"유럽",lat:52.3676,lng:4.9041},
+  {name:"코펜하겐",continent:"유럽",lat:55.6761,lng:12.5683},
+  {name:"파리",continent:"유럽",lat:48.8566,lng:2.3522},
+  {name:"프라하",continent:"유럽",lat:50.0755,lng:14.4378},
+  {name:"헬싱키",continent:"유럽",lat:60.1699,lng:24.9384},
+  {name:"과달라하라",continent:"북아메리카",lat:20.6597,lng:-103.3496},
+  {name:"뉴욕",continent:"북아메리카",lat:40.7128,lng:-74.0060},
+  {name:"댈러스",continent:"북아메리카",lat:32.7767,lng:-96.7970},
+  {name:"로스앤젤레스",continent:"북아메리카",lat:34.0522,lng:-118.2437},
+  {name:"마이애미",continent:"북아메리카",lat:25.7617,lng:-80.1918},
+  {name:"멕시코시티",continent:"북아메리카",lat:19.4326,lng:-99.1332},
+  {name:"몬트리올",continent:"북아메리카",lat:45.5017,lng:-73.5673},
+  {name:"밴쿠버",continent:"북아메리카",lat:49.2827,lng:-123.1207},
+  {name:"보스턴",continent:"북아메리카",lat:42.3601,lng:-71.0589},
+  {name:"샌프란시스코",continent:"북아메리카",lat:37.7749,lng:-122.4194},
+  {name:"시카고",continent:"북아메리카",lat:41.8781,lng:-87.6298},
+  {name:"시애틀",continent:"북아메리카",lat:47.6062,lng:-122.3321},
+  {name:"워싱턴 D.C.",continent:"북아메리카",lat:38.9072,lng:-77.0369},
+  {name:"토론토",continent:"북아메리카",lat:43.6532,lng:-79.3832},
+  {name:"하바나",continent:"북아메리카",lat:23.1136,lng:-82.3666},
+  {name:"리마",continent:"남아메리카",lat:-12.0464,lng:-77.0428},
+  {name:"마나우스",continent:"남아메리카",lat:-3.1190,lng:-60.0217},
+  {name:"메데진",continent:"남아메리카",lat:6.2442,lng:-75.5812},
+  {name:"몬테비데오",continent:"남아메리카",lat:-34.9011,lng:-56.1645},
+  {name:"보고타",continent:"남아메리카",lat:4.7110,lng:-74.0721},
+  {name:"부에노스아이레스",continent:"남아메리카",lat:-34.6037,lng:-58.3816},
+  {name:"산티아고",continent:"남아메리카",lat:-33.4489,lng:-70.6693},
+  {name:"상파울루",continent:"남아메리카",lat:-23.5505,lng:-46.6333},
+  {name:"카라카스",continent:"남아메리카",lat:10.4806,lng:-66.9036},
+  {name:"키토",continent:"남아메리카",lat:-0.1807,lng:-78.4678},
+  {name:"나이로비",continent:"아프리카",lat:-1.2921,lng:36.8219},
+  {name:"다르에스살람",continent:"아프리카",lat:-6.7924,lng:39.2083},
+  {name:"라고스",continent:"아프리카",lat:6.5244,lng:3.3792},
+  {name:"루안다",continent:"아프리카",lat:-8.8368,lng:13.2343},
+  {name:"알제",continent:"아프리카",lat:36.7372,lng:3.0865},
+  {name:"아디스아바바",continent:"아프리카",lat:9.0320,lng:38.7469},
+  {name:"아비장",continent:"아프리카",lat:5.3600,lng:-4.0083},
+  {name:"요하네스버그",continent:"아프리카",lat:-26.2041,lng:28.0473},
+  {name:"카이로",continent:"아프리카",lat:30.0444,lng:31.2357},
+  {name:"카사블랑카",continent:"아프리카",lat:33.5731,lng:-7.5898},
+  {name:"케이프타운",continent:"아프리카",lat:-33.9249,lng:18.4241},
+  {name:"킨샤사",continent:"아프리카",lat:-4.4419,lng:15.2663},
+  {name:"튀니스",continent:"아프리카",lat:36.8188,lng:10.1658},
+  {name:"멜버른",continent:"오세아니아",lat:-37.8136,lng:144.9631},
+  {name:"브리즈번",continent:"오세아니아",lat:-27.4698,lng:153.0251},
+  {name:"시드니",continent:"오세아니아",lat:-33.8688,lng:151.2093},
+  {name:"오클랜드",continent:"오세아니아",lat:-36.8485,lng:174.7633},
+  {name:"퍼스",continent:"오세아니아",lat:-31.9505,lng:115.8605},
+  {name:"호바트",continent:"오세아니아",lat:-42.8821,lng:147.3272},
+];
 
-document.querySelectorAll('.palette-box').forEach(b=>b.addEventListener('click',()=>{highlightFill=b.dataset.color;$('colorPicker').value=highlightFill;}));
-$('colorPicker').addEventListener('input',e=>{highlightFill=e.target.value;});
-$('dotSize').addEventListener('input',e=>{$('dot-size-value').textContent=parseFloat(e.target.value).toFixed(1);renderDots();});
-$('dotColor').addEventListener('input',renderDots);
-$('dotStroke').addEventListener('change',renderDots);
-map.on('zoomend',()=>{ if(dotMarkers.length>0) renderDots(); });
-$('btn-base').addEventListener('click',()=>{baseOn=!baseOn;if(baseOn){map.addLayer(baseLayer);$('btn-base').textContent='🌝 배경지도';}else{map.removeLayer(baseLayer);$('btn-base').textContent='🌚 배경지도';}});
+(async function () {
+  const $ = id => document.getElementById(id);
+  const el = {
+    svg: $('map'),
+    toolbar: $('toolbar'),
+    tooltip: d3.select('#tooltip'),
+    linkTooltip: $('linkTooltip'),
+    colorPicker: $('colorPicker'),
+    baseColor: $('baseColorSelect'),
+    oceanColor: $('oceanColorSelect'),
+    strokeWidth: $('strokeWidth'),
+    strokeValue: $('strokeValue'),
+    dotSize: $('dotSize'),
+    dotSizeValue: $('dotSizeValue'),
+    dotColor: $('dotColor'),
+    dotStroke: $('dotStroke'),
+    zoomLevel: $('zoomLevel'),
+    cityPanel: $('city-panel'),
+    pinPanel: $('pin-panel'),
+    panelSearch: $('panel-search'),
+    panelSearchClear: $('btn-search-clear'),
+    panelList: $('panel-list'),
+    panelSummary: $('panel-selected-summary'),
+    pinList: $('pin-list'),
+    pinSummary: $('pin-selected-summary'),
+    btnDotPanel: $('btn-dot-panel'),
+    btnManualClear: $('btn-manual-clear'),
+  };
 
-// 패널
-function openPanels(){dotMode=true;$('city-panel').classList.add('open');$('pin-panel').classList.add('open');$('btn-dot-panel').textContent='✅ 점찍기 완료';$('btn-dot-panel').classList.add('active');map.getContainer().style.cursor='crosshair';buildDotList('');buildPinList();}
-function closePanels(){dotMode=false;$('city-panel').classList.remove('open');$('pin-panel').classList.remove('open');$('btn-dot-panel').textContent='📍 점찍기';$('btn-dot-panel').classList.remove('active');map.getContainer().style.cursor='';}
-$('btn-dot-panel').addEventListener('click',()=>{if(dotMode)closePanels();else openPanels();});
-
-// 북측 토글: ON/OFF + 화면 맞춤
-$('btn-nk').addEventListener('click',()=>{
-  nkVisible=!nkVisible;
-  const btn=$('btn-nk');
-  if(nkVisible){
-    if(nkLayer)map.addLayer(nkLayer);
-    btn.textContent='🌕 북측';
-    btn.style.background='';btn.style.color='';
-  } else {
-    if(nkLayer)map.removeLayer(nkLayer);
-    btn.textContent='🌑 북측';
-    btn.style.background='';btn.style.color='';
-  }
-  fitMapBounds();
-});
-
-// 화면 맞춤 함수
-function fitMapBounds(){
-  const layers=[];
-  if(borderMode===1 && skLayer) layers.push(skLayer);
-  else {
-    if(sdLayer)layers.push(sdLayer);
-    if(sdBorderLayer)layers.push(sdBorderLayer);
-    if(borderMode===3 && sgLayer)layers.push(sgLayer);
-  }
-  if(nkVisible && nkLayer)layers.push(nkLayer);
-  if(layers.length>0){
-    try{ map.fitBounds(L.featureGroup(layers).getBounds(),{padding:[20,20]}); }catch(e){}
-  }
-}
-$('btn-city-panel-close').addEventListener('click',closePanels);
-$('btn-pin-panel-close').addEventListener('click',closePanels);
-$('btn-city-deselect').addEventListener('click',()=>{selectedCities.clear();renderDots();buildDotList($('dot-search').value.toLowerCase());});
-$('btn-pin-deselect').addEventListener('click',()=>{manualPins=[];renderDots();buildPinList();});
-
-$('dot-search').addEventListener('input',e=>{const t=e.target.value.toLowerCase();$('btn-search-clear').style.display=t?'inline':'none';if(t)SIDO_ORDER.forEach(s=>sidoCollapsed.delete(s));else SIDO_ORDER.forEach(s=>sidoCollapsed.add(s));buildDotList(t);});
-$('btn-search-clear').addEventListener('click',()=>{$('dot-search').value='';$('btn-search-clear').style.display='none';SIDO_ORDER.forEach(s=>sidoCollapsed.add(s));buildDotList('');});
-
-map.on('click',function(e){if(!dotMode)return;manualPins.push({lat:e.latlng.lat,lng:e.latlng.lng,id:Date.now()});renderDots();buildPinList();});
-
-function buildDotList(st){
-  const list=$('dot-list');list.innerHTML='';
-  SIDO_ORDER.forEach(sido=>{
-    const cities=KOREA_CITIES.filter(c=>c.sido===sido);if(!cities.length)return;
-    const filtered=cities.filter(c=>c.name.toLowerCase().includes(st));if(!filtered.length)return;
-    const col=sidoCollapsed.has(sido),sel=filtered.filter(c=>selectedCities.has(c.name)).length;
-    const lb=document.createElement('div');lb.className='sido-label';
-    lb.innerHTML=`<span>${sido}</span><span style="font-size:11px;color:#666;">${sel>0?'✔'+sel+' ':''}${col?'▶':'▼'}</span>`;
-    lb.addEventListener('click',ev=>{if(ev.target.tagName==='BUTTON')return;if(col)sidoCollapsed.delete(sido);else sidoCollapsed.add(sido);buildDotList(st);});
-    list.appendChild(lb);
-    if(!col){
-      const btns=document.createElement('div');btns.className='cat-btns';
-      const sa=document.createElement('button');sa.textContent='전체선택';sa.addEventListener('click',()=>{filtered.forEach(c=>selectedCities.add(c.name));renderDots();buildDotList(st);});
-      const da=document.createElement('button');da.textContent='전체해제';da.addEventListener('click',()=>{filtered.forEach(c=>selectedCities.delete(c.name));renderDots();buildDotList(st);});
-      btns.appendChild(sa);btns.appendChild(da);list.appendChild(btns);
-      filtered.forEach(city=>{
-        const row=document.createElement('div');row.className='city-row';
-        const cb=document.createElement('input');cb.type='checkbox';cb.checked=selectedCities.has(city.name);
-        const nm=document.createElement('span');nm.className='city-name'+(selectedCities.has(city.name)?' checked':'');nm.textContent=city.name;
-        const tog=()=>{if(selectedCities.has(city.name))selectedCities.delete(city.name);else selectedCities.add(city.name);renderDots();buildDotList(st);};
-        cb.addEventListener('change',tog);nm.addEventListener('click',tog);
-        row.appendChild(cb);row.appendChild(nm);list.appendChild(row);
-      });
-    }
+  document.querySelectorAll('#iconLinks a').forEach(link => {
+    link.addEventListener('pointerenter', () => {
+      el.linkTooltip.textContent = link.dataset.tip;
+      el.linkTooltip.style.display = 'block';
+    });
+    link.addEventListener('pointermove', e => {
+      el.linkTooltip.style.left = (e.clientX - el.linkTooltip.offsetWidth - 10) + 'px';
+      el.linkTooltip.style.top  = (e.clientY + 20) + 'px';
+    });
+    link.addEventListener('pointerleave', () => { el.linkTooltip.style.display = 'none'; });
   });
-  const s=$('dot-summary');if(selectedCities.size===0){s.textContent='선택된 도시 없음';s.style.color='#aaa';}else{s.textContent='✔ '+selectedCities.size+'개 선택';s.style.color='#1a73e8';}
-}
 
-function buildPinList(){
-  const list=$('pin-list'),s=$('pin-summary');list.innerHTML='';
-  if(!manualPins.length){s.textContent='찍은 점 없음';s.style.color='#aaa';list.innerHTML='<div style="padding:40px 20px;text-align:center;color:#bbb;font-size:13px;">지도를 클릭해서<br>점을 찍어보세요 📍</div>';return;}
-  s.textContent='✔ '+manualPins.length+'개';s.style.color='#1a73e8';
-  manualPins.forEach((p,i)=>{
-    const row=document.createElement('div');row.className='pin-row';
-    const lb=document.createElement('span');lb.textContent=`${i+1}번 (${p.lat.toFixed(3)}, ${p.lng.toFixed(3)})`;lb.style.color='#555';
-    const del=document.createElement('button');del.className='pin-del';del.textContent='✕';
-    del.addEventListener('click',()=>{manualPins=manualPins.filter(x=>x.id!==p.id);renderDots();buildPinList();});
-    row.appendChild(lb);row.appendChild(del);list.appendChild(row);
+  const selectedCities = new Set();
+  const collapsedContinents = new Set(CONTINENT_ORDER);
+  const countryColors = new Map();
+  let manualPins = [];
+  let pinCounter = 0;
+  let manualMode = false;
+  let panelsOpen = false;
+  let gridVisible = false, labelsVisible = false, equatorVisible = true, bordersVisible = true;
+
+  // Expose these globally for game reset
+  window._gameMapVars = {
+    selectedCities: selectedCities,
+    get manualPins() { return manualPins; },
+    set manualPins(val) { manualPins = val; },
+    clearManualPins() { 
+      manualPins.length = 0; 
+      pinCounter = 0;
+    },
+    get panelsOpen() { return panelsOpen; },
+    set panelsOpen(val) { panelsOpen = val; },
+    cityPanel: null,  // Will be set later
+    pinPanel: null    // Will be set later
+  };
+
+  const svg = d3.select(el.svg);
+  const vw = window.innerWidth;
+  const vh = el.svg.parentElement.clientHeight || (window.innerHeight - el.toolbar.offsetHeight - 40);
+  svg.attr("viewBox", `0 0 ${vw} ${vh}`);
+
+  const background = svg.insert("rect", ":first-child")
+    .attr("x", -vw).attr("y", -vh)
+    .attr("width", vw * 3).attr("height", vh * 3)
+    .attr("fill", el.oceanColor.value);
+
+  const projection = d3.geoMercator()
+    .center([128, 36])
+    .scale(vw / (2 * Math.PI))
+    .translate([vw / 2, vh / 2]);
+  const path = d3.geoPath().projection(projection);
+  window._gameProjection = projection;
+
+  const mapGroup1     = svg.append("g").attr("class","map1");
+  const mapGroup2     = svg.append("g").attr("class","map2").attr("transform",`translate(${vw},0)`);
+  
+  // Expose for markers
+  window._gameMapGroup1 = mapGroup1;
+  window._gameMapGroup2 = mapGroup2;
+  const lakeGroup1    = svg.append("g").attr("class","lakes1");
+  const lakeGroup2    = svg.append("g").attr("class","lakes2").attr("transform",`translate(${vw},0)`);
+  const otherLakeGroup1 = svg.append("g").attr("class","other-lakes1");
+  const otherLakeGroup2 = svg.append("g").attr("class","other-lakes2").attr("transform",`translate(${vw},0)`);
+  const labelsGroup1  = svg.append("g").attr("class","labels1");
+  const labelsGroup2  = svg.append("g").attr("class","labels2");
+  const gridGroup1    = svg.append("g").attr("class","grids1");
+  const gridGroup2    = svg.append("g").attr("class","grids2");
+  const equatorGroup1 = svg.append("g").attr("class","equator1");
+  const equatorGroup2 = svg.append("g").attr("class","equator2");
+  const cityGroup1    = svg.append("g").attr("class","cities1");
+  const cityGroup2    = svg.append("g").attr("class","cities2");
+  const pinGroup1     = svg.append("g").attr("class","pins1");
+  const pinGroup2     = svg.append("g").attr("class","pins2").attr("transform",`translate(${vw},0)`);
+
+  const graticule = d3.geoGraticule().step([30, 30]);
+  gridGroup1.append("path").datum(graticule()).attr("class","grid-line").attr("d",path);
+  gridGroup2.append("path").datum(graticule()).attr("class","grid-line").attr("d",path)
+    .attr("transform",`translate(${vw},0)`);
+  gridGroup1.style("display","none");
+  gridGroup2.style("display","none");
+
+  const equator = {type:"LineString", coordinates:d3.range(-180,181,1).map(lon => [lon, 0])};
+  equatorGroup1.append("path").datum(equator).attr("class","equator-line").attr("d",path);
+  equatorGroup2.append("path").datum(equator).attr("class","equator-line").attr("d",path).attr("transform",`translate(${vw},0)`);
+
+  document.querySelectorAll('.palette-box').forEach(box => {
+    box.addEventListener('click', () => { el.colorPicker.value = box.getAttribute('data-color'); });
   });
-}
 
-function renderDots(){
-  dotMarkers.forEach(m=>map.removeLayer(m));dotMarkers=[];
-  const r=parseFloat($('dotSize').value),color=$('dotColor').value,stroke=$('dotStroke').checked;
-  // circle은 미터 단위 - 슬라이더 값을 미터로 변환 (1→3000m, 12→36000m)
-  const radiusM = r * 3000;
-  // 현재 줌에서 반지름이 몇 픽셀인지 계산해서 테두리 비율 맞춤
-  const c = map.getCenter();
-  const p1 = map.latLngToContainerPoint(c);
-  const p2 = map.latLngToContainerPoint(L.latLng(c.lat, c.lng + radiusM / (111320 * Math.cos(c.lat * Math.PI / 180))));
-  const radiusPx = Math.abs(p2.x - p1.x);
-  const strokeW = stroke ? Math.max(1.5, radiusPx * 0.15) : 0;
-  const opts={radius:radiusM,fillColor:color,color:stroke?'#fff':'none',weight:strokeW,fillOpacity:1,pane:'markerPane'};
-  KOREA_CITIES.filter(c=>selectedCities.has(c.name)).forEach(c=>{const m=L.circle([c.lat,c.lng],opts).addTo(map);m.on('mouseover',e=>showTT(c.name,e));m.on('mousemove',e=>showTT(c.name,e));m.on('mouseout',hideTT);dotMarkers.push(m);});
-  manualPins.forEach((p,i)=>{const m=L.circle([p.lat,p.lng],opts).addTo(map);m.on('mouseover',e=>showTT('내가 찍은 점 '+(i+1),e));m.on('mousemove',e=>showTT('내가 찍은 점 '+(i+1),e));m.on('mouseout',hideTT);dotMarkers.push(m);});
-}
+  const [world, lakesData] = await Promise.all([
+    d3.json("https://unpkg.com/world-atlas@2/countries-50m.json"),
+    d3.json("https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_lakes.geojson").catch(() => null)
+  ]);
+  const features = topojson.feature(world, world.objects.countries).features;
+  window._gameFeatureByName = new Map(features.map(f=>[f.properties.name, f]));
+  const landMesh   = topojson.mesh(world, world.objects.countries, (a,b) => a===b);
+  const borderMesh = topojson.mesh(world, world.objects.countries, (a,b) => a!==b);
 
-function getSdStyle(l){return coloredSd.get(l._leaflet_id)?{color:'#444',weight:2,fillColor:highlightFill,fillOpacity:0.7,opacity:1}:{...defaultStyle.sd};}
-function getSgStyle(l){return coloredSg.get(l._leaflet_id)?{color:'#444',weight:1,fillColor:highlightFill,fillOpacity:0.7,opacity:1}:{...defaultStyle.sg};}
-function toggleSdLayerColor(l){coloredSd.set(l._leaflet_id,!coloredSd.get(l._leaflet_id));l.setStyle(getSdStyle(l));}
-function toggleSgLayerColor(l){coloredSg.set(l._leaflet_id,!coloredSg.get(l._leaflet_id));l.setStyle(getSgStyle(l));}
-function animateMapFade(cb){const m=$('map');m.classList.add('animated-fade');setTimeout(()=>{cb();m.classList.remove('animated-fade');m.classList.add('animated-fade-in');setTimeout(()=>m.classList.remove('animated-fade-in'),400);},300);}
+  [mapGroup1, mapGroup2].forEach(group => {
+    group.selectAll("path.country").data(features).enter().append("path")
+      .attr("class","country").attr("d",path).attr("fill","#ffffff")
+      .style("stroke","#666").style("stroke-width","0.3px")
+      .on("click",(event,d) => {
+        if (typeof G !== 'undefined' && G.active) { handleGameClick(d); return; }
+        if (manualMode) return;
+        const id = d.id;
+        if (countryColors.has(id)) countryColors.delete(id);
+        else countryColors.set(id, el.colorPicker.value);
+        updateColors();
+      })
+      .on("pointerenter",(event,d) => { 
+        if (!(typeof G !== 'undefined' && G.active)) {
+          el.tooltip.style("display","block").text(d.properties.name); 
+        }
+      })
+      .on("pointermove", event => { 
+        if (!(typeof G !== 'undefined' && G.active)) {
+          el.tooltip.style("transform",`translate(${event.clientX+26}px,${event.clientY+28}px)`); 
+        }
+      })
+      .on("pointerleave", () => { el.tooltip.style("display","none"); });
 
-document.addEventListener('click',e=>{if(!$('provinceDropdown').contains(e.target))$('provinceDropdown').classList.remove('open');});
-$('provinceDropdownBtn').addEventListener('click',e=>{e.stopPropagation();$('provinceDropdown').classList.toggle('open');});
+    group.append("path").datum(landMesh).attr("class","land-outline").attr("d",path)
+      .attr("fill","none").attr("stroke","#666").attr("stroke-width","0.3px").attr("pointer-events","none");
+    group.append("path").datum(borderMesh).attr("class","border-mesh").attr("d",path)
+      .attr("fill","none").attr("stroke","#666").attr("stroke-width","0.3px").attr("pointer-events","none");
+  });
 
-Promise.all([
-  fetch('202604_sd.geojson').then(r=>r.json()),
-  fetch('202604_sg.geojson').then(r=>r.json()),
-  fetch('202604_nk.geojson').then(r=>r.json()),
-  fetch('202604_sk.geojson').then(r=>r.json())
-]).then(([sdJson,sgJson,nkJson,skJson])=>{
+  const majorLakeFeatures = new Map();
+  const otherLakeFeatures = [];
+  if (lakesData && lakesData.features) {
+    lakesData.features.forEach(f => {
+      let en = f.properties?.name || f.properties?.name_en;
+      if (!en) return;
+      if (LAKE_NAME_ALIASES[en]) en = LAKE_NAME_ALIASES[en];
+      if (MAJOR_LAKE_BY_EN.has(en)) {
+        majorLakeFeatures.set(MAJOR_LAKE_BY_EN.get(en).ko, f);
+      } else {
+        otherLakeFeatures.push(f);
+      }
+    });
+  }
 
-  // 북한 레이어 (토글 가능, 색칠 가능) - 기본 숨김
-  nkLayer = L.geoJSON(nkJson,{
-    style: ()=>({color:'#333', weight:parseFloat($('slider-nk').value), fillColor:'#ffffff', fillOpacity:defaultLandOpacity, opacity:1}),
-    onEachFeature:(ft,ly)=>{
-      ly.on('click',()=>{
-        if(dotMode)return;
-        const on=!coloredSd.get('nk');
-        coloredSd.set('nk',on);
-        ly.setStyle(on?{color:'#444',weight:2,fillColor:highlightFill,fillOpacity:0.7,opacity:1}:{color:'#444',weight:1,fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1});
-      });
-      ly.on('mouseout',hideTT);
+  // 디폴트: 사해, 그레이트솔트레이크, 티티카카호 제외하고 켜기
+  const selectedMajorLakes = new Set(
+    MAJOR_LAKES
+      .filter(l => majorLakeFeatures.has(l.ko) && !LAKE_DEFAULT_OFF.has(l.ko))
+      .map(l => l.ko)
+  );
+  let showAllLakes = false;
+
+  function renderMajorLakes() {
+    [lakeGroup1, lakeGroup2].forEach(group => {
+      group.selectAll("path.lake").remove();
+      const visibleFeatures = [...selectedMajorLakes]
+        .map(ko => majorLakeFeatures.get(ko))
+        .filter(Boolean);
+      group.selectAll("path.lake").data(visibleFeatures).enter().append("path")
+        .attr("class","lake").attr("d",path)
+        .attr("fill", el.oceanColor.value)
+        .attr("stroke","#888").attr("stroke-width", el.strokeWidth.value + "px")
+        .attr("pointer-events","all")
+        .on("pointerenter",(event,d) => {
+          let en = d.properties?.name || d.properties?.name_en;
+          if (LAKE_NAME_ALIASES[en]) en = LAKE_NAME_ALIASES[en];
+          const ko = MAJOR_LAKE_BY_EN.get(en)?.ko || en;
+          el.tooltip.style("display","block").text(ko);
+        })
+        .on("pointermove", event => { el.tooltip.style("transform",`translate(${event.clientX+26}px,${event.clientY+28}px)`); })
+        .on("pointerleave", () => { el.tooltip.style("display","none"); });
+    });
+  }
+
+  function renderOtherLakes() {
+    [otherLakeGroup1, otherLakeGroup2].forEach(group => {
+      group.selectAll("path.other-lake").remove();
+      if (!showAllLakes) return;
+      group.selectAll("path.other-lake").data(otherLakeFeatures).enter().append("path")
+        .attr("class","other-lake lake").attr("d",path)
+        .attr("fill", el.oceanColor.value)
+        .attr("stroke","#888").attr("stroke-width", el.strokeWidth.value + "px")
+        .attr("pointer-events","none");
+    });
+  }
+
+  renderMajorLakes();
+  renderOtherLakes();
+
+  const centroids = new Map(features.map(f => [f.id, projection(d3.geoCentroid(f))]));
+
+  function updateColors() {
+    window._gameUpdateColors = updateColors;
+    const base = el.baseColor.value;
+    [mapGroup1, mapGroup2].forEach(g => {
+      g.selectAll("path.country")
+        .attr("fill", d => countryColors.get(d.id) || base)
+        .classed("selected", d => countryColors.has(d.id));
+    });
+  }
+
+  function updateBorders() {
+    svg.selectAll(".border-mesh").style("display", bordersVisible ? "block" : "none");
+    svg.selectAll("path.country").style("stroke", bordersVisible ? "#666" : "none");
+  }
+
+  function updateLabels() {
+    [labelsGroup1, labelsGroup2].forEach(g => {
+      g.selectAll("text").remove();
+      g.selectAll("text").data(features).enter().append("text")
+        .attr("class","labels")
+        .attr("x", d => centroids.get(d.id)?.[0] ?? 0)
+        .attr("y", d => centroids.get(d.id)?.[1] ?? 0)
+        .text(d => d.properties.name)
+        .style("display", labelsVisible ? "block" : "none");
+    });
+  }
+
+  // ===== 게임용: 라벨 끄기 / 국경선 켜기 =====
+  window._gameSetLabels = function(visible) {
+    labelsVisible = visible;
+    updateLabels();
+    if (typeof setToggleEmoji === 'function') {
+      setToggleEmoji('toggleLabels', labelsVisible);
     }
-  }); // 기본 숨김 - addTo(map) 안 함
+  };
+  window._gameSetBorders = function(visible) {
+    bordersVisible = visible;
+    updateBorders();
+    if (typeof setToggleEmoji === 'function') {
+      setToggleEmoji('toggleBorders', bordersVisible);
+    }
+  };
 
-  // 속성명: NL_NAME_1 (시도), NL_NAME_2 (시군)
-  provinceNames=[...new Set(sdJson.features.map(f=>f.properties.NL_NAME_1))].sort();
-  const pc=$('provinceCheckboxes');pc.innerHTML='';
-  provinceNames.forEach(n=>{const l=document.createElement('label');l.innerHTML=`<input type="checkbox" value="${n}" checked> ${n}`;pc.appendChild(l);});
-  selectedProvinces=new Set(provinceNames);$('provinceSelectedCount').textContent=selectedProvinces.size;
+  function renderCityDots() {
+    const r = parseFloat(el.dotSize.value);
+    const color = el.dotColor.value;
+    const useStroke = el.dotStroke.checked;
+    const selected = CITIES.filter(c => selectedCities.has(c.name));
+    [cityGroup1, cityGroup2].forEach(g => {
+      g.selectAll("circle.city-dot").remove();
+      g.selectAll("circle.city-dot").data(selected).enter().append("circle")
+        .attr("class","city-dot")
+        .attr("cx", d => projection([d.lng, d.lat])[0])
+        .attr("cy", d => projection([d.lng, d.lat])[1])
+        .attr("r", r)
+        .attr("fill", color)
+        .attr("stroke", useStroke ? "#fff" : "none")
+        .attr("stroke-width", useStroke ? Math.max(0.5, r * 0.2) : 0)
+        .attr("pointer-events","all")
+        .on("pointerenter",(event,d) => { el.tooltip.style("display","block").text(d.name); })
+        .on("pointermove", event => { el.tooltip.style("transform",`translate(${event.clientX+26}px,${event.clientY+28}px)`); })
+        .on("pointerleave", () => { el.tooltip.style("display","none"); });
+    });
+  }
+  window._gameRenderCityDots = renderCityDots;
 
-  $('btn-province-all').addEventListener('click',()=>{provinceNames.forEach(n=>selectedProvinces.add(n));pc.querySelectorAll('input').forEach(c=>c.checked=true);$('provinceSelectedCount').textContent=selectedProvinces.size;animateMapFade(updateLayers);});
-  $('btn-province-none').addEventListener('click',()=>{selectedProvinces.clear();pc.querySelectorAll('input').forEach(c=>c.checked=false);$('provinceSelectedCount').textContent=0;animateMapFade(updateLayers);});
-  pc.querySelectorAll('input').forEach(cb=>cb.addEventListener('change',function(){if(this.checked)selectedProvinces.add(this.value);else selectedProvinces.delete(this.value);$('provinceSelectedCount').textContent=selectedProvinces.size;animateMapFade(updateLayers);}));
+  function renderPins() {
+    const r = parseFloat(el.dotSize.value);
+    const color = el.dotColor.value;
+    const useStroke = el.dotStroke.checked;
+    const visible = manualPins.filter(p => p.visible);
+    [pinGroup1, pinGroup2].forEach(g => {
+      g.selectAll("circle.pin-dot").remove();
+      visible.forEach(pin => {
+        const [cx, cy] = projection([pin.lng, pin.lat]);
+        g.append('circle')
+          .attr('class', 'pin-dot')
+          .attr('cx', cx).attr('cy', cy)
+          .attr('r', r)
+          .attr('fill', color)
+          .attr('stroke', useStroke ? '#fff' : 'none')
+          .attr('stroke-width', useStroke ? Math.max(0.5, r * 0.2) : 0)
+          .attr('pointer-events','all')
+          .on('pointerenter', () => { el.tooltip.style('display','block').text(`📍 #${pin.num}`); })
+          .on('pointermove', ev => { el.tooltip.style('transform',`translate(${ev.clientX+26}px,${ev.clientY+28}px)`); })
+          .on('pointerleave', () => { el.tooltip.style('display','none'); });
+      });
+    });
+  }
+  window._gameRenderPins = renderPins;
 
-  function createSdLayer(f){return L.geoJSON(sdJson,{filter:f,style:getSdStyle,onEachFeature:(ft,ly)=>{
-    ly.on('click',()=>{if(dotMode)return;if(!sgVisible){toggleSdLayerColor(ly);sdBorderLayer.bringToFront();}});
-    if(ft.properties?.NL_NAME_1){const n=ft.properties.NL_NAME_1;ly.on('mouseover',e=>showTT(n,e));ly.on('mousemove',e=>showTT(n,e));ly.on('mouseout',hideTT);}
-  }});}
-
-  function createSgLayer(f){return L.geoJSON(sgJson,{filter:f,style:getSgStyle,onEachFeature:(ft,ly)=>{
-    ly.on('click',()=>{if(dotMode)return;if(sgVisible){toggleSgLayerColor(ly);sdBorderLayer.bringToFront();}});
-    if(ft.properties?.NL_NAME_2){const n=ft.properties.NL_NAME_2;ly.on('mouseover',e=>showTT(n,e));ly.on('mousemove',e=>showTT(n,e));ly.on('mouseout',hideTT);}
-  }});}
-
-  function updateLayers(){
-    if(sdLayer)map.removeLayer(sdLayer);
-    if(sgLayer)map.removeLayer(sgLayer);
-    if(sdBorderLayer)map.removeLayer(sdBorderLayer);
-    if(skLayer)map.removeLayer(skLayer);
-
-    const sel=Array.from(selectedProvinces);
-    const ff=sel.length===0?(f=>false):(f=>sel.includes(f.properties.NL_NAME_1));
-
-    // borderMode: 0=없애기, 1=나라(sd fill만), 2=시도(sd fill+border), 3=시군(sg)
-    if(borderMode===0){
-      // 없애기: 아무것도 안 그림
-      sdLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
-      sgLayer=L.geoJSON({type:'FeatureCollection',features:[]});
-      sdBorderLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
-    } else if(borderMode===1){
-      // 나라: 남한 전체 윤곽(sk) + 나라 경계
-      if(skLayer)map.removeLayer(skLayer);
-      skLayer=L.geoJSON(skJson,{
-        style:()=>({color:'#333',weight:parseFloat($('slider-nk').value),fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1}),
-        onEachFeature:(ft,ly)=>{ly.on('click',()=>{if(dotMode)return;const on=!coloredSd.get('sk');coloredSd.set('sk',on);ly.setStyle(on?{color:'#222',weight:2,fillColor:highlightFill,fillOpacity:0.7,opacity:1}:{color:'#222',weight:parseFloat($('slider-sd').value),fillColor:'#ffffff',fillOpacity:defaultLandOpacity,opacity:1});});}
-      }).addTo(map);
-      sdLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
-      sgLayer=L.geoJSON({type:'FeatureCollection',features:[]});
-      sdBorderLayer=L.geoJSON({type:'FeatureCollection',features:[]}).addTo(map);
-    } else if(borderMode===2){
-      // 시도: sd fill + 시도 경계
-      sdLayer=createSdLayer(ff).addTo(map);
-      sgLayer=L.geoJSON({type:'FeatureCollection',features:[]});
-      sdBorderLayer=L.geoJSON(sdJson,{filter:ff,style:()=>({color:'#222',weight:parseFloat($('slider-sd').value),fillOpacity:0,opacity:1}),interactive:false}).addTo(map);
-      sdLayer.setStyle({fillOpacity:defaultLandOpacity,opacity:1});
-      sdBorderLayer.bringToFront();
+  function updateSummary() {
+    if (selectedCities.size === 0) {
+      el.panelSummary.textContent = '선택된 도시 없음';
+      el.panelSummary.style.color = '#aaa';
     } else {
-      // 시군(3): sg + sd border
-      sdLayer=createSdLayer(ff).addTo(map);
-      sgLayer=createSgLayer(ff);
-      sdBorderLayer=L.geoJSON(sdJson,{filter:ff,style:()=>({color:'#222',weight:parseFloat($('slider-sd').value),fillOpacity:0,opacity:1}),interactive:false}).addTo(map);
-      sdBorderLayer.bringToFront();
-      sdLayer.setStyle({fillOpacity:0,opacity:0.5});
-      map.addLayer(sgLayer);
+      const names = [...selectedCities].join(', ');
+      el.panelSummary.textContent = `✔ ${selectedCities.size}개 선택: ${names}`;
+      el.panelSummary.style.color = '#1a73e8';
+    }
+  }
+
+  function buildPanelList(filter = '') {
+    el.panelList.innerHTML = '';
+    const fl = filter.trim().toLowerCase();
+    const isSearch = fl.length > 0;
+
+    const grouped = {};
+    CONTINENT_ORDER.forEach(c => { grouped[c] = []; });
+    CITIES.forEach(city => {
+      if (!grouped[city.continent]) grouped[city.continent] = [];
+      if (!fl || city.name.toLowerCase().includes(fl)) grouped[city.continent].push(city);
+    });
+
+    let anyResult = false;
+    CONTINENT_ORDER.forEach(continent => {
+      const cities = grouped[continent];
+      if (!cities || !cities.length) return;
+      anyResult = true;
+      const sorted = [...cities].sort((a,b) => a.name.localeCompare(b.name, 'ko'));
+      const isCollapsed = !isSearch && collapsedContinents.has(continent);
+      const selectedCount = sorted.filter(c => selectedCities.has(c.name)).length;
+
+      const lbl = document.createElement('div');
+      lbl.className = 'continent-label';
+
+      const lblLeft = document.createElement('span');
+      lblLeft.textContent = continent;
+
+      const lblRight = document.createElement('span');
+      lblRight.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:11px;';
+      if (selectedCount > 0) {
+        const badge = document.createElement('span');
+        badge.dataset.badge = '1';
+        badge.textContent = `✔${selectedCount}`;
+        badge.style.cssText = 'color:#1a73e8; font-weight:bold;';
+        lblRight.appendChild(badge);
+      }
+      const arrow = document.createElement('span');
+      arrow.textContent = isCollapsed ? '▶' : '▼';
+      arrow.style.cssText = 'color:#999; font-size:10px;';
+      lblRight.appendChild(arrow);
+
+      lbl.appendChild(lblLeft);
+      lbl.appendChild(lblRight);
+
+      const cityWrap = document.createElement('div');
+      cityWrap.style.display = isCollapsed ? 'none' : 'block';
+
+      lbl.addEventListener('click', () => {
+        if (isSearch) return;
+        if (collapsedContinents.has(continent)) {
+          collapsedContinents.delete(continent);
+          cityWrap.style.display = 'block';
+          arrow.textContent = '▼';
+        } else {
+          collapsedContinents.add(continent);
+          cityWrap.style.display = 'none';
+          arrow.textContent = '▶';
+        }
+      });
+
+      el.panelList.appendChild(lbl);
+
+      sorted.forEach(city => {
+        const row = document.createElement('div');
+        row.className = 'city-row';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = selectedCities.has(city.name);
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'city-name' + (selectedCities.has(city.name) ? ' checked' : '');
+        nameEl.textContent = city.name;
+
+        const toggle = () => {
+          if (selectedCities.has(city.name)) {
+            selectedCities.delete(city.name);
+            cb.checked = false;
+            nameEl.classList.remove('checked');
+          } else {
+            selectedCities.add(city.name);
+            cb.checked = true;
+            nameEl.classList.add('checked');
+          }
+          const cnt = sorted.filter(c => selectedCities.has(c.name)).length;
+          let b = lblRight.querySelector('span[data-badge]');
+          if (!b && cnt > 0) {
+            b = document.createElement('span');
+            b.dataset.badge = '1';
+            b.style.cssText = 'color:#1a73e8; font-weight:bold;';
+            lblRight.insertBefore(b, arrow);
+          }
+          if (b) {
+            if (cnt > 0) { b.textContent = `✔${cnt}`; b.style.display = ''; }
+            else { b.style.display = 'none'; }
+          }
+          updateSummary();
+          renderCityDots();
+        };
+        cb.addEventListener('change', toggle);
+        nameEl.addEventListener('click', toggle);
+
+        row.appendChild(cb);
+        row.appendChild(nameEl);
+        cityWrap.appendChild(row);
+      });
+
+      el.panelList.appendChild(cityWrap);
+    });
+
+    if (!anyResult) {
+      const msg = document.createElement('div');
+      msg.className = 'no-result';
+      msg.textContent = '검색 결과가 없습니다';
+      el.panelList.appendChild(msg);
+    }
+  }
+
+  function buildPinList() {
+    el.pinList.innerHTML = '';
+    const visibleCount = manualPins.filter(p => p.visible).length;
+
+    if (manualPins.length === 0) {
+      const msg = document.createElement('div');
+      msg.className = 'pin-empty';
+      msg.innerHTML = '지도를 클릭해서<br>점을 찍어보세요 📍';
+      el.pinList.appendChild(msg);
+      el.pinSummary.textContent = '찍은 점 없음';
+      el.pinSummary.style.color = '#aaa';
+      return;
     }
 
-    if(nkVisible) nkLayer.bringToBack();
-    fitMapBounds();
-  }
-  updateLayers();
+    el.pinSummary.textContent = `✔ ${visibleCount}개 표시 중 (전체 ${manualPins.length}개)`;
+    el.pinSummary.style.color = '#1a73e8';
 
-  // 경계 버튼: 없애기 → 나라 → 시도 → 시군 순환
-  function updateBorderBtn(){
-    const btn=$('btn-sg');
-    const labels=['경계없음 →','남측 →','시도 →','시군 →'];
-    const colors=['#6c757d','#17a2b8','#dc3545','#007bff'];
-    btn.textContent=labels[borderMode];
-    btn.style.background=colors[borderMode];
-    btn.style.color='#fff';
-    btn.style.borderColor=colors[borderMode];
-  }
-  updateBorderBtn();
+    manualPins.forEach(pin => {
+      const row = document.createElement('div');
+      row.className = 'city-row';
 
-  $('btn-sg').addEventListener('click',()=>{
-    animateMapFade(()=>{
-      borderMode=(borderMode+1)%4;
-      updateBorderBtn();
-      updateLayers();
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = pin.visible;
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'city-name' + (pin.visible ? ' checked' : '');
+      nameEl.textContent = `#${pin.num}`;
+
+      cb.addEventListener('change', () => {
+        pin.visible = cb.checked;
+        nameEl.classList.toggle('checked', cb.checked);
+        buildPinList();
+        renderPins();
+      });
+      nameEl.addEventListener('click', () => { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); });
+
+      const delBtn = document.createElement('span');
+      delBtn.className = 'del-btn';
+      delBtn.textContent = '✕';
+      delBtn.title = '삭제';
+      delBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        manualPins = manualPins.filter(p => p.num !== pin.num);
+        buildPinList();
+        renderPins();
+      });
+
+      row.appendChild(cb);
+      row.appendChild(nameEl);
+      row.appendChild(delBtn);
+      el.pinList.appendChild(row);
+    });
+  }
+
+  function openPanels() {
+    panelsOpen = true;
+    el.cityPanel.classList.add('open');
+    el.pinPanel.classList.add('open');
+    el.btnDotPanel.textContent = '✅ 점찍기 완료';
+    el.btnDotPanel.classList.add('active');
+    buildPanelList(el.panelSearch.value);
+    buildPinList();
+    enterManualMode();
+  }
+  function closePanels() {
+    panelsOpen = false;
+    el.cityPanel.classList.remove('open');
+    el.pinPanel.classList.remove('open');
+    el.btnDotPanel.textContent = '📍 점찍기';
+    el.btnDotPanel.classList.remove('active');
+    exitManualMode();
+  }
+  window._gameClosePanels = closePanels;
+
+  function enterManualMode() {
+    manualMode = true;
+    el.svg.style.cursor = 'crosshair';
+    el.svg.style.outline = '3px solid #1a73e8';
+  }
+  function exitManualMode() {
+    manualMode = false;
+    el.svg.style.cursor = '';
+    el.svg.style.outline = '';
+  }
+
+  const zoomBehavior = d3.zoom().scaleExtent([0.5, 8])
+    .on("zoom", ({transform}) => {
+      const {k, x, y} = transform;
+      const t2 = `translate(${vw*k+x},${y}) scale(${k})`;
+      mapGroup1.attr("transform", transform);
+      mapGroup2.attr("transform", t2);
+      lakeGroup1.attr("transform", transform);
+      lakeGroup2.attr("transform", t2);
+      otherLakeGroup1.attr("transform", transform);
+      otherLakeGroup2.attr("transform", t2);
+      labelsGroup1.attr("transform", transform);
+      labelsGroup2.attr("transform", t2);
+      gridGroup1.attr("transform", transform);
+      gridGroup2.attr("transform", transform);
+      equatorGroup1.attr("transform", transform);
+      equatorGroup2.attr("transform", transform);
+      cityGroup1.attr("transform", transform);
+      cityGroup2.attr("transform", t2);
+      pinGroup1.attr("transform", transform);
+      pinGroup2.attr("transform", t2);
+      el.zoomLevel.innerText = `확대 레벨: ${k.toFixed(2)}`;
+      // 경위선 라벨 위치 재계산 (게임 중 또는 일반 지도에서 경위선 켜진 경우)
+      if ((typeof G !== 'undefined' && G.active) || gridVisible) {
+        showGridLabels();
+      }
+    });
+  svg.call(zoomBehavior).on("dblclick.zoom", null);
+  
+  // Expose for game reset
+  window._gameZoomBehavior = zoomBehavior;
+  window._gameSvg = svg;
+
+  function setToggleEmoji(id, visible) {
+    const btn = $(id);
+    const label = btn.textContent.replace(/🌝|🌚/, '').trim();
+    btn.textContent = (visible ? '🌝 ' : '🌚 ') + label;
+  }
+
+  svg.on('click', function(event) {
+    if (!manualMode) return;
+    const pt = el.svg.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
+    const svgP = pt.matrixTransform(el.svg.getScreenCTM().inverse());
+    const t = d3.zoomTransform(el.svg);
+    let ux = (svgP.x - t.x) / t.k;
+    const uy = (svgP.y - t.y) / t.k;
+    if (ux >= vw) ux -= vw;
+    const lngLat = projection.invert([ux, uy]);
+    if (!lngLat) return;
+    pinCounter++;
+    manualPins.push({ lng: lngLat[0], lat: lngLat[1], num: pinCounter, visible: true });
+    buildPinList();
+    renderPins();
+    event.stopPropagation();
+  });
+
+  el.btnDotPanel.addEventListener('click', () => panelsOpen ? closePanels() : openPanels());
+  $('btn-panel-close').addEventListener('click', closePanels);
+  $('btn-pin-panel-close').addEventListener('click', closePanels);
+  $('btn-panel-deselect').addEventListener('click', () => {
+    selectedCities.clear();
+    updateSummary();
+    buildPanelList(el.panelSearch.value);
+    renderCityDots();
+  });
+  $('btn-pin-deselect').addEventListener('click', () => {
+    manualPins.forEach(p => p.visible = false);
+    buildPinList();
+    renderPins();
+  });
+  el.btnManualClear.addEventListener('click', () => {
+    if (!manualPins.length) return;
+    if (!confirm(`직접 찍은 점 ${manualPins.length}개를 모두 지울까요?`)) return;
+    manualPins = []; pinCounter = 0;
+    buildPinList(); renderPins();
+  });
+  el.panelSearch.addEventListener('input', e => {
+    el.panelSearchClear.style.display = e.target.value.length > 0 ? 'inline-block' : 'none';
+    buildPanelList(e.target.value);
+  });
+  el.panelSearchClear.addEventListener('click', () => {
+    el.panelSearch.value = '';
+    el.panelSearchClear.style.display = 'none';
+    buildPanelList('');
+    el.panelSearch.focus();
+  });
+
+  el.dotSize.addEventListener('input', () => {
+    el.dotSizeValue.textContent = el.dotSize.value;
+    renderCityDots(); renderPins();
+  });
+  el.dotColor.addEventListener('input', () => { renderCityDots(); renderPins(); });
+  el.dotStroke.addEventListener('change', () => { renderCityDots(); renderPins(); });
+
+  el.oceanColor.addEventListener('change', () => {
+    background.attr("fill", el.oceanColor.value);
+    svg.selectAll("path.lake").attr("fill", el.oceanColor.value);
+  });
+  el.baseColor.addEventListener('change', updateColors);
+  el.strokeWidth.addEventListener('input', () => {
+    const w = el.strokeWidth.value;
+    el.strokeValue.textContent = w;
+    svg.selectAll("path.country,.equator-line,.grid-line,.land-outline,.border-mesh,.lake")
+      .style("stroke-width", w + 'px');
+  });
+
+  $('toggleLabels').onclick  = () => { labelsVisible  = !labelsVisible;  updateLabels();  setToggleEmoji('toggleLabels',  labelsVisible); };
+  $('toggleBorders').onclick = () => { bordersVisible = !bordersVisible; updateBorders(); setToggleEmoji('toggleBorders', bordersVisible); };
+  $('toggleGrids').onclick   = () => {
+    gridVisible = !gridVisible;
+    gridGroup1.style("display", gridVisible ? "block" : "none");
+    gridGroup2.style("display", gridVisible ? "block" : "none");
+    setToggleEmoji('toggleGrids', gridVisible);
+    // 경위선 라벨 동기화
+    if (gridVisible) { showGridLabels(); }
+    else { removeGridLabels(); }
+  };
+  $('toggleEquator').onclick = () => {
+    equatorVisible = !equatorVisible;
+    equatorGroup1.style("display", equatorVisible ? "block" : "none");
+    equatorGroup2.style("display", equatorVisible ? "block" : "none");
+    setToggleEmoji('toggleEquator', equatorVisible);
+  };
+
+  // ========== 호수 패널 ==========
+  const lakePanel = $('lake-panel');
+  let lakePanelOpen = false;
+
+  function openLakePanel() {
+    lakePanelOpen = true;
+    lakePanel.classList.add('open');
+    $('btn-lake-panel').classList.add('active');
+    $('btn-lake-panel').textContent = '💧 호수 닫기';
+    buildLakeList();
+  }
+  function closeLakePanel() {
+    lakePanelOpen = false;
+    lakePanel.classList.remove('open');
+    $('btn-lake-panel').classList.remove('active');
+    $('btn-lake-panel').textContent = '💧 호수';
+  }
+  window._gameCloseLakePanel = closeLakePanel;
+  $('btn-lake-panel').addEventListener('click', () => lakePanelOpen ? closeLakePanel() : openLakePanel());
+  $('btn-lake-panel-close').addEventListener('click', closeLakePanel);
+
+  $('btn-lake-deselect').addEventListener('click', () => {
+    selectedMajorLakes.clear();
+    showAllLakes = false;
+    buildLakeList();
+    renderMajorLakes();
+    renderOtherLakes();
+  });
+  $('btn-lake-default').addEventListener('click', () => {
+    selectedMajorLakes.clear();
+    MAJOR_LAKES.forEach(l => {
+      if (majorLakeFeatures.has(l.ko) && !LAKE_DEFAULT_OFF.has(l.ko)) selectedMajorLakes.add(l.ko);
+    });
+    showAllLakes = false;
+    buildLakeList();
+    renderMajorLakes();
+    renderOtherLakes();
+  });
+
+  function updateLakeSummary() {
+    const el2 = $('lake-selected-summary');
+    const majorCount = selectedMajorLakes.size;
+    const allLabel = showAllLakes ? ' + 전체 호수' : '';
+    if (majorCount === 0 && !showAllLakes) {
+      el2.textContent = '표시 중인 호수 없음';
+      el2.style.color = '#aaa';
+    } else {
+      el2.textContent = `✔ 주요 ${majorCount}개${allLabel}`;
+      el2.style.color = '#1a73e8';
+    }
+  }
+
+  function buildLakeList() {
+    const list = $('lake-list');
+    list.innerHTML = '';
+
+    const header = document.createElement('div');
+    header.className = 'continent-label';
+    header.style.cursor = 'default';
+    const hLeft = document.createElement('span');
+    hLeft.innerHTML = '⭐ 주요 호수';
+    hLeft.style.color = '#1a73e8';
+    const hRight = document.createElement('span');
+    hRight.style.cssText = 'font-size:11px; color:#1a73e8; font-weight:bold;';
+    hRight.textContent = `✔${selectedMajorLakes.size}`;
+    header.appendChild(hLeft);
+    header.appendChild(hRight);
+    list.appendChild(header);
+
+    MAJOR_LAKES.forEach(lake => {
+      if (!majorLakeFeatures.has(lake.ko)) return;
+      const row = document.createElement('div');
+      row.className = 'city-row';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = selectedMajorLakes.has(lake.ko);
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'city-name' + (selectedMajorLakes.has(lake.ko) ? ' checked' : '');
+      nameEl.textContent = lake.ko;
+
+      const toggle = () => {
+        if (selectedMajorLakes.has(lake.ko)) {
+          selectedMajorLakes.delete(lake.ko);
+          cb.checked = false;
+          nameEl.classList.remove('checked');
+        } else {
+          selectedMajorLakes.add(lake.ko);
+          cb.checked = true;
+          nameEl.classList.add('checked');
+        }
+        hRight.textContent = `✔${selectedMajorLakes.size}`;
+        updateLakeSummary();
+        renderMajorLakes();
+      };
+      cb.addEventListener('change', toggle);
+      nameEl.addEventListener('click', toggle);
+
+      row.appendChild(cb);
+      row.appendChild(nameEl);
+      list.appendChild(row);
+    });
+
+    const spacer = document.createElement('div');
+    spacer.style.cssText = 'height:10px; background:#fafafa; border-top:1px solid #eee;';
+    list.appendChild(spacer);
+
+    const allHeader = document.createElement('div');
+    allHeader.className = 'continent-label';
+    allHeader.style.cursor = 'default';
+    allHeader.innerHTML = '<span>🌐 전체 호수</span>';
+    list.appendChild(allHeader);
+
+    const info = document.createElement('div');
+    info.style.cssText = 'padding:8px 12px; font-size:11px; color:#777; background:#fff; line-height:1.5;';
+    info.textContent = `전세계 호수를 한 번에 표시 (약 ${otherLakeFeatures.length + MAJOR_LAKES.length}개). 시각적 참고용이며 개별 선택은 불가합니다.`;
+    list.appendChild(info);
+
+    const toggleRow = document.createElement('div');
+    toggleRow.className = 'city-row';
+    const tcb = document.createElement('input');
+    tcb.type = 'checkbox';
+    tcb.checked = showAllLakes;
+    const tname = document.createElement('span');
+    tname.className = 'city-name' + (showAllLakes ? ' checked' : '');
+    tname.textContent = '전체 호수 표시';
+
+    const toggleAll = () => {
+      showAllLakes = !showAllLakes;
+      tcb.checked = showAllLakes;
+      tname.classList.toggle('checked', showAllLakes);
+      updateLakeSummary();
+      renderOtherLakes();
+    };
+    tcb.addEventListener('change', toggleAll);
+    tname.addEventListener('click', toggleAll);
+
+    toggleRow.appendChild(tcb);
+    toggleRow.appendChild(tname);
+    list.appendChild(toggleRow);
+
+    updateLakeSummary();
+  }
+
+  $('resetZoom').onclick = () => {
+    const korea = features.find(f => f.properties.name === 'South Korea');
+    if (korea) {
+      const [cx,cy] = projection(d3.geoCentroid(korea));
+      svg.transition().duration(750).call(zoomBehavior.transform, d3.zoomIdentity.translate(vw/2-cx, vh/2-cy).scale(1));
+    } else {
+      svg.transition().call(zoomBehavior.transform, d3.zoomIdentity);
+    }
+    countryColors.clear();
+    // 게임 중 칠해진 색상도 함께 제거 (초기화의 약속)
+    svg.selectAll('path.country').classed('gcor', false).classed('gwfl', false).classed('gpas', false);
+    removeGridLabels();
+    hideHintPop();
+    el.colorPicker.value = "#FFD700";
+    el.baseColor.value = "#ffffff";
+    el.oceanColor.value = "#e0f0ff";
+    background.attr("fill", "#e0f0ff");
+    el.strokeWidth.value = "0.3";
+    el.strokeValue.textContent = "0.3";
+    svg.selectAll("path.country,.equator-line,.grid-line,.land-outline,.border-mesh,.lake").style("stroke-width","0.3px");
+    gridVisible = false;   gridGroup1.style("display","none"); gridGroup2.style("display","none");
+    labelsVisible = false; updateLabels();
+    equatorVisible = true; equatorGroup1.style("display","block"); equatorGroup2.style("display","block");
+    bordersVisible = true; updateBorders();
+    updateColors();
+    setToggleEmoji('toggleLabels',  labelsVisible);
+    setToggleEmoji('toggleBorders', bordersVisible);
+    setToggleEmoji('toggleGrids',   gridVisible);
+    setToggleEmoji('toggleEquator', equatorVisible);
+    selectedMajorLakes.clear();
+    MAJOR_LAKES.forEach(l => {
+      if (majorLakeFeatures.has(l.ko) && !LAKE_DEFAULT_OFF.has(l.ko)) selectedMajorLakes.add(l.ko);
+    });
+    showAllLakes = false;
+    renderMajorLakes();
+    renderOtherLakes();
+    if (lakePanelOpen) buildLakeList();
+    selectedCities.clear();
+    updateSummary();
+    buildPanelList('');
+    renderCityDots();
+    manualPins = []; pinCounter = 0;
+    buildPinList(); renderPins();
+    closePanels();
+    closeLakePanel();
+    removeGridLabels();
+  };
+
+  document.querySelector('#header .title').addEventListener('click', () => $('resetZoom').click());
+
+  $('savePng').addEventListener('click', () => {
+    const clone = el.svg.cloneNode(true);
+    clone.querySelectorAll('.country').forEach(e => {
+      e.setAttribute('style', `stroke:${e.style.stroke || '#666'};stroke-width:${e.style.strokeWidth || '0.3px'};fill:${e.getAttribute('fill') || '#fff'}`);
+    });
+    clone.querySelectorAll('.land-outline').forEach(e => e.setAttribute('style','stroke:#666;stroke-width:0.3px;fill:none'));
+    clone.querySelectorAll('.border-mesh').forEach(e => e.setAttribute('style',`stroke:#666;stroke-width:0.3px;fill:none;display:${e.style.display}`));
+    clone.querySelectorAll('.lake').forEach(e => {
+      const fill = e.getAttribute('fill') || '#e0f0ff';
+      e.setAttribute('style', `stroke:#888;stroke-width:${e.style.strokeWidth || '0.3px'};fill:${fill}`);
+    });
+    clone.querySelectorAll('.equator-line').forEach(e => e.setAttribute('style','stroke:red;stroke-width:0.3px;fill:none'));
+    clone.querySelectorAll('.grid-line').forEach(e => e.setAttribute('style','stroke:#ccc;stroke-width:0.5px;stroke-dasharray:2 2;fill:none'));
+
+    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml;charset=utf-8'}));
+    const img = new Image();
+    img.onload = () => {
+      const vb = el.svg.viewBox.baseVal;
+      const canvas = document.createElement('canvas');
+      canvas.width = vb.width * 2; canvas.height = vb.height * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = el.oceanColor.value;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'coloring-map.png';
+        a.click();
+      }, 'image/png');
+    };
+    img.src = url;
+  });
+
+  updateColors();
+  renderCityDots();
+  renderPins();
+  buildPinList();
+  updateSummary();
+})();
+</script>
+
+<script>
+// ========== 나라 찾기 게임 ==========
+const FOOD_EMOJIS = ['🍕','🍔','🍜','🍣','🌮','🍩','🍦','🍗','🥗','🍱','🥐','🍛','🧆','🥩','🍤','🍙','🥘','🍝','🥪','🫕','🍢','🍖','🥟','🫔'];
+
+const COUNTRY_KO = {
+  "Afghanistan":"아프가니스탄","Albania":"알바니아","Algeria":"알제리","Andorra":"안도라",
+  "Angola":"앙골라","Antigua and Barbuda":"앤티가바부다","Argentina":"아르헨티나",
+  "Australia":"오스트레일리아","Austria":"오스트리아","Bahamas":"바하마",
+  "Bangladesh":"방글라데시","Barbados":"바베이도스","Belarus":"벨라루스","Belgium":"벨기에",
+  "Belize":"벨리즈","Benin":"베냉","Bhutan":"부탄","Bolivia":"볼리비아",
+  "Bosnia and Herzegovina":"보스니아헤르체고비나","Botswana":"보츠와나","Brazil":"브라질",
+  "Brunei":"브루나이","Bulgaria":"불가리아","Burkina Faso":"부르키나파소","Burundi":"부룬디",
+  "Cambodia":"캄보디아","Cameroon":"카메룬","Canada":"캐나다","Cape Verde":"카보베르데",
+  "Central African Republic":"중앙아프리카공화국","Chad":"차드","Chile":"칠레","China":"중국",
+  "Colombia":"콜롬비아","Comoros":"코모로","Costa Rica":"코스타리카","Croatia":"크로아티아",
+  "Cuba":"쿠바","Cyprus":"키프로스","Czechia":"체코",
+  "Democratic Republic of the Congo":"콩고민주공화국","Denmark":"덴마크","Djibouti":"지부티",
+  "Dominica":"도미니카","Dominican Republic":"도미니카공화국","East Timor":"동티모르",
+  "Ecuador":"에콰도르","Egypt":"이집트","El Salvador":"엘살바도르",
+  "Equatorial Guinea":"적도기니","Eritrea":"에리트레아","Estonia":"에스토니아",
+  "Eswatini":"에스와티니","Ethiopia":"에티오피아","Fiji":"피지","Finland":"핀란드",
+  "France":"프랑스","Gabon":"가봉","Gambia":"감비아","Germany":"독일","Ghana":"가나",
+  "Greece":"그리스","Grenada":"그레나다","Guatemala":"과테말라","Guinea":"기니",
+  "Guinea-Bissau":"기니비사우","Guyana":"가이아나","Haiti":"아이티","Honduras":"온두라스",
+  "Hungary":"헝가리","Iceland":"아이슬란드","India":"인도","Indonesia":"인도네시아",
+  "Iran":"이란","Iraq":"이라크","Ireland":"아일랜드","Israel":"이스라엘","Italy":"이탈리아",
+  "Ivory Coast":"코트디부아르","Jamaica":"자메이카","Japan":"일본","Jordan":"요르단",
+  "Kazakhstan":"카자흐스탄","Kenya":"케냐","Kiribati":"키리바시","Kuwait":"쿠웨이트",
+  "Kyrgyzstan":"키르기스스탄","Laos":"라오스","Latvia":"라트비아","Lebanon":"레바논",
+  "Lesotho":"레소토","Liberia":"라이베리아","Libya":"리비아","Liechtenstein":"리히텐슈타인",
+  "Lithuania":"리투아니아","Luxembourg":"룩셈부르크","Madagascar":"마다가스카르",
+  "Malawi":"말라위","Malaysia":"말레이시아","Maldives":"몰디브","Mali":"말리","Malta":"몰타",
+  "Marshall Islands":"마셜제도","Mauritania":"모리타니","Mauritius":"모리셔스",
+  "Mexico":"멕시코","Micronesia":"미크로네시아","Moldova":"몰도바","Monaco":"모나코",
+  "Mongolia":"몽골","Montenegro":"몬테네그로","Morocco":"모로코","Mozambique":"모잠비크",
+  "Myanmar":"미얀마","Namibia":"나미비아","Nauru":"나우루","Nepal":"네팔",
+  "Netherlands":"네덜란드","New Zealand":"뉴질랜드","Nicaragua":"니카라과","Niger":"니제르",
+  "Nigeria":"나이지리아","North Korea":"북한","North Macedonia":"북마케도니아","Norway":"노르웨이",
+  "Oman":"오만","Pakistan":"파키스탄","Palau":"팔라우","Panama":"파나마",
+  "Papua New Guinea":"파푸아뉴기니","Paraguay":"파라과이","Peru":"페루","Philippines":"필리핀",
+  "Poland":"폴란드","Portugal":"포르투갈","Qatar":"카타르",
+  "Republic of the Congo":"콩고공화국","Romania":"루마니아","Russia":"러시아","Rwanda":"르완다",
+  "Saint Kitts and Nevis":"세인트키츠네비스","Saint Lucia":"세인트루시아",
+  "Saint Vincent and the Grenadines":"세인트빈센트그레나딘","Samoa":"사모아",
+  "San Marino":"산마리노","Saudi Arabia":"사우디아라비아","Senegal":"세네갈","Serbia":"세르비아",
+  "Seychelles":"세이셸","Sierra Leone":"시에라리온","Singapore":"싱가포르",
+  "Slovakia":"슬로바키아","Slovenia":"슬로베니아","Solomon Islands":"솔로몬제도",
+  "Somalia":"소말리아","South Africa":"남아프리카공화국","South Korea":"대한민국",
+  "South Sudan":"남수단","Spain":"스페인","Sri Lanka":"스리랑카","Sudan":"수단",
+  "Suriname":"수리남","Sweden":"스웨덴","Switzerland":"스위스","Syria":"시리아",
+  "São Tomé and Príncipe":"상투메프린시페","Tajikistan":"타지키스탄","Tanzania":"탄자니아",
+  "Thailand":"타이","Togo":"토고","Tonga":"통가","Trinidad and Tobago":"트리니다드토바고",
+  "Tunisia":"튀니지","Turkey":"튀르키예","Turkmenistan":"투르크메니스탄","Tuvalu":"투발루",
+  "Uganda":"우간다","Ukraine":"우크라이나","United Arab Emirates":"아랍에미리트",
+  "United Kingdom":"영국","United States of America":"미국","Uruguay":"우루과이",
+  "Uzbekistan":"우즈베키스탄","Vanuatu":"바누아투","Vatican":"바티칸","Venezuela":"베네수엘라",
+  "Vietnam":"베트남","Yemen":"예멘","Zambia":"잠비아","Zimbabwe":"짐바브웨"
+};
+
+// 나라-대륙 매핑 (중학교 교과서 기준)
+const COUNTRY_CONTINENT = {
+  // === 🌏 아시아 ===
+  "Afghanistan":"아시아","Bahrain":"아시아","Bangladesh":"아시아","Bhutan":"아시아",
+  "Brunei":"아시아","Cambodia":"아시아","China":"아시아","East Timor":"아시아",
+  "India":"아시아","Indonesia":"아시아","Iran":"아시아","Iraq":"아시아",
+  "Israel":"아시아","Japan":"아시아","Jordan":"아시아","Kazakhstan":"아시아",
+  "North Korea":"아시아","South Korea":"아시아","Kuwait":"아시아","Kyrgyzstan":"아시아",
+  "Laos":"아시아","Lebanon":"아시아","Malaysia":"아시아","Maldives":"아시아",
+  "Mongolia":"아시아","Myanmar":"아시아","Nepal":"아시아","Oman":"아시아",
+  "Pakistan":"아시아","Philippines":"아시아","Qatar":"아시아",
+  "Saudi Arabia":"아시아","Singapore":"아시아","Sri Lanka":"아시아","Syria":"아시아",
+  "Taiwan":"아시아","Tajikistan":"아시아","Thailand":"아시아","Turkey":"아시아",
+  "Turkmenistan":"아시아","United Arab Emirates":"아시아","Uzbekistan":"아시아",
+  "Vietnam":"아시아","Yemen":"아시아",
+  "Armenia":"아시아","Azerbaijan":"아시아","Georgia":"아시아",
+
+  // === 🌍 유럽 ===
+  "Albania":"유럽","Andorra":"유럽","Austria":"유럽","Belarus":"유럽",
+  "Belgium":"유럽","Bosnia and Herzegovina":"유럽","Bulgaria":"유럽","Croatia":"유럽",
+  "Cyprus":"유럽","Czechia":"유럽","Denmark":"유럽","Estonia":"유럽",
+  "Finland":"유럽","France":"유럽","Germany":"유럽","Greece":"유럽",
+  "Hungary":"유럽","Iceland":"유럽","Ireland":"유럽","Italy":"유럽",
+  "Latvia":"유럽","Liechtenstein":"유럽","Lithuania":"유럽","Luxembourg":"유럽",
+  "Malta":"유럽","Moldova":"유럽","Monaco":"유럽","Montenegro":"유럽",
+  "Netherlands":"유럽","North Macedonia":"유럽","Norway":"유럽","Poland":"유럽",
+  "Portugal":"유럽","Romania":"유럽","Russia":"유럽","San Marino":"유럽",
+  "Serbia":"유럽","Slovakia":"유럽","Slovenia":"유럽","Spain":"유럽",
+  "Sweden":"유럽","Switzerland":"유럽","Ukraine":"유럽","United Kingdom":"유럽",
+  "Vatican":"유럽",
+
+  // === 🌍 아프리카 ===
+  "Algeria":"아프리카","Angola":"아프리카","Benin":"아프리카","Botswana":"아프리카",
+  "Burkina Faso":"아프리카","Burundi":"아프리카","Cameroon":"아프리카","Cape Verde":"아프리카",
+  "Central African Republic":"아프리카","Chad":"아프리카","Comoros":"아프리카",
+  "Democratic Republic of the Congo":"아프리카","Republic of the Congo":"아프리카",
+  "Djibouti":"아프리카","Egypt":"아프리카","Equatorial Guinea":"아프리카",
+  "Eritrea":"아프리카","Eswatini":"아프리카","Ethiopia":"아프리카","Gabon":"아프리카",
+  "Gambia":"아프리카","Ghana":"아프리카","Guinea":"아프리카","Guinea-Bissau":"아프리카",
+  "Ivory Coast":"아프리카","Kenya":"아프리카","Lesotho":"아프리카","Liberia":"아프리카",
+  "Libya":"아프리카","Madagascar":"아프리카","Malawi":"아프리카","Mali":"아프리카",
+  "Mauritania":"아프리카","Mauritius":"아프리카","Morocco":"아프리카","Mozambique":"아프리카",
+  "Namibia":"아프리카","Niger":"아프리카","Nigeria":"아프리카","Rwanda":"아프리카",
+  "São Tomé and Príncipe":"아프리카","Senegal":"아프리카","Seychelles":"아프리카",
+  "Sierra Leone":"아프리카","Somalia":"아프리카","South Africa":"아프리카",
+  "South Sudan":"아프리카","Sudan":"아프리카","Tanzania":"아프리카","Togo":"아프리카",
+  "Tunisia":"아프리카","Uganda":"아프리카","Zambia":"아프리카","Zimbabwe":"아프리카",
+
+  // === 🌎 북아메리카 ===
+  "Antigua and Barbuda":"북아메리카","Bahamas":"북아메리카","Barbados":"북아메리카",
+  "Belize":"북아메리카","Canada":"북아메리카","Costa Rica":"북아메리카",
+  "Cuba":"북아메리카","Dominica":"북아메리카","Dominican Republic":"북아메리카",
+  "El Salvador":"북아메리카","Grenada":"북아메리카","Guatemala":"북아메리카",
+  "Haiti":"북아메리카","Honduras":"북아메리카","Jamaica":"북아메리카",
+  "Mexico":"북아메리카","Nicaragua":"북아메리카","Panama":"북아메리카",
+  "Saint Kitts and Nevis":"북아메리카","Saint Lucia":"북아메리카",
+  "Saint Vincent and the Grenadines":"북아메리카","Trinidad and Tobago":"북아메리카",
+  "United States of America":"북아메리카",
+
+  // === 🌎 남아메리카 ===
+  "Argentina":"남아메리카","Bolivia":"남아메리카","Brazil":"남아메리카","Chile":"남아메리카",
+  "Colombia":"남아메리카","Ecuador":"남아메리카","Guyana":"남아메리카","Paraguay":"남아메리카",
+  "Peru":"남아메리카","Suriname":"남아메리카","Uruguay":"남아메리카","Venezuela":"남아메리카",
+
+  // === 🌏 오세아니아 ===
+  "Australia":"오세아니아","Fiji":"오세아니아","Kiribati":"오세아니아","Marshall Islands":"오세아니아",
+  "Micronesia":"오세아니아","Nauru":"오세아니아","New Zealand":"오세아니아","Palau":"오세아니아",
+  "Papua New Guinea":"오세아니아","Samoa":"오세아니아","Solomon Islands":"오세아니아",
+  "Tonga":"오세아니아","Tuvalu":"오세아니아","Vanuatu":"오세아니아"
+};
+
+// 6개 대륙 순서
+const CONTINENTS_FOR_GAME = ["아시아","유럽","아프리카","북아메리카","남아메리카","오세아니아"];
+
+// 게임에서 제외할 나라 (출제 X)
+const EXCLUDED_FROM_GAME = ["Kosovo", "Palestine", "Somaliland", "Western Sahara"];
+
+// 중학교 필수 30개국
+const LEVEL_MIDDLE = [
+  // 아시아 (11) - 튀르키예 포함
+  "South Korea", "Japan", "China", "India", "Thailand", "Vietnam", 
+  "Indonesia", "Kazakhstan", "Saudi Arabia", "United Arab Emirates", "Turkey",
+  // 유럽 (6)
+  "United Kingdom", "Germany", "France", "Spain", "Italy", "Russia",
+  // 아프리카 (5)
+  "Algeria", "Egypt", "Nigeria", "Ethiopia", "South Africa",
+  // 북아메리카 (3)
+  "United States of America", "Canada", "Mexico",
+  // 남아메리카 (3)
+  "Brazil", "Bolivia", "Argentina",
+  // 오세아니아 (2)
+  "Australia", "New Zealand"
+];
+
+// 고등학교 필수 70개국 (중학 30 + 추가 40)
+const LEVEL_HIGH = [
+  // 중학 30개 (그대로 포함)
+  ...LEVEL_MIDDLE,
+  // 아시아 추가 14개 (네팔 제외, 카타르 포함)
+  "Iran", "Iraq", "Israel", "Singapore", "Malaysia", 
+  "Myanmar", "Philippines", "Pakistan", "Cambodia", 
+  "Bangladesh", "Qatar", "Sri Lanka", "Mongolia", "Syria",
+  // 유럽 추가 15개 (아일랜드 포함)
+  "Iceland", "Norway", "Sweden", "Finland", "Switzerland", 
+  "Netherlands", "Ukraine", "Greece", "Czechia", "Belgium",
+  "Portugal", "Denmark", "Poland", "Austria", "Ireland",
+  // 아프리카 추가 4개
+  "Kenya", "Democratic Republic of the Congo", "Zambia", "Morocco",
+  // 북중미 추가 2개
+  "Cuba", "Panama",
+  // 남아메리카 추가 5개
+  "Colombia", "Peru", "Chile", "Venezuela", "Ecuador"
+  // 오세아니아 추가 0개
+];
+
+// 수도 좌표 힌트
+const CAPITALS = {
+  "Russia":"모스크바(55.8°N,37.6°E)","Canada":"오타와(45.4°N,75.7°W)","United States of America":"워싱턴DC(38.9°N,77°W)",
+  "China":"베이징(39.9°N,116.4°E)","Brazil":"브라질리아(15.8°S,47.9°W)","Australia":"캔버라(35.3°S,149.1°E)",
+  "India":"뉴델리(28.6°N,77.2°E)","Argentina":"부에노스아이레스(34.6°S,58.4°W)","Kazakhstan":"아스타나(51.2°N,71.5°E)",
+  "Algeria":"알제(36.7°N,3.1°E)","Democratic Republic of the Congo":"킨샤사(4.3°S,15.3°E)","Saudi Arabia":"리야드(24.7°N,46.7°E)",
+  "Mexico":"멕시코시티(19.4°N,99.1°W)","Indonesia":"자카르타(6.2°S,106.8°E)","Sudan":"하르툼(15.6°N,32.5°E)",
+  "Libya":"트리폴리(32.9°N,13.2°E)","Iran":"테헤란(35.7°N,51.4°E)","Mongolia":"울란바토르(47.9°N,106.9°E)",
+  "Peru":"리마(12°S,77°W)","Chad":"은자메나(12.1°N,15°E)","Niger":"니아메이(13.5°N,2.1°E)",
+  "Angola":"루안다(8.8°S,13.2°E)","Mali":"바마코(12.7°N,8°W)","South Africa":"프리토리아(25.7°S,28.2°E)",
+  "Colombia":"보고타(4.7°N,74.1°W)","Ethiopia":"아디스아바바(9°N,38.7°E)","Bolivia":"수크레(19°S,65.3°W)",
+  "Mauritania":"누악쇼트(18.1°N,15.9°W)","Egypt":"카이로(30°N,31.2°E)","Tanzania":"도도마(6.2°S,35.7°E)",
+  "Nigeria":"아부자(9.1°N,7.5°E)","Venezuela":"카라카스(10.5°N,66.9°W)","Namibia":"빈트후크(22.6°S,17.1°E)",
+  "Mozambique":"마푸투(25.9°S,32.6°E)","Pakistan":"이슬라마바드(33.7°N,73.1°E)","Turkey":"앙카라(39.9°N,32.9°E)",
+  "Chile":"산티아고(33.5°S,70.7°W)","Zambia":"루사카(15.4°S,28.3°E)","Myanmar":"네피도(19.7°N,96.1°E)",
+  "Afghanistan":"카불(34.5°N,69.2°E)","Somalia":"모가디슈(2°N,45.3°E)","Central African Republic":"방기(4.4°N,18.6°E)",
+  "South Sudan":"주바(4.9°N,31.6°E)","Ukraine":"키이우(50.4°N,30.5°E)","Madagascar":"안타나나리보(18.9°S,47.5°E)",
+  "Botswana":"가보로네(24.7°S,25.9°E)","Kenya":"나이로비(1.3°S,36.8°E)","Yemen":"사나(15.4°N,44.2°E)",
+  "Thailand":"방콕(13.8°N,100.5°E)","Spain":"마드리드(40.4°N,3.7°W)","France":"파리(48.9°N,2.3°E)",
+  "Sweden":"스톡홀름(59.3°N,18.1°E)","Morocco":"라바트(34°N,6.8°W)","Cameroon":"야운데(3.9°N,11.5°E)",
+  "Uzbekistan":"타슈켄트(41.3°N,69.3°E)","Iraq":"바그다드(33.3°N,44.4°E)","Paraguay":"아순시온(25.3°S,57.6°W)",
+  "Zimbabwe":"하라레(17.8°S,31.1°E)","Japan":"도쿄(35.7°N,139.7°E)","Germany":"베를린(52.5°N,13.4°E)",
+  "Norway":"오슬로(59.9°N,10.7°E)","Finland":"헬싱키(60.2°N,24.9°E)","Malaysia":"쿠알라룸푸르(3.1°N,101.7°E)",
+  "Ivory Coast":"야무수크로(6.8°N,5.3°W)","Poland":"바르샤바(52.2°N,21°E)","Oman":"무스카트(23.6°N,58.6°E)",
+  "Italy":"로마(41.9°N,12.5°E)","Philippines":"마닐라(14.6°N,121°E)","Ecuador":"키토(0.2°S,78.5°W)",
+  "Burkina Faso":"와가두구(12.4°N,1.5°W)","New Zealand":"웰링턴(41.3°S,174.8°E)","Gabon":"리브르빌(0.4°N,9.5°E)",
+  "Guinea":"코나크리(9.5°N,13.7°W)","United Kingdom":"런던(51.5°N,0.1°W)","Uganda":"캄팔라(0.3°N,32.6°E)",
+  "Ghana":"아크라(5.6°N,0.2°W)","Romania":"부쿠레슈티(44.4°N,26.1°E)","Laos":"비엔티안(18°N,102.6°E)",
+  "Guyana":"조지타운(6.8°N,58.2°W)","Belarus":"민스크(53.9°N,27.6°E)","Kyrgyzstan":"비슈케크(42.9°N,74.6°E)",
+  "Senegal":"다카르(14.7°N,17.4°W)","Syria":"다마스쿠스(33.5°N,36.3°E)","Cambodia":"프놈펜(11.6°N,105°E)",
+  "Uruguay":"몬테비데오(34.9°S,56.2°W)","Suriname":"파라마리보(5.8°N,55.2°W)","Tunisia":"튀니스(36.8°N,10.2°E)",
+  "Bangladesh":"다카(23.7°N,90.4°E)","Papua New Guinea":"포트모르즈비(9.4°S,147.2°E)","Turkmenistan":"아시가바트(37.9°N,58.4°E)",
+  "Nepal":"카트만두(27.7°N,85.3°E)","Tajikistan":"두샨베(38.6°N,68.8°E)","Greece":"아테네(38°N,23.7°E)",
+  "Nicaragua":"마나과(12.1°N,86.3°W)","North Korea":"평양(39°N,125.8°E)","Malawi":"릴롱궤(13.9°S,33.8°E)",
+  "Eritrea":"아스마라(15.3°N,38.9°E)","Benin":"포르토노보(6.4°N,2.6°E)","Honduras":"테구시갈파(14.1°N,87.2°W)",
+  "Liberia":"몬로비아(6.3°N,10.8°W)","Bulgaria":"소피아(42.7°N,23.3°E)","Cuba":"아바나(23.1°N,82.4°W)",
+  "Guatemala":"과테말라시티(14.6°N,90.5°W)","Iceland":"레이캬비크(64.1°N,22°W)","South Korea":"서울(37.6°N,127°E)",
+  "Hungary":"부다페스트(47.5°N,19°E)","Jordan":"암만(31.9°N,35.9°E)","Portugal":"리스본(38.7°N,9.1°W)",
+  "Serbia":"베오그라드(44.8°N,20.5°E)","Austria":"빈(48.2°N,16.4°E)","Czechia":"프라하(50.1°N,14.4°E)",
+  "Panama":"파나마시티(9°N,79.5°W)","Sierra Leone":"프리타운(8.5°N,13.2°W)","Ireland":"더블린(53.3°N,6.3°W)",
+  "Sri Lanka":"스리자야와르데네푸라코테(7°N,80°E)","Lithuania":"빌뉴스(54.7°N,25.3°E)","Latvia":"리가(56.9°N,24.1°E)",
+  "Togo":"로메(6.1°N,1.2°E)","Croatia":"자그레브(45.8°N,16°E)","Bosnia and Herzegovina":"사라예보(43.9°N,18.4°E)",
+  "Slovakia":"브라티슬라바(48.1°N,17.1°E)","Dominican Republic":"산토도밍고(18.5°N,69.9°W)",
+  "Estonia":"탈린(59.4°N,24.7°E)","Denmark":"코펜하겐(55.7°N,12.6°E)","Netherlands":"암스테르담(52.4°N,4.9°E)",
+  "Switzerland":"베른(46.9°N,7.4°E)","Bhutan":"팀부(27.5°N,89.6°E)","Guinea-Bissau":"비사우(11.9°N,15.6°W)",
+  "Moldova":"키시나우(47°N,28.9°E)","Belgium":"브뤼셀(50.9°N,4.4°E)","Lesotho":"마세루(29.3°S,27.5°E)",
+  "Rwanda":"키갈리(1.9°S,30.1°E)","North Macedonia":"스코페(42°N,21.4°E)","Djibouti":"지부티(11.6°N,43.1°E)",
+  "Belize":"벨모판(17.3°N,88.8°W)","El Salvador":"산살바도르(13.7°N,89.2°W)",
+  "Israel":"예루살렘(31.8°N,35.2°E)","Slovenia":"류블랴나(46.1°N,14.5°E)","Montenegro":"포드고리차(42.4°N,19.3°E)",
+  "East Timor":"딜리(8.6°S,125.6°E)","Vanuatu":"포트빌라(17.7°S,168.3°E)","Fiji":"수바(18.1°S,178.4°E)",
+  "Kuwait":"쿠웨이트시티(29.4°N,47.9°E)","Eswatini":"음바바네(26.3°S,31.1°E)","Luxembourg":"룩셈부르크(49.6°N,6.1°E)",
+  "Vietnam":"하노이(21°N,105.9°E)","Albania":"티라나(41.3°N,19.8°E)","Equatorial Guinea":"말라보(3.7°N,8.8°E)",
+  "Burundi":"기테가(3.4°S,29.9°E)","Haiti":"포르토프랭스(18.5°N,72.3°W)",
+  "Solomon Islands":"호니아라(9.4°S,160°E)","Papua New Guinea":"포트모르즈비(9.4°S,147.2°E)",
+  "Brunei":"반다르스리브가완(4.9°N,114.9°E)","Singapore":"싱가포르(1.4°N,103.8°E)",
+  "Cyprus":"니코시아(35.2°N,33.4°E)","Jamaica":"킹스턴(18°N,76.8°W)","Trinidad and Tobago":"포트오브스페인(10.7°N,61.5°W)"
+};
+
+// 난이도: 1쉬움 2보통 3어려움
+const DIFF = {
+  "Russia":1,"Canada":1,"United States of America":1,"China":1,"Brazil":1,"Australia":1,
+  "India":1,"Argentina":1,"Kazakhstan":1,"Algeria":1,"Democratic Republic of the Congo":1,
+  "Saudi Arabia":1,"Mexico":1,"Indonesia":1,"Sudan":1,"Libya":1,"Iran":1,"Mongolia":1,
+  "Peru":1,"Chad":1,"Niger":1,"Angola":1,"Mali":1,"South Africa":1,"Colombia":1,
+  "Ethiopia":1,"Bolivia":1,"Mauritania":1,"Egypt":1,"Tanzania":1,"Nigeria":1,
+  "Venezuela":1,"Namibia":1,"Mozambique":1,"Pakistan":1,"Turkey":1,"Chile":1,
+  "Zambia":1,"Myanmar":1,"Afghanistan":1,"Somalia":1,"Central African Republic":1,
+  "South Sudan":1,"Ukraine":1,"Madagascar":1,"Botswana":1,
+  "Kenya":2,"Yemen":2,"Thailand":2,"Spain":2,"France":2,"Sweden":2,"Morocco":2,
+  "Cameroon":2,"Uzbekistan":2,"Iraq":2,"Paraguay":2,"Zimbabwe":2,"Japan":2,
+  "Germany":2,"Norway":2,"Finland":2,"Malaysia":2,"Ivory Coast":2,"Poland":2,
+  "Oman":2,"Italy":2,"Philippines":2,"Ecuador":2,"Burkina Faso":2,"New Zealand":2,
+  "Gabon":2,"Guinea":2,"United Kingdom":2,"Uganda":2,"Ghana":2,"Romania":2,
+  "Laos":2,"Guyana":2,"Belarus":2,"Kyrgyzstan":2,"Senegal":2,"Syria":2,
+  "Cambodia":2,"Uruguay":2,"Suriname":2,"Tunisia":2,"Bangladesh":2,
+  "Papua New Guinea":2,"Turkmenistan":2,"Nepal":2,"Tajikistan":2,"Greece":2,
+  "Nicaragua":2,"North Korea":2,"Malawi":2,"Eritrea":2,"Benin":2,"Honduras":2,
+  "Liberia":2,"Bulgaria":2,"Cuba":2,"Guatemala":2,"Iceland":2,"South Korea":2,
+  "Hungary":2,"Jordan":2,"Portugal":2,"Serbia":2,"Austria":2,"Czechia":2,
+  "Panama":2,"Sierra Leone":2,"Ireland":2,"Sri Lanka":2,"Lithuania":2,"Latvia":2,
+  "Togo":2,"Croatia":2,"Bosnia and Herzegovina":2,"Slovakia":2,"Dominican Republic":2,
+  "Estonia":2,"Denmark":2,"Netherlands":2,"Switzerland":2,"Bhutan":2,"Guinea-Bissau":2,
+  "Moldova":2,"Belgium":2,"Lesotho":2,"Solomon Islands":2,"Albania":2,
+  "Equatorial Guinea":2,"Burundi":2,"Haiti":2,"Rwanda":2,"North Macedonia":2,
+  "Djibouti":2,"Belize":2,"El Salvador":2
+};
+
+let LB = [];  // 세션 순위표
+
+(function initGame() {
+  var startBtn = document.getElementById('gbtn');
+
+  // ===== 🍳 버튼 =====
+  document.getElementById('btn-game-egg').addEventListener('click', function() {
+    document.getElementById('game-overlay').classList.add('active');
+  });
+
+  // ===== 시작 버튼 =====
+  startBtn.addEventListener('click', function() {
+    var modeRadio = document.querySelector('input[name="game-mode"]:checked');
+    var mode = modeRadio ? modeRadio.value : 'continent';
+    
+    // 수준별 라디오 안 선택됨 → 대륙별 모드로 간주
+    if (!modeRadio) {
+      var checked = document.querySelectorAll('.continent-cb:checked').length;
+      if (checked === 0) {
+        alert('최소 1개 이상의 대륙을 선택하거나 수준을 선택해주세요!');
+        return;
+      }
+    }
+    
+    document.getElementById('game-overlay').classList.remove('active');
+    startGame(null);
+  });
+
+  // ===== 대륙 전체 선택/해제 =====
+  document.getElementById('cb-all').addEventListener('click', function() {
+    document.querySelectorAll('.continent-cb').forEach(function(cb) { cb.checked = true; });
+    // 수준별 라디오 해제
+    document.querySelectorAll('input[name="game-mode"]').forEach(function(r) { r.checked = false; });
+  });
+  document.getElementById('cb-none').addEventListener('click', function() {
+    document.querySelectorAll('.continent-cb').forEach(function(cb) { cb.checked = false; });
+  });
+
+  // ===== 대륙 체크박스 클릭 시 수준별 라디오 해제 =====
+  document.querySelectorAll('.continent-cb').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      // 수준별 라디오 해제
+      document.querySelectorAll('input[name="game-mode"]').forEach(function(r) { r.checked = false; });
     });
   });
 
-  $('slider-sd').addEventListener('input',e=>{$('sd-value').textContent=(+e.target.value).toFixed(1);if(sdBorderLayer)sdBorderLayer.setStyle({weight:+e.target.value});if(sdBorderLayer)sdBorderLayer.bringToFront();});
-  $('slider-nk').addEventListener('input',e=>{
-    $('nk-value').textContent=(+e.target.value).toFixed(1);
-    if(nkLayer)nkLayer.setStyle({weight:+e.target.value});
-    if(skLayer)skLayer.setStyle({weight:+e.target.value});
+  // ===== 수준별 라디오 클릭 시 대륙 체크박스 해제 =====
+  document.querySelectorAll('input[name="game-mode"]').forEach(function(r) {
+    r.addEventListener('change', function() {
+      if (r.checked) {
+        document.querySelectorAll('.continent-cb').forEach(function(cb) { cb.checked = false; });
+      }
+    });
   });
-  $('slider-sg').addEventListener('input',e=>{$('sg-value').textContent=(+e.target.value).toFixed(1);if(sgLayer)sgLayer.setStyle({weight:+e.target.value});if(sdBorderLayer)sdBorderLayer.bringToFront();});
-  $('btn-reset').addEventListener('click',()=>location.reload());
-  $('savePng').addEventListener('click',()=>alert('저장 기능을 만들다가 계속 실패. 😢😡😵‍💫 [shift]+[win]+[s]를 이용해주세요.'));
-});
-});
+
+  // ===== 나가기 버튼 =====
+  var cancelBtn = document.getElementById('gcancel-btn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function() {
+      document.getElementById('game-overlay').classList.remove('active');
+    });
+  }
+
+  // ===== 패스 =====
+  document.getElementById('gpass-btn').addEventListener('click', passQ);
+
+  // ===== 힌트 =====
+  document.getElementById('ghint-btn').addEventListener('click', useHint);
+
+  // ===== 나가기 =====
+  document.getElementById('gexit-btn').addEventListener('click', exitGame);
+})();
+
+// ===== 게임 상태 =====
+var G = {
+  active: false, timer: 0, intv: null,
+  queue: [], idx: 0, score: 0,
+  passLeft: 3, wrongCnt: 0,
+  log: [], locked: false,
+  emoji: null, hintUsed: false
+};
+
+function getDiff(score) {
+  // Keep function for code structure, but result is not used anymore
+  return score < 8 ? 1 : score < 15 ? 2 : 3;
+}
+
+function buildQueue(maxDiff) {
+  // 게임 모드 확인
+  // 수준별 라디오가 선택되어 있으면 수준별, 아니면 대륙별
+  var modeRadio = document.querySelector('input[name="game-mode"]:checked');
+  var mode = modeRadio ? modeRadio.value : 'continent';
+  
+  var pool = [];
+  
+  if (mode === 'middle') {
+    // 중학교 지리 교과서 30개
+    pool = LEVEL_MIDDLE.slice();
+  } else if (mode === 'high') {
+    // 고등학교 교과서 70개
+    pool = LEVEL_HIGH.slice();
+  } else if (mode === 'all') {
+    // 모든 나라 (제외 나라 빼고)
+    pool = Object.keys(COUNTRY_KO).filter(function(en) {
+      return EXCLUDED_FROM_GAME.indexOf(en) === -1;
+    });
+  } else {
+    // 대륙별
+    var selectedContinents = [];
+    document.querySelectorAll('.continent-cb:checked').forEach(function(cb) {
+      selectedContinents.push(cb.value);
+    });
+    
+    pool = Object.keys(COUNTRY_KO).filter(function(en) {
+      if (EXCLUDED_FROM_GAME.indexOf(en) !== -1) return false;
+      var continent = COUNTRY_CONTINENT[en];
+      return continent && selectedContinents.indexOf(continent) !== -1;
+    });
+  }
+  
+  // 지도에 실제 존재하는 나라만 필터링
+  var validKeys = pool.filter(function(en) {
+    return window._gameFeatureByName && window._gameFeatureByName.has(en);
+  });
+  
+  // 랜덤 셔플
+  return validKeys.sort(function(){ return Math.random() - 0.5; });
+}
+
+function startGame(emoji) {
+  if (!window._gameFeatureByName) {
+    alert('지도 데이터 로딩 중입니다. 잠시 후 다시 시도해주세요!');
+    return;
+  }
+  G.active = true; G.timer = 60; G.score = 0;
+  G.passLeft = 3; G.wrongCnt = 0; G.log = [];
+  G.queue = buildQueue(getDiff(0));
+  G.idx = 0; G.locked = false; G.emoji = emoji; G.hintUsed = false;
+
+  // HIDE TOOLBAR
+  document.getElementById('toolbar').style.display = 'none';
+  document.getElementById('ghud').classList.add('on');
+
+  // ========== COMPLETE RESET FOR GAME ==========
+  
+  // 1. Clear all country colors
+  d3.selectAll('path.country').attr('fill', '#ffffff')
+    .classed('gcor', false).classed('gwfl', false).classed('gpas', false);
+
+  // 2. Close ALL panels (city, pin, lake)
+  if (window._gameClosePanels) {
+    window._gameClosePanels();
+  }
+  if (window._gameCloseLakePanel) {
+    window._gameCloseLakePanel();
+  }
+
+  // 3. Clear all city dots and pins using exposed variables
+  if (window._gameMapVars) {
+    window._gameMapVars.selectedCities.clear();
+    window._gameMapVars.clearManualPins(); // Use method to properly clear
+  }
+  
+  // 4. Re-render to clear dots from map using exposed functions
+  if (window._gameRenderCityDots) window._gameRenderCityDots();
+  if (window._gameRenderPins) window._gameRenderPins();
+
+  // 5. Reset zoom and center to Korea view (scale 0.8, centered on Korea)
+  if (window._gameProjection && window._gameZoomBehavior && window._gameSvg) {
+    const koreaCoords = window._gameProjection([128, 36]); // Korea center
+    const vw = window.innerWidth;
+    const vh = document.getElementById('map').parentElement.clientHeight || (window.innerHeight - 80);
+    const centerX = vw / 2;
+    const centerY = vh / 2;
+    const scale = 0.8;
+    
+    // Transform to center Korea with zoom 0.8
+    const transform = d3.zoomIdentity
+      .translate(centerX, centerY)
+      .scale(scale)
+      .translate(-koreaCoords[0], -koreaCoords[1]);
+    
+    window._gameSvg.transition().duration(500).call(window._gameZoomBehavior.transform, transform);
+  }
+
+  // 6. Show grid lines and equator for game
+  d3.selectAll('.grids1,.grids2').style('display','block');
+  d3.selectAll('.equator1,.equator2').style('display','block');
+  showGridLabels();
+  
+  // 7. Turn OFF country labels and turn ON borders
+  if (window._gameSetLabels) window._gameSetLabels(false);
+  if (window._gameSetBorders) window._gameSetBorders(true);
+  
+  // 8. 호수 기본값으로 리셋 (전체 호수 표시 끄기, 주요 호수만)
+  var lakeDefaultBtn = document.getElementById('btn-lake-default');
+  if (lakeDefaultBtn) lakeDefaultBtn.click();
+
+  updatePassBtn(); updateWrong();
+  nextQ();
+
+  clearInterval(G.intv);
+  G.intv = setInterval(function() {
+    G.timer--;
+    var t = document.getElementById('gtimer');
+    t.textContent = G.timer;
+    t.className = G.timer <= 10 ? 'red' : '';
+    
+    // 10초 이하면 화면 전체 빨간 깜빡임
+    var flash = document.getElementById('danger-flash');
+    if (flash) {
+      if (G.timer <= 10 && G.timer > 0) {
+        flash.classList.add('on');
+      } else {
+        flash.classList.remove('on');
+      }
+    }
+    
+    if (G.timer <= 0) endGame();
+  }, 1000);
+}
+
+function nextQ() {
+  // 큐가 끝났으면 게임 종료 (남은 시간 무시)
+  if (G.idx >= G.queue.length) {
+    endGame();
+    return;
+  }
+  G.wrongCnt = 0; G.hintUsed = false;
+  updateWrong();
+  document.getElementById('ghint-btn').disabled = false;
+  document.getElementById('gq').textContent = COUNTRY_KO[G.queue[G.idx]] || G.queue[G.idx];
+  document.getElementById('gscore').textContent = G.score;
+  hideHintPop();
+}
+
+function handleGameClick(feature) {
+  if (!G.active || G.locked) return;
+  var en = G.queue[G.idx];
+  var clicked = feature.properties.name;
+
+  if (clicked === en) {
+    // 정답
+    G.score++; G.log.push({name:en, ko:COUNTRY_KO[en], result:'correct'});
+    d3.selectAll('path.country').filter(function(d){ return d.properties.name === en; }).classed('gcor', true);
+    showFB('⭕', '#4caf50');
+    G.idx++;
+    document.getElementById('gscore').textContent = G.score;
+    setTimeout(nextQ, 350);
+  } else {
+    // 오답
+    G.wrongCnt++;
+    d3.selectAll('path.country').filter(function(d){ return d.properties.name === clicked; }).classed('gwfl', true);
+    showFB('❌', '#ef5350');
+    G.locked = true;
+    G.log.push({name:en, ko:COUNTRY_KO[en], result:'wrong'});
+    setTimeout(function() {
+      d3.selectAll('path.country').filter(function(d){ return d.properties.name === clicked; }).classed('gwfl', false);
+      G.locked = false;
+      if (G.wrongCnt >= 3) {
+        // 3번 틀리면 빨강으로 표시
+        G.log.push({name:en, ko:COUNTRY_KO[en], result:'wrong3'});
+        d3.selectAll('path.country').filter(function(d){ return d.properties.name === en; }).classed('gwfl', true);
+        G.idx++;
+        setTimeout(nextQ, 300);
+      }
+      updateWrong();
+    }, 700);
+    updateWrong();
+  }
+}
+
+function passQ() {
+  if (G.passLeft <= 0 || !G.active) return;
+  var en = G.queue[G.idx];
+  G.log.push({name:en, ko:COUNTRY_KO[en], result:'pass'});
+  d3.selectAll('path.country').filter(function(d){ return d.properties.name === en; }).classed('gpas', true);
+  G.passLeft--; G.idx++;
+  updatePassBtn();
+  nextQ();
+}
+
+function useHint() {
+  if (!G.active || G.hintUsed) return;
+  var en = G.queue[G.idx];
+  var cap = CAPITALS[en];
+  G.hintUsed = true;
+  G.timer = Math.max(1, G.timer - 1);
+  document.getElementById('gtimer').textContent = G.timer;
+  document.getElementById('ghint-btn').disabled = true;
+  showHintPop(cap ? '💡 수도: ' + cap : '💡 수도 정보 없음');
+}
+
+function exitGame() {
+  clearInterval(G.intv);
+  G.active = false;
+  document.getElementById('ghud').classList.remove('on');
+  document.getElementById('toolbar').style.display = '';
+  // 나머지는 '초기화' 버튼이 알아서 처리해줌 (게임 색상/힌트/경위선 등)
+  document.getElementById('resetZoom').click();
+}
+
+function endGame() {
+  clearInterval(G.intv);
+  G.active = false;
+  document.getElementById('ghud').classList.remove('on');
+  document.getElementById('toolbar').style.display = '';
+  hideHintPop();
+  d3.selectAll('.grids1,.grids2').style('display','none');
+  removeGridLabels();
+  
+  // 깜빡임 끄기
+  var flash = document.getElementById('danger-flash');
+  if (flash) flash.classList.remove('on');
+  
+  // Reset zoom to Korea center (0.8 scale) for result view
+  if (window._gameProjection && window._gameZoomBehavior && window._gameSvg) {
+    const koreaCoords = window._gameProjection([128, 36]);
+    const vw = window.innerWidth;
+    const vh = document.getElementById('map').parentElement.clientHeight || (window.innerHeight - 80);
+    const centerX = vw / 2;
+    const centerY = vh / 2;
+    const scale = 0.8;
+    
+    const transform = d3.zoomIdentity
+      .translate(centerX, centerY)
+      .scale(scale)
+      .translate(-koreaCoords[0], -koreaCoords[1]);
+    
+    // Wait for zoom animation to complete before showing result
+    window._gameSvg.transition().duration(500)
+      .call(window._gameZoomBehavior.transform, transform)
+      .on('end', function() {
+        // Show result AFTER zoom completes
+        showResult();
+      });
+  } else {
+    // No zoom behavior - show result immediately
+    showResult();
+  }
+}
+
+function showResult() {
+  var corrects = G.log.filter(function(l){ return l.result === 'correct'; });
+  var wrong3   = G.log.filter(function(l){ return l.result === 'wrong3'; });
+  var passes   = G.log.filter(function(l){ return l.result === 'pass'; });
+
+  // Add markers and labels on map for all result countries
+  addResultMarkers(corrects, wrong3, passes);
+
+  var html = '<div class="grbox">';
+  // Remove title and score subtitle - just show badges
+  html += '<div class="grbadges">';
+  html += '<div class="grbadge bc"><div class="n">' + corrects.length + '</div><div class="l">✅ 정답</div></div>';
+  html += '<div class="grbadge bw"><div class="n">' + wrong3.length + '</div><div class="l">❌ 3번 틀림</div></div>';
+  html += '<div class="grbadge bp"><div class="n">' + passes.length + '</div><div class="l">⏭️ 패스</div></div>';
+  html += '</div>';
+  html += '<div style="text-align:center;font-size:12px;color:#b0bec5;margin-bottom:12px;">💡 결과 지도를 마우스 휠로 확대/축소, 드래그로 이동하며 자세히 살펴볼 수 있어요!</div>';
+  html += '<div class="grbtns"><button class="grbtn grbtn-go" onclick="doRetry()">다시 하기</button><button class="grbtn grbtn-cl" onclick="doClose()">지도로 돌아가기</button></div>';
+  html += '</div>';
+
+  var rs = document.getElementById('gresult');
+  rs.innerHTML = html;
+  rs.classList.add('on');
+}
+
+// Add markers and labels for game result countries
+function addResultMarkers(corrects, wrong3, passes) {
+  // Remove any existing result markers
+  d3.selectAll('.result-marker').remove();
+  
+  if (!window._gameProjection || !window._gameFeatureByName) return;
+  if (!window._gameMapGroup1 || !window._gameMapGroup2) return;
+  
+  // Add markers to BOTH map groups (for wraparound)
+  var markerGroup1 = window._gameMapGroup1.append('g').attr('class', 'result-marker');
+  var markerGroup2 = window._gameMapGroup2.append('g').attr('class', 'result-marker');
+  
+  // Helper function to add label for a country
+  function addMarker(countryName, koreanName, color) {
+    var feature = window._gameFeatureByName.get(countryName);
+    if (!feature) return;
+    
+    // Get centroid
+    var centroid = d3.geoCentroid(feature);
+    var coords = window._gameProjection(centroid);
+    if (!coords) return;
+    
+    // Add to both groups
+    [markerGroup1, markerGroup2].forEach(function(markerGroup) {
+      // Add label only (no circle pin)
+      markerGroup.append('text')
+        .attr('x', coords[0])
+        .attr('y', coords[1])
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '12px')
+        .attr('font-weight', 'bold')
+        .attr('fill', color)
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 3)
+        .attr('paint-order', 'stroke')
+        .text(koreanName);
+    });
+  }
+  
+  // Add markers for each category
+  corrects.forEach(function(item) {
+    addMarker(item.name, item.ko, '#66bb6a'); // Green
+  });
+  
+  wrong3.forEach(function(item) {
+    addMarker(item.name, item.ko, '#ef5350'); // Red
+  });
+  
+  passes.forEach(function(item) {
+    addMarker(item.name, item.ko, '#ffa726'); // Orange
+  });
+}
+
+function doRetry() {
+  document.getElementById('gresult').classList.remove('on');
+  d3.selectAll('path.country').classed('gcor', false).classed('gwfl', false).classed('gpas', false);
+  d3.selectAll('.result-marker').remove(); // Remove markers
+  if (window._gameUpdateColors) window._gameUpdateColors();
+  document.getElementById('game-overlay').classList.add('active');
+}
+
+function doClose() {
+  document.getElementById('gresult').classList.remove('on');
+  d3.selectAll('path.country').classed('gcor', false).classed('gwfl', false).classed('gpas', false);
+  d3.selectAll('.result-marker').remove(); // Remove markers
+  d3.selectAll('.grids1,.grids2').style('display','none');
+  removeGridLabels();
+  if (window._gameUpdateColors) window._gameUpdateColors();
+  // Complete reset like exitGame - click resetZoom to restore everything
+  document.getElementById('resetZoom').click();
+}
+
+function updatePassBtn() {
+  var b = document.getElementById('gpass-btn');
+  b.textContent = '⏭️ 패스 (' + G.passLeft + ')';
+  b.disabled = G.passLeft <= 0;
+}
+function updateWrong() {
+  var dots = ['○','○','○'].map(function(_,i){ return i < G.wrongCnt ? '●' : '○'; }).join('');
+  var el = document.getElementById('gwrong');
+  el.textContent = dots;
+  el.style.color = G.wrongCnt >= 3 ? '#ff5252' : G.wrongCnt >= 2 ? '#ff9800' : '#fff';
+}
+function showFB(text, color) {
+  var fb = document.getElementById('gfb');
+  fb.textContent = text; fb.style.color = color; fb.style.display = 'block';
+  fb.style.animation = 'none';
+  requestAnimationFrame(function(){ fb.style.animation = 'gbounce .6s ease forwards'; });
+  setTimeout(function(){ fb.style.display = 'none'; }, 600);
+}
+function showHintPop(text) {
+  var p = document.getElementById('ghint-pop');
+  p.textContent = text; p.style.display = 'block';
+}
+function hideHintPop() {
+  document.getElementById('ghint-pop').style.display = 'none';
+}
+
+// ===== 경위선 좌표 라벨 =====
+function showGridLabels() {
+  removeGridLabels();
+  if (!window._gameProjection) return;
+  var proj = window._gameProjection;
+  var svg  = d3.select('#map');
+
+  // 게임 중 경위선: 파란 점선 (기본과 동일 스타일, 굵기만 살짝 강조)
+  d3.selectAll('.grid-line')
+    .style('stroke', '#6baed6')
+    .style('stroke-width', '0.8px')
+    .style('stroke-dasharray', '4 3');
+
+  // 줌 transform 반영
+  var t = d3.zoomTransform(document.getElementById('map'));
+  var vw = window.innerWidth, vh = window.innerHeight;
+  
+  function txy(lng, lat, offsetX) {
+    var raw = proj([lng, lat]);
+    if (!raw) return null;
+    return [(raw[0] + (offsetX || 0)) * t.k + t.x, raw[1] * t.k + t.y];
+  }
+
+  // 화면 너비 (지도 한 장의 너비)
+  var mapWidth = vw;
+
+  // 위선 라벨 (30° 간격) - 두 지도 모두에 표시
+  [60, 30, 0, -30, -60].forEach(function(lat) {
+    [0, mapWidth].forEach(function(offsetX) {
+      var pt = txy(-170, lat, offsetX);
+      if (!pt || pt[1] < 10 || pt[1] > vh - 10) return;
+      if (pt[0] < -50 || pt[0] > vw + 50) return; // 화면 밖이면 스킵
+      var label = lat === 0 ? '0° (적도)' : (lat > 0 ? lat + '°N' : Math.abs(lat) + '°S');
+      svg.append('text').attr('class','grid-coord-label')
+        .attr('x', pt[0] + 6).attr('y', pt[1] - 3).text(label);
+    });
+  });
+
+  // 경선 라벨 (30° 간격) - 두 지도 모두에 표시
+  [-150,-120,-90,-60,-30,0,30,60,90,120,150].forEach(function(lng) {
+    [0, mapWidth].forEach(function(offsetX) {
+      var pt = txy(lng, 72, offsetX);
+      if (!pt) return;
+      if (pt[0] < 10 || pt[0] > vw - 10) return;
+      var label = lng === 0 ? '0° (본초자오선)' : (lng > 0 ? lng+'°E' : Math.abs(lng)+'°W');
+      svg.append('text').attr('class','grid-coord-label')
+        .attr('x', pt[0]).attr('y', 14).attr('text-anchor','middle').text(label);
+    });
+  });
+}
+
+function removeGridLabels() {
+  d3.selectAll('.grid-coord-label').remove();
+  d3.selectAll('.grid-line')
+    .style('stroke', null).style('stroke-width', null).style('stroke-dasharray', null);
+
+}
 </script>
+
 </body>
 </html>
