@@ -229,8 +229,9 @@
   <div id="sidebar-header">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div>
-        <h1>세계 상징 사전</h1>
+        <h1 style="cursor:pointer;" onclick="goHome()" title="홈으로">세계 상징 사전</h1>
         <p>WORLD SYMBOL DICTIONARY</p>
+        <p style="font-size:9px;color:#8a9aa8;margin-top:3px;letter-spacing:0.03em;">@geotasoo / 20260612</p>
       </div>
       <button id="random-btn" title="랜덤 나라" onclick="selectRandom()" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px;line-height:1;opacity:0.7;transition:opacity 0.15s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">🎲</button>
     </div>
@@ -259,7 +260,7 @@
 </nav>
 
 <main id="main">
-  <div id="welcome">
+  <div id="welcome" style="display:none">
     <div class="globe">🌍</div>
     <h2>세계 상징 사전</h2>
     <p>국기·국장·국가 속에 담긴 그 땅의 지리, 역사, 삶의 방식을 읽어보세요.</p>
@@ -363,6 +364,9 @@ async function loadFromSheet() {
   buildTagFilter();
   buildList();
   updateProgress();
+  // 초기 화면: 대한민국
+  const krIdx = filtered.findIndex(c => c.code === 'kr');
+  if (krIdx >= 0) selectCountry(krIdx);
 }
 
 function updateProgress() {
@@ -668,6 +672,19 @@ function switchAnthem(code, type) {
 
 loadFromSheet();
 
+function goHome() {
+  const krIdx = filtered.findIndex(c => c.code === 'kr');
+  if (krIdx >= 0) {
+    selectCountry(krIdx);
+    const items = document.querySelectorAll('.country-item');
+    if (items[krIdx]) items[krIdx].scrollIntoView({block:'nearest'});
+  } else {
+    // 아직 로드 안됐으면 welcome 화면으로
+    document.getElementById('welcome').style.display = 'flex';
+    document.getElementById('country-page').style.display = 'none';
+  }
+}
+
 function selectRandom() {
   const pool = filtered.length > 0 ? filtered : COUNTRIES;
   const idx = Math.floor(Math.random() * pool.length);
@@ -824,6 +841,19 @@ function switchAnthem(code, type) {
 }
 
 loadFromSheet();
+
+function goHome() {
+  const krIdx = filtered.findIndex(c => c.code === 'kr');
+  if (krIdx >= 0) {
+    selectCountry(krIdx);
+    const items = document.querySelectorAll('.country-item');
+    if (items[krIdx]) items[krIdx].scrollIntoView({block:'nearest'});
+  } else {
+    // 아직 로드 안됐으면 welcome 화면으로
+    document.getElementById('welcome').style.display = 'flex';
+    document.getElementById('country-page').style.display = 'none';
+  }
+}
 
 function selectRandom() {
   const pool = filtered.length > 0 ? filtered : COUNTRIES;
