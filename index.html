@@ -29,14 +29,13 @@
     width: 100%; background: #4d6070; border: 1px solid #4d6070; border-radius: 3px;
     color: #fff; font-size: 12px; padding: 5px 9px; font-family: inherit; outline: none;
   }
-  #search::placeholder { color: #444; }
+  #search::placeholder { color: #8a9aa8; }
   #search:focus { border-color: #3a3f5c; }
   #region-tabs { display: flex; flex-wrap: wrap; gap: 3px; padding: 0.5rem 1.1rem; border-bottom: 1px solid #4d6070; flex-shrink: 0; }
-  .rtab { font-size: 10px; padding: 2px 6px; border-radius: 2px; cursor: pointer; background: transparent; color: #666; border: 1px solid #4d6070; transition: all 0.15s; font-family: inherit; }
-  .rtab:hover { background: #4d6070; color: #c5c9d8; }
+  .rtab { font-size: 10px; padding: 2px 6px; border-radius: 2px; cursor: pointer; background: transparent; color: #c5c9d8; border: 1px solid #4d6070; transition: all 0.15s; font-family: inherit; }
+  .rtab:hover { background: #4d6070; color: #fff; }
   .rtab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .tag-filter-bar { padding: 0.5rem 1.1rem; border-bottom: 1px solid #4d6070; flex-shrink: 0; }
-  .tag-filter-bar .tf-label { font-size: 9px; color: #444; letter-spacing: 0.06em; margin-bottom: 4px; text-transform: uppercase; }
   #country-list { flex: 1; overflow-y: auto; }
   #country-list::-webkit-scrollbar { width: 3px; }
   #country-list::-webkit-scrollbar-thumb { background: #4d6070; }
@@ -48,7 +47,7 @@
   .ci-name small { display: block; font-size: 9px; color: #8a9db0; margin-top: 1px; }
   .ci-status { width: 5px; height: 5px; border-radius: 50%; background: #222; flex-shrink: 0; }
   .ci-status.ready { background: var(--accent); }
-  #count-info { padding: 0.5rem 1.1rem; border-top: 1px solid #4d6070; font-size: 10px; color: #444; flex-shrink: 0; }
+  #count-info { padding: 0.5rem 1.1rem; border-top: 1px solid #4d6070; font-size: 10px; color: #8a9aa8; flex-shrink: 0; }
 
   /* ── MAIN ── */
   #main { margin-left: var(--col1); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
@@ -65,18 +64,10 @@
   /* Country page */
   #country-page { display: none; flex-direction: column; flex: 1; }
 
-  /* TOP BAR: country name + tags */
+  /* TOP BAR */
   #top-bar {
-    padding: 1.25rem 2rem 1rem;
-    background: #fff;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    padding: 1.25rem 2rem 1rem; background: #fff; border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 10;
   }
   #top-bar h2 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 600; color: var(--ink); flex-shrink: 0; }
   #top-bar .en { font-size: 13px; color: var(--ink-faint); letter-spacing: 0.03em; flex-shrink: 0; }
@@ -89,41 +80,50 @@
   .tag-pill.color-tag:hover, .tag-pill.color-tag.active { background: var(--ink); color: #fff; border-color: var(--ink); }
 
   /* Sidebar tag pills */
-  .tag-filter-bar .tag-pill.symbol { background: #4d6070; color: #8890aa; border: 1px solid #4d6070; }
+  .tag-filter-bar .tag-pill.symbol { background: #4d6070; color: #c5c9d8; border: 1px solid #4d6070; }
   .tag-filter-bar .tag-pill.symbol:hover, .tag-filter-bar .tag-pill.symbol.active { background: #4a6278; color: #fff; border-color: #4a6278; }
-  .tag-filter-bar .tag-pill.color-tag { background: #4d6070; color: #8890aa; border: 1px solid #4d6070; }
+  .tag-filter-bar .tag-pill.color-tag { background: #4d6070; color: #c5c9d8; border: 1px solid #4d6070; }
   .tag-filter-bar .tag-pill.color-tag:hover, .tag-filter-bar .tag-pill.color-tag.active { background: #666; color: #fff; border-color: #666; }
 
   /* 3-COLUMN CONTENT */
   #content-cols { flex: 1; align-items: start; }
-
-  .content-col {
-    padding: 1.75rem 1.75rem 4rem;
-    border-right: 1px solid var(--border);
-  }
+  .content-col { padding: 1.75rem 1.75rem 4rem; border-right: 1px solid var(--border); }
   .content-col:last-child { border-right: none; }
   .col-flag { background: #fdf6e3; }
   .col-emblem { background: #eef2f7; color: #1e2a35; }
   .col-anthem { background: #fdf4f4; }
 
-  /* Column header */
-  .col-header {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 1.5rem; padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border);
-  }
+  .col-header { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
   .col-icon { width: 22px; height: 22px; background: var(--accent-light); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
   .col-title { font-size: 11px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; font-weight: 500; }
 
-  /* Flag */
   .flag-img { width: 100%; height: auto; border: 1px solid var(--border); display: block; margin-bottom: 1.25rem; }
-  /* Emblem */
-  .emblem-wrap { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 1.25rem; overflow: hidden; }
-  .emblem-img { width: 100% !important; height: auto !important; max-width: 100% !important; object-fit: contain; }
-  .emblem-img[src$=".svg"] { width: 100% !important; height: auto !important; }
-  /* SVG 내부 고정크기 무력화 */
-  .emblem-img svg { width: 100% !important; height: auto !important; }
-  /* Text */
+  
+  /* ── [수정] 국장 영역 반응형 스타일 보완 ── */
+  .emblem-wrap { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    margin-bottom: 1.25rem; 
+    overflow: hidden; 
+    width: 100%;
+    max-height: 250px; 
+  }
+  .emblem-img { 
+    width: 100% !important; 
+    height: auto !important; 
+    max-width: 100% !important; 
+    max-height: 250px !important;
+    object-fit: contain; 
+  }
+  .emblem-wrap svg { 
+    width: 100% !important; 
+    height: 100% !important; 
+    max-width: 100% !important;
+    max-height: 250px !important;
+    display: block;
+  }
+  
   .col-desc { font-size: 13px; line-height: 1.95; color: var(--ink); }
   .col-desc br { display: block; margin-top: 0.75rem; content: ''; }
   .source-line { margin-top: 0.75rem; font-size: 10px; color: var(--ink-faint); }
@@ -135,7 +135,6 @@
   .anthem-name { margin-bottom: 1.25rem; }
   .anthem-name .title { font-family: 'Noto Sans KR', sans-serif; font-size: 17px; font-weight: 600; color: var(--ink); }
   .anthem-name .sub { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
-  .anthem-viewer { }
   .anthem-toggle { display: flex; gap: 4px; margin-bottom: 1rem; }
   .atbtn { font-size: 11px; padding: 3px 9px; border-radius: 2px; border: 1px solid var(--border); background: transparent; color: var(--ink-muted); cursor: pointer; font-family: inherit; transition: all 0.15s; }
   .atbtn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -145,54 +144,23 @@
   .verse-line { font-size: 13px; line-height: 2.1; color: var(--ink); font-family: 'Noto Sans KR', sans-serif; }
 
   .yt-btn-sm {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 8px; background: #f00; color: #fff; border-radius: 2px;
-    font-size: 10px; font-weight: 500; text-decoration: none;
-    font-family: inherit; border: none; cursor: pointer; transition: background 0.15s;
-    flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: #f00; color: #fff; border-radius: 2px;
+    font-size: 10px; font-weight: 500; text-decoration: none; font-family: inherit; border: none; cursor: pointer; transition: background 0.15s; flex-shrink: 0;
   }
   .yt-btn-sm:hover { background: #c00; }
 
-  .yt-btn { display: inline-flex; align-items: center; gap: 5px; margin-top: 1.25rem; padding: 6px 12px; background: #f00; color: #fff; border-radius: 3px; font-size: 11px; font-weight: 500; text-decoration: none; font-family: inherit; border: none; cursor: pointer; transition: background 0.15s; }
-  .yt-btn:hover { background: #c00; }
-
-  @media (max-width: 860px) {
-    #sidebar { width: 100%; position: relative; min-height: auto; }
-    #main { margin-left: 0; }
-    #content-cols { grid-template-columns: 1fr; }
-    .content-col { min-height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-  }
-
   /* ── INFO COLUMN (col 2) ── */
   #col-info {
-    background: #e8f0e9;
-    color: #1e2a35;
-    padding: 2rem 1.5rem 4rem;
-    min-height: 100vh;
-    border-right: 1px solid var(--border);
-    min-width: 180px;
-    max-width: 260px;
-    width: fit-content;
-    flex-shrink: 0;
+    background: #e8f0e9; color: #1e2a35; padding: 2rem 1.5rem 4rem; min-height: 100vh;
+    border-right: 1px solid var(--border); min-width: 180px; max-width: 260px; width: fit-content; flex-shrink: 0;
   }
-  .info-name-kr {
-    font-family: 'Noto Serif KR', serif;
-    font-size: clamp(16px, 2vw, 26px);
-    font-weight: 600;
-    color: var(--ink);
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: visible;
-  }
+  .info-name-kr { font-family: 'Noto Serif KR', serif; font-size: clamp(16px, 2vw, 26px); font-weight: 600; color: var(--ink); line-height: 1.25; white-space: nowrap; overflow: visible; }
   .info-name-en { font-size: 11px; color: var(--ink-faint); margin-top: 4px; letter-spacing: 0.03em; line-height: 1.4; }
   .info-region { display: inline-block; margin-top: 8px; font-size: 10px; padding: 2px 8px; background: var(--accent-light); color: var(--accent); border-radius: 2px; }
-
   .info-divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
-
   .nickname-list { display: flex; flex-direction: column; gap: 4px; }
   .nickname-item { font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
   .nickname-item::before { content: '·  '; color: var(--accent); }
-
   .info-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 1rem; }
   .info-tag { font-size: 10px; padding: 2px 7px; border-radius: 99px; }
   .info-tag.symbol { background: #e4ecf2; color: #2d5470; border: 1px solid #b8cdd9; }
@@ -202,22 +170,15 @@
   .map-wrap iframe { display: block; width: 100%; height: 200px; border: none; }
 
   .safety-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    margin-top: 1rem; padding: 7px 10px;
-    background: #f0fdf4; color: #16a34a; border-radius: 3px;
-    font-size: 11px; font-weight: 500; text-decoration: none;
-    font-family: inherit; border: 1px solid #bbf7d0; transition: all 0.15s;
-    width: 100%;
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 1rem; padding: 7px 10px;
+    background: #f0fdf4; color: #16a34a; border-radius: 3px; font-size: 11px; font-weight: 500;
+    text-decoration: none; font-family: inherit; border: 1px solid #bbf7d0; transition: all 0.15s; width: 100%;
   }
   .safety-btn:hover { background: #dcfce7; }
-  .safety-btn svg { flex-shrink: 0; }
-
 
   .tag-toggle-btn {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 10px; color: var(--ink-faint); cursor: pointer;
-    background: none; border: none; padding: 0; font-family: inherit;
-    margin-top: 0.75rem; transition: color 0.15s;
+    display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--ink-faint); cursor: pointer;
+    background: none; border: none; padding: 0; font-family: inherit; margin-top: 0.75rem; transition: color 0.15s;
   }
   .tag-toggle-btn:hover { color: var(--ink-muted); }
   .tag-toggle-btn .arrow { transition: transform 0.2s; display: inline-block; }
@@ -225,22 +186,19 @@
   .tags-collapsible { overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s; max-height: 0; opacity: 0; }
   .tags-collapsible.open { max-height: 300px; opacity: 1; }
 
+  /* ── 모바일 탭 & 반응형 ── */
+  .mobile-tabs { display: none; }
 
-  /* ── 모바일 탭 ── */
-  @media (max-width: 768px) {
+  @media (max-width: 860px) {
     body { flex-direction: column; }
-    #sidebar {
-      width: 100%; height: auto; position: relative;
-      min-height: auto;
-    }
-    #main { margin-left: 0; flex-direction: column; }
-    #country-page { flex-direction: column; }
+    #sidebar { width: 100%; height: auto; position: relative; min-height: auto; }
+    #main { margin-left: 0; }
     #four-col-wrap { flex-direction: column; }
+    #content-cols { grid-template-columns: 1fr !important; }
+    .content-col { min-height: auto; border-right: none; border-bottom: 1px solid var(--border); }
 
-    /* 모바일 탭 바 */
     .mobile-tabs {
-      display: flex !important;
-      position: sticky; top: 0; z-index: 20;
+      display: flex !important; position: sticky; top: 0; z-index: 20;
       background: #fff; border-bottom: 1px solid var(--border);
     }
     .mobile-tab-btn {
@@ -249,31 +207,20 @@
       color: var(--ink-muted); border-bottom: 2px solid transparent;
       font-family: inherit; transition: all 0.15s;
     }
-    .mobile-tab-btn.active {
-      color: var(--accent); border-bottom-color: var(--accent);
-    }
+    .mobile-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-    /* 모바일에서 col 숨기기/보이기 */
     #col-info, .content-col {
-      display: none;
-      width: 100% !important; max-width: 100% !important;
+      display: none; width: 100% !important; max-width: 100% !important;
       min-height: auto !important; height: auto !important;
       border-right: none !important; border-bottom: 1px solid var(--border);
       position: relative !important;
     }
     #col-info.mobile-active, .content-col.mobile-active { display: block; }
-
-    #content-cols {
-      grid-template-columns: 1fr !important;
-    }
   }
-
-  /* 데스크탑에서 모바일 탭 숨기기 */
-  .mobile-tabs { display: none; }
-
 </style>
 </head>
 <body>
+
 <nav id="sidebar">
   <div id="sidebar-header">
     <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -309,7 +256,7 @@
 </nav>
 
 <main id="main">
-  <div id="welcome" style="display:none">
+  <div id="welcome">
     <div class="globe">🌍</div>
     <h2>세계 상징 사전</h2>
     <p>국기·국장·국가 속에 담긴 그 땅의 지리, 역사, 삶의 방식을 읽어보세요.</p>
@@ -318,7 +265,7 @@
   </div>
 
   <div id="country-page">
-    <div id="top-bar" style="display:none">
+    <div id="top-bar">
       <h2 id="tb-name"></h2>
       <span class="en" id="tb-en"></span>
       <div class="tag-list" id="tb-tags"></div>
@@ -332,18 +279,16 @@
     <div id="four-col-wrap" style="display:flex;flex:1;align-items:stretch;min-height:100vh;">
       <div id="col-info" class="mobile-active"></div>
       <div id="content-cols" style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;align-items:stretch;">
-      <div class="content-col col-flag" id="col-flag"></div>
-      <div class="content-col col-emblem" id="col-emblem"></div>
-      <div class="content-col col-anthem" id="col-anthem"></div>
+        <div class="content-col col-flag" id="col-flag"></div>
+        <div class="content-col col-emblem" id="col-emblem"></div>
+        <div class="content-col col-anthem" id="col-anthem"></div>
+      </div>
     </div>
   </div>
 </main>
 
 <script>
-// 하드코딩 데이터 제거 - 구글 시트에서 로드
 const FALLBACK_COUNTRIES = [];
-
-
 const SHEET_ID = '18HUgccAJurqfaIpn8wWuwUOdB0Q_pMTPPxg28a5oZ58';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 
@@ -419,7 +364,6 @@ async function loadFromSheet() {
   buildTagFilter();
   buildList();
   updateProgress();
-  // 초기 화면: 랜덤
   if (filtered.length > 0) {
     const randIdx = Math.floor(Math.random() * filtered.length);
     selectCountry(randIdx);
@@ -435,9 +379,6 @@ function updateProgress() {
   if(pf) pf.style.width = pct + '%';
   if(pl) pl.textContent = `해설 완성 ${ready} / ${total}개 나라 (${pct}%)`;
 }
-
-
-
 
 function buildList() {
   const ul = document.getElementById('country-list');
@@ -460,6 +401,7 @@ function buildList() {
 }
 
 function selectCountry(idx) {
+  if (idx < 0 || idx >= filtered.length) return;
   currentIdx = idx;
   document.querySelectorAll('.country-item').forEach((el, i) => {
     el.classList.toggle('active', i === idx);
@@ -470,43 +412,32 @@ function selectCountry(idx) {
   document.getElementById('country-page').style.display = 'flex';
 }
 
-function navigate(dir) {
-  const next = currentIdx + dir;
-  if (next >= 0 && next < filtered.length) selectCountry(next);
-}
-
 function renderPage(c) {
-  // COL INFO (dark panel)
   const nicknameHtml = (c.nicknames||[]).map(n =>
     `<div class="nickname-item">${n}</div>`
   ).join('') || '<div class="nickname-item" style="color:var(--ink-faint);font-style:italic">별명 준비 중</div>';
 
-  const infoTagHtml = (c.tags||[]).map(t=>`<span class="info-tag symbol">${t}</span>`).join('')
-    + (c.colors||[]).map(t=>`<span class="info-tag color-tag">${t}</span>`).join('');
+  const infoTagHtml = (c.tags||[]).map(t=>`<span class="info-tag symbol" style="margin-right:2px;">${t}</span>`).join('')
+    + (c.colors||[]).map(t=>`<span class="info-tag color-tag" style="margin-right:2px; border:1px solid var(--border); padding:2px 5px; border-radius:10px; background:#fff;">${t}</span>`).join('');
 
   const mapQuery = encodeURIComponent(c.en);
-  const mapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=m&z=4&output=embed&iwloc=near`;
+  const mapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=m&z=4&output=embed`;
 
   document.getElementById('col-info').innerHTML = `
     <div class="info-name-kr">${c.name}</div>
     <div class="info-name-en">${c.en}</div>
     <span class="info-region">${c.region}</span>
-
     <hr class="info-divider">
-
     <div class="nickname-list">${nicknameHtml}</div>
-
     <button class="tag-toggle-btn" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
       <span class="arrow">▾</span> 태그
     </button>
     <div class="tags-collapsible">
       <div class="info-tags" style="margin-top:6px">${infoTagHtml}</div>
     </div>
-
     <div class="map-wrap">
       <iframe src="${mapUrl}" allowfullscreen loading="lazy"></iframe>
     </div>
-
     ${c.safetyUrl ? `
     <a class="safety-btn" href="${c.safetyUrl}" target="_blank">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -514,8 +445,6 @@ function renderPage(c) {
     </a>` : ''}
   `;
 
-  // Top bar
-  document.getElementById('top-bar').style.display = 'none';
   document.getElementById('tb-name').textContent = c.name;
   document.getElementById('tb-en').textContent = c.en;
   const tagHtml = `<span class="tag-pill region">${c.region}</span>`
@@ -523,35 +452,25 @@ function renderPage(c) {
     + (c.colors||[]).map(t=>`<span class="tag-pill color-tag" style="cursor:default">${t}</span>`).join('');
   document.getElementById('tb-tags').innerHTML = tagHtml;
 
-  // COL 1: Flag
   document.getElementById('col-flag').innerHTML = `
     <div class="col-header"><div class="col-icon">🏳️</div><span class="col-title">국기</span></div>
     <img class="flag-img" src="${c.flag}" alt="${c.name} 국기" onerror="this.style.opacity=0.15" >
-    ${c.ready
-      ? `<div class="col-desc">${c.flagDesc}</div>`
-      : '<div class="coming-soon">해설 준비 중입니다</div>'}
+    ${c.ready ? `<div class="col-desc">${c.flagDesc}</div>` : '<div class="coming-soon">해설 준비 중입니다</div>'}
   `;
 
-  // COL 2: Emblem
   document.getElementById('col-emblem').innerHTML = `
     <div class="col-header"><div class="col-icon">🔰</div><span class="col-title">국장</span></div>
     <div class="emblem-wrap" id="emblem-svg-wrap"></div>
-    ${c.ready
-      ? `<div class="col-desc">${c.emblemDesc.replace(/\n\n/g,'<br><br>')}</div>
-         ${c.sources ? `<div class="source-line">출처: ${c.sources.map(s=>`<a href="${s.url}" target="_blank">${s.label}</a>`).join(' · ')}</div>` : ''}`
-      : '<div class="coming-soon">해설 준비 중입니다</div>'}
+    ${c.ready ? `<div class="col-desc">${c.emblemDesc.replace(/\n\n/g,'<br><br>')}</div>` : '<div class="coming-soon">해설 준비 중입니다</div>'}
   `;
   loadEmblemSVG(c.emblem, 'emblem-svg-wrap');
 
-  // COL 3: Anthem
   document.getElementById('col-anthem').innerHTML = `
-    <div class="col-header">
-      <div class="col-icon">🎵</div><span class="col-title">국가</span>
-    </div>
+    <div class="col-header"><div class="col-icon">🎵</div><span class="col-title">국가</span></div>
     <div class="anthem-name" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <div>
-        <div class="title">${c.anthem.title}</div>
-        <div class="sub">${c.anthem.sub}</div>
+        <div class="title">${c.anthem.title || '국가 정보 없음'}</div>
+        <div class="sub">${c.anthem.sub || ''}</div>
       </div>
       <a class="yt-btn-sm" href="${ytSearchUrl(c.en)}" target="_blank">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
@@ -562,11 +481,28 @@ function renderPage(c) {
   `;
 }
 
+/* ── [수정] 끊겨있던 applyFilter 함수를 완성하고 오류 제거 ── */
+function applyFilter(q, region) {
+  filtered = COUNTRIES.filter(c => {
+    const matchRegion = region === 'all' || c.region === region;
+    const matchQ = !q || c.name.includes(q) || c.en.toLowerCase().includes(q);
+    const matchTag = !activeTagFilter || 
+      (activeTagFilter.type === 'symbol' && (c.tags||[]).includes(activeTagFilter.value)) ||
+      (activeTagFilter.type === 'color' && (c.colors||[]).includes(activeTagFilter.value));
+    return matchRegion && matchQ && matchTag;
+  });
+  currentIdx = 0;
+  buildList();
+  if(filtered.length > 0) {
+    selectCountry(0);
+  } else {
+    document.getElementById('country-page').style.display = 'none';
+    document.getElementById('welcome').style.display = 'flex';
+  }
+}
 
-// Search & filter
 document.getElementById('search').addEventListener('input', function() {
-  const q = this.value.trim().toLowerCase();
-  applyFilter(q, currentRegion);
+  applyFilter(this.value.trim().toLowerCase(), currentRegion);
 });
 
 document.querySelectorAll('.rtab').forEach(btn => {
@@ -578,21 +514,6 @@ document.querySelectorAll('.rtab').forEach(btn => {
   });
 });
 
-function applyFilter(q, region) {
-  filtered = COUNTRIES.filter(c => {
-    const matchRegion = region === 'all' || c.region === region;
-    const matchQ = !q || c.name.includes(q) || c.en.toLowerCase().includes(q);
-    const matchTag = !activeTagFilter || 
-      (activeTagFilter.type === 'symbol' && (c.tags||[]).includes(activeTagFilter.value)) ||
-      (activeTagFilter.type === 'color' && (c.colors||[]).includes(activeTagFilter.value));
-    return matchRegion && matchQ && matchTag;
-  });
-  currentIdx = 0;
-  
-
-
-// Collect all unique tags and colors
-
 function buildTagFilter() {
   const allTags = new Set();
   const allColors = new Set();
@@ -623,7 +544,6 @@ function buildTagFilter() {
 
 function toggleTagFilter(value, type, btn) {
   const isActive = btn.classList.contains('active');
-  // Clear all active
   document.querySelectorAll('#tag-pills .tag-pill').forEach(b => b.classList.remove('active'));
   if (!isActive) {
     btn.classList.add('active');
@@ -634,168 +554,26 @@ function toggleTagFilter(value, type, btn) {
   applyFilter(document.getElementById('search').value.trim().toLowerCase(), currentRegion);
 }
 
-
 function ytSearchUrl(en) { return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(en + ' national anthem official'); }
 
 const ANTHEMS = {
-  in: {
-    original: { lang: '힌디어/산스크리트어 (원문)', verses: [
-      { title: '1절', lines: ['জন গণ মন অধিনায়ক জয় হে', 'ভারত ভাগ্য বিধাতা', 'পঞ্জাব সিন্ধু গুজরাট মরাঠা', 'দ্রাবিড় উৎকল বঙ্গ', 'বিন্ধ্য হিমাচল যমুনা গঙ্গা', 'উচ্ছল জলধি তরঙ্গ', 'তব শুভ নামে জাগে', 'তব শুভ আশিষ মাগে', 'গাহে তব জয় গাথা', 'জন গণ মঙ্গলদায়ক জয় হে', 'ভারত ভাগ্য বিধাতা', 'জয় হে জয় হে জয় হে', 'জয় জয় জয় জয় হে'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['모든 이의 마음을 이끄는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '펀자브, 신드, 구자라트, 마라타', '드라비다, 오리사, 벵갈', '빈디야, 히말라야, 야무나, 갠지스', '출렁이는 바다의 물결', '그대의 축복된 이름으로 깨어나고', '그대의 축복을 구하며', '그대의 승리를 노래하네', '모든 이에게 행복을 주는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '승리 승리 승리 승리하소서'] }
-    ]}
-  },
-  id: {
-    original: { lang: '인도네시아어 (원문)', verses: [
-      { title: '1절', lines: ['Indonesia, tanah airku', 'Tanah tumpah darahku', 'Di sanalah aku berdiri', 'Jadi pandu ibuku', 'Indonesia, kebangsaanku', 'Bangsa dan tanah airku', 'Marilah kita berseru', 'Indonesia bersatu'] },
-      { title: '후렴', lines: ['Hiduplah tanahku', 'Hiduplah negeriku', 'Bangsaku, rakyatku, semuanya', 'Bangunlah jiwanya', 'Bangunlah badannya', 'Untuk Indonesia Raya'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['인도네시아, 나의 조국', '내 피가 흐르는 땅', '그곳에서 나는 서 있네', '어머니의 안내자로서', '인도네시아, 나의 민족', '나의 민족과 조국', '함께 외치세', '인도네시아여 하나 되어라'] },
-      { title: '후렴', lines: ['나의 땅이여 살아있어라', '나의 나라여 살아있어라', '나의 민족, 나의 국민, 모두 다', '그 정신을 세워라', '그 몸을 세워라', '위대한 인도네시아를 위하여'] }
-    ]}
-  },
-  th: {
-    original: { lang: '태국어 (원문)', verses: [
-      { title: '', lines: ['ประเทศไทยรวมเลือดเนื้อชาติเชื้อไทย', 'เป็นประชารัฐ ไผทของไทยทุกส่วน', 'อยู่ดำรงคงไว้ได้ทั้งมวล', 'ด้วยไทยล้วนหมาย รักสามัคคี', 'ไทยนี้รักสงบ แต่ถึงรบไม่ขลาด', 'เอกราชจะไม่ให้ใครข่มขี่', 'ยอมเสียเลือดทุกหยาดเป็นชาติพลี', 'เถลิงประเทศชาติไทยทวี มีชัย ชโย'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['태국은 태국 민족의 피와 살로 이루어졌다', '모든 땅은 태국 국민의 것이다', '오랫동안 그것은 온전히 유지되어 왔다', '태국인들은 단결과 사랑을 원하기 때문이다', '태국인은 평화를 사랑하지만 싸울 때 두려워하지 않는다', '독립은 누구에게도 짓밟히지 않을 것이다', '나라를 위해 피 한 방울도 기꺼이 바치리', '태국이여 번영하고 승리하라'] }
-    ]}
-  },
-  vn: {
-    original: { lang: '베트남어 (원문)', verses: [
-      { title: '1절', lines: ['Đoàn quân Việt Nam đi', 'Chung lòng cứu quốc', 'Bước chân dồn vang trên đường gập ghềnh xa', 'Cờ in máu chiến thắng mang hồn nước', 'Súng ngoài xa chen khúc quân hành ca', 'Đường vinh quang xây xác quân thù', 'Thắng gian lao cùng nhau lập chiến khu', 'Vì nhân dân chiến đấu không ngừng', 'Tiến mau ra sa trường', 'Tiến lên cùng tiến lên', 'Nước non Việt Nam ta vững bền'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['베트남 군대여 나아가라', '조국 구원을 위해 한마음으로', '험난한 먼 길 위에 발걸음이 울려 퍼진다', '깃발에 전승의 피가 물들어 나라의 혼을 담았네', '저 멀리 총소리가 군가와 어우러지고', '영광의 길은 적군의 시체 위에 세워지고', '고난을 이겨내며 함께 전진기지를 세우리', '인민을 위해 끊임없이 싸우며', '빨리 전장으로 나아가라', '앞으로 함께 나아가라', '우리 베트남 강산 영원하리'] }
-    ]}
-  },
-  sg: {
-    original: { lang: '말레이어 (원문)', verses: [
-      { title: '', lines: ['Mari kita rakyat Singapura', 'Sama-sama menuju bahagia', 'Cita-cita kita yang mulia', 'Berjaya Singapura', 'Marilah kita bersatu', 'Dengan semangat yang baru', 'Semua kita berseru', 'Majulah Singapura', 'Majulah Singapura'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['싱가포르 국민이여 함께 나아가자', '행복을 향해 함께 나아가자', '우리의 고귀한 염원', '싱가포르여 성공하라', '우리 하나 되어 나아가자', '새로운 정신으로', '우리 모두 외치네', '싱가포르여 전진하라', '싱가포르여 전진하라'] }
-    ]}
-  },
-  my: {
-    original: { lang: '말레이어 (원문)', verses: [
-      { title: '', lines: ['Negaraku', 'Tanah tumpahnya darahku', 'Rakyat hidup', 'Bersatu dan maju', 'Rahmat bahagia', 'Tuhan kurniakan', 'Raja kita', 'Selamat bertakhta', 'Rahmat bahagia', 'Tuhan kurniakan', 'Raja kita', 'Selamat bertakhta'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['나의 조국', '내 피가 흘렀던 땅', '국민은 살아가네', '단결하고 전진하며', '행복한 축복을', '신이 내려주시고', '우리 국왕이여', '왕좌에 평안하소서', '행복한 축복을', '신이 내려주시고', '우리 국왕이여', '왕좌에 평안하소서'] }
-    ]}
-  },
-  kh: {
-    original: { lang: '크메르어 (원문)', verses: [
-      { title: '1절', lines: ['សូមពុទ្ធាក្សត្រព្រះ​ ជ័យ​ជ័យ', 'ព្រះ​ជ័យ​ជ័យ​ ព្រះ​នរបតី​​', 'ដែល​បង្កើត​ ជាតិខ្មែរ​ ជា​ ​អ​ច្ឆ​រិយ', 'ដូច​ថ្ម​មាស​ ត្រចះ​ ​ ​រុងរឿង​ ​ ​ ​ ​ ​ ​ ​ ​', 'ឧត្ដ​ ​ ​ ​ ​​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['하늘이여, 왕을 지켜주소서', '승리하소서, 승리하소서, 왕이시여', '크메르 민족을 창건하신 분', '황금빛 돌처럼 빛나는 나라', '앙코르와트의 영광을 되새기며', '크메르 민족은 영원하리라'] }
-    ]}
-  },
-  mn: {
-    original: { lang: '몽골어 (원문)', verses: [
-      { title: '1절', lines: ['Даяар монголын оргил дээгүүр', 'Далбаалан мандаж байна', 'Чөлөөт эрхт монгол оронд', 'Чандмань болж гийж байна'] },
-      { title: '후렴', lines: ['Үндэсний эрхэмлэсэн', 'Үүрд тэтгэгч манай орон', 'Жаргалант чөлөөт монгол орон', 'Мөнхийн дэлхийд мандтугай'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['온 몽골의 봉우리 위로', '깃발이 날리며 빛나네', '자유롭고 독립된 몽골 땅에', '보석처럼 빛나고 있네'] },
-      { title: '후렴', lines: ['민족이 소중히 여기는', '영원히 지속되는 우리 나라', '행복하고 자유로운 몽골 땅', '영원한 세상에서 번영하라'] }
-    ]}
-  },
-  np: {
-    original: { lang: '네팔어 (원문)', verses: [
-      { title: '', lines: ['सयौँ थुँगा फूलका हामी, एउटै माला नेपाली', 'सार्वभौम भई फैलिएका, मेची-महाकाली', 'प्रकृतिका कोटी-कोटी सम्पदाको आँचल', 'वीरहरूका रगतले, स्वतन्त्र र अटल', 'ज्ञान-भूमि शान्ति-भूमि तराई, पहाड, हिमाल', 'अखण्ड यो प्यारो हाम्रो मातृभूमि नेपाल', 'बहुल जाति, भाषा, धर्म, संस्कृति छन् विशाल', 'अग्रगामी राष्ट्र हाम्रो, जय जय नेपाल'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['수백 송이 꽃으로 이루어진 우리, 하나의 화환 네팔인', '메치에서 마하칼리까지 주권을 펼쳐', '자연의 수천만 가지 보물의 품속', '영웅들의 피로 자유롭고 굳건하네', '지식의 땅 평화의 땅, 평원, 산, 히말라야', '온전하고 사랑스러운 우리 어머니의 땅 네팔', '다양한 민족, 언어, 종교, 문화가 드넓고', '전진하는 우리 나라, 네팔이여 만세'] }
-    ]}
-  },
-  pk: {
-    original: { lang: '우르두어 (원문)', verses: [
-      { title: '', lines: ['پاک سرزمین شاد باد', 'کشورِ حسین شاد باد', 'تو نشانِ عزمِ عالیِ شان', 'ارضِ پاکستان', 'مرکزِ یقین شاد باد', 'پاک سرزمین کا نظام', 'قوتِ اخوتِ عوام', 'قوم، ملک، سلطنت', 'پائندہ تابندہ باد', 'شاد باد منزلِ مراد'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['축복받은 땅이여 번영하라', '아름다운 나라여 번영하라', '그대는 높은 결의의 상징', '파키스탄의 땅이여', '믿음의 중심이여 번영하라', '축복받은 땅의 질서', '국민 형제애의 힘', '민족, 나라, 국가여', '영원하고 빛나라', '목적지의 목표여 번영하라'] }
-    ]}
-  },
-  sa: {
-    original: { lang: '아랍어 (원문)', verses: [
-      { title: '', lines: ['سارعي للمجد والعليا', 'وارفعي العلم الخفاق', 'وارفعي العلم المخفق', 'واحمدي الله على التوفيق', 'النشيد الوطني السعودي'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['영광과 높은 곳을 향해 서두르라', '펄럭이는 깃발을 높이 들어라', '나부끼는 깃발을 높이 들어라', '성공에 대해 신께 감사드리라', '사우디 왕국의 국가'] }
-    ]}
-  },
-  ir: {
-    original: { lang: '페르시아어 (원문)', verses: [
-      { title: '', lines: ['سر زد از افق مهر خاوران', 'فروغ دیدهٔ حق‌باوران', 'بهمن فرّ ایمان ماست', 'پیامت ای امام، استقلال، آزادی، نقش جان ماست', 'شهیدان پیچیده در خون، جاری در خاطرهٔ ماست', 'پاینده بمان تا ابد، جمهوری اسلامی ایران'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['동방의 지평선에서 태양이 떠오르네', '진실을 믿는 이들의 눈의 빛이여', '바흐만은 우리 믿음의 영광이라', '오 이맘이여, 당신의 메시지 독립과 자유는 우리 영혼에 새겨졌네', '피에 젖은 순교자들이 우리 기억 속에 흐르네', '영원히 지속되라, 이란 이슬람 공화국'] }
-    ]}
-  },
-  il: {
-    original: { lang: '히브리어 (원문)', verses: [
-      { title: '', lines: ['כֹּל עוֹד בַּלֵּבָב פְּנִימָה', 'נֶפֶשׁ יְהוּדִי הוֹמִיָּה,', 'וּלְפַאֲתֵי מִזְרָח קָדִימָה,', 'עַיִן לְצִיּוֹן צוֹפִיָּה;', 'עוֹד לֹא אָבְדָה תִּקְוָתֵנוּ,', 'הַתִּקְוָה בַּת שְׁנוֹת אַלְפַּיִם,', 'לִהְיוֹת עַם חׇפְשִׁי בְּאַרְצֵנוּ,', 'אֶרֶץ צִיּוֹן וִירוּשָׁלַיִם.'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['마음 깊은 곳에서', '유대인의 영혼이 그리워하는 한,', '동방을 향해,', '눈은 시온을 바라보는 한;', '우리의 희망은 아직 사라지지 않았네,', '이천 년의 희망,', '우리 땅에서 자유로운 민족이 되기를,', '시온의 땅, 예루살렘에서.'] }
-    ]}
-  },
-  tr: {
-    original: { lang: '튀르키예어 (원문)', verses: [
-      { title: '1절', lines: ['Korkma, sönmez bu şafaklarda yüzen al sancak;', 'Sönmeden yurdumun üstünde tüten en son ocak.', 'O benim milletimin yıldızıdır, parlayacak;', 'O benimdir, o benim milletimindir ancak.'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['두려워 마라, 이 새벽빛 속에 떠있는 붉은 깃발은 꺼지지 않는다;', '내 조국 위에서 마지막까지 타오르는 불꽃도 꺼지지 않으리.', '저것은 내 민족의 별이니 빛날 것이다;', '저것은 나의 것, 오직 내 민족의 것이다.'] }
-    ]}
-  },
-
-  kr: {
-    original: {
-      lang: '한국어',
-      verses: [
-        { title: '1절', lines: ['동해 물과 백두산이 마르고 닳도록', '하느님이 보우하사 우리나라 만세'] },
-        { title: '후렴', lines: ['무궁화 삼천리 화려강산', '대한 사람 대한으로 길이 보전하세'] },
-        { title: '2절', lines: ['남산 위에 저 소나무 철갑을 두른 듯', '바람서리 불변함은 우리 기상일세'] },
-        { title: '3절', lines: ['가을 하늘 공활한데 높고 구름 없이', '밝은 달은 우리 가슴 일편단심일세'] },
-        { title: '4절', lines: ['이 기상과 이 맘으로 충성을 다하여', '괴로우나 즐거우나 나라 사랑하세'] },
-      ]
-    },
-    translation: null
-  },
-  cn: {
-    original: {
-      lang: '중국어 (원문)',
-      verses: [
-        { title: '1절', lines: ['起来！不愿做奴隶的人们！', '把我们的血肉，筑成我们新的长城！', '中华民族到了最危险的时候，', '每个人被迫着发出最后的吼声。', '起来！起来！起来！', '我们万众一心，', '冒着敌人的炮火，前进！', '冒着敌人的炮火，前进！', '前进！前进！前进！'] }
-      ]
-    },
-    translation: {
-      lang: '한국어 번역',
-      verses: [
-        { title: '1절', lines: ['일어나라! 노예가 되기 싫은 자들이여!', '우리의 피와 살로 새로운 만리장성을 쌓자!', '중화 민족이 가장 위험한 시기에 처했을 때,', '모든 이가 마지막 함성을 내지르도록 강요받는다.', '일어나라! 일어나라! 일어나라!', '우리 모두 한마음으로,', '적의 포화를 뚫고 전진하라!', '적의 포화를 뚫고 전진하라!', '전진! 전진! 전진!'] }
-      ]
-    }
-  },
-  jp: {
-    original: {
-      lang: '일본어 (원문)',
-      verses: [
-        { title: '', lines: ['君が代は', '千代に八千代に', 'さざれ石の', 'いわおとなりて', 'こけのむすまで'] }
-      ]
-    },
-    translation: {
-      lang: '한국어 번역',
-      verses: [
-        { title: '', lines: ['임금의 치세는', '천 년이고 팔천 년이고', '조약돌이', '큰 바위가 되어', '이끼가 낄 때까지'] }
-      ]
-    }
-  }
+  in: { original: { lang: '힌디어/산스크리트어 (원문)', verses: [{ title: '1절', lines: ['জন গণ মন অধিনায়ক জয় হে', 'ভারত भाग्य বিধাতা', 'পঞ্জাব সিন্ধু গুজরাট মরাঠা', 'द्रাবিড় উৎকল বঙ্গ', 'বিন্ধ্য হিমাচল यমুনা গঙ্গা', 'উচ্ছল জলধি তরঙ্গ', 'তব শুভ নামে জাগে', 'তব শুভ আশিष মাগে', 'গাহে তব জয় গাथा', 'জন গণ মঙ্গলদায়क জয় হে', 'ভারত भाग्य বিধাতা', 'জয় হে জয় হে জয় হে', 'জয় জয় জয় জয় হে'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['모든 이의 마음을 이끄는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '펀자브, 신드, 구자라트, 마라타', '드라비다, 오리사, 벵갈', '빈디야, 히말라야, 야무나, 갠지스', '출렁이는 바다의 물결', '그대의 축복된 이름으로 깨어나고', '그대의 축복을 구하며', '그대의 승리를 노래하네', '모든 이에게 행복을 주는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '승리 승리 승리 승리하소서'] }] } },
+  id: { original: { lang: '인도네시아어 (원문)', verses: [{ title: '1절', lines: ['Indonesia, tanah airku', 'Tanah tumpah darahku', 'Di sanalah aku berdiri', 'Jadi pandu ibuku', 'Indonesia, kebangsaanku', 'Bangsa dan tanah airku', 'Marilah kita berseru', 'Indonesia bersatu'] }, { title: '후렴', lines: ['Hiduplah tanahku', 'Hiduplah negeriku', 'Bangsaku, rakyatku, semuanya', 'Bangunlah jiwanya', 'Bangunlah badannya', 'Untuk Indonesia Raya'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['인도네시아, 나의 조국', '내 피가 흐르는 땅', '그곳에서 나는 서 있네', '어머니의 안내자로서', '인도네시아, 나의 민족', '나의 민족과 조국', '함께 외치세', '인도네시아여 하나 되어라'] }, { title: '후렴', lines: ['나의 땅이여 살아있어라', '나의 나라여 살아있어라', '나의 민족, 나의 국민, 모두 다', '그 정신을 세워라', '그 몸을 세워라', '위대한 인도네시아를 위하여'] }] } },
+  th: { original: { lang: '태국어 (원문)', verses: [{ title: '', lines: ['ประเทศไทยรวมเลือดเนื้อชาติเชื้อไทย', 'เป็นประชารัฐ ไผทของไทยทุกส่วน', 'อยู่ดำรงคงไว้ได้ทั้งมวล', 'ด้วยไทยล้วนหมาย รักสามัคคี', 'ไทยนี้รักสงบ แต่ถึงรบไม่ขลาด', 'เอกราชจะไม่ให้ใครข่มขี่', 'ยอมเสียเลือดทุกหยาดเป็นชาติพลี', 'เถลิงประเทศชาติไทยทวี มีชัย ชโย'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['태국은 태국 민족의 피와 살로 이루어졌다', '모든 땅은 태국 국민의 것이다', '오랫동안 그것은 온전히 유지되어 왔다', '태국인들은 단결과 사랑을 원하기 때문이다', '태국인은 평화를 사랑하지만 싸울 때 두려워하지 않는다', '독립은 누구에게도 짓밟히지 않을 것이다', '나라를 위해 피 한 방울도 기꺼이 바치리', '태국이여 번영하고 승리하라'] }] } },
+  vn: { original: { lang: '베트남어 (원문)', verses: [{ title: '1절', lines: ['Đoàn quân Việt Nam đi', 'Chung lòng cứu quốc', 'Bước chân dồn vang trên đường gập ghềnh xa', 'Cờ in máu chiến thắng mang hồn nước', 'Súng ngoài xa chen khúc quân hành ca', 'Đường vinh quang xây xác quân thù', 'Thắng gian lao cùng nhau lập chiến khu', 'Vì nhân dân chiến đấu không ngừng', 'Tiến mau ra sa trường', 'Tiến lên cùng tiến lên', 'Nước non Việt Nam ta vững bền'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['베트남 군대여 나아가라', '조국 구원을 위해 한마음으로', '험난한 먼 길 위에 발걸음이 울려 퍼진다', '깃발에 전승의 피가 물들어 나라의 혼을 담았네', '저 멀리 총소리가 군가와 어우러지고', '영광의 길은 적군의 시체 위에 세워지고', '고난을 이겨내며 함께 전진기지를 세우리', '인민을 위해 끊임없이 싸우며', '빨리 전장으로 나아가라', '앞으로 함께 나아가라', '우리 베트남 강산 영원하리'] }] } },
+  sg: { original: { lang: '말레이어 (원문)', verses: [{ title: '', lines: ['Mari kita rakyat Singapura', 'Sama-sama menuju bahagia', 'Cita-cita kita yang mulia', 'Berjaya Singapura', 'Marilah kita bersatu', 'Dengan semangat yang baru', 'Semua kita berseru', 'Majulah Singapura', 'Majulah Singapura'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['싱가포르 국민이여 함께 나아가자', '행복을 향해 함께 나아가자', '우리의 고귀한 염원', '싱가포르여 성공하라', '우리 하나 되어 나아가자', '새로운 정신으로', '우리 모두 외치네', '싱가포르여 전진하라', '싱가포르여 전진하라'] }] } },
+  my: { original: { lang: '말레이어 (원문)', verses: [{ title: '', lines: ['Negaraku', 'Tanah tumpahnya darahku', 'Rakyat hidup', 'Bersatu dan maju', 'Rahmat bahagia', 'Tuhan kurniakan', 'Raja kita', 'Selamat bertakhta', 'Rahmat bahagia', 'Tuhan kurniakan', 'Raja kita', 'Selamat bertakhta'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['나의 조국', '내 피가 흘렀던 땅', '국민은 살아가네', '단결하고 전진하며', '행복한 축복을', '신이 내려주시고', '우리 국왕이여', '왕좌에 평안하소서', '행복한 축복을', '신이 내려주시고', '우리 국왕이여', '왕좌에 평안하소서'] }] } },
+  kh: { original: { lang: '크메르어 (원문)', verses: [{ title: '1절', lines: ['សូមពុទ្ធាក្សត្រព្រះ ជ័យជ័យ', 'ព្រះជ័យជัย ព្រះនរបតី', 'ដែលបង្កើត ជាតិខ្មែរ ជា อច្ឆរិย', 'ដូចថ្มមាស ត្រចះ រុងរឿង'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['하늘이여, 왕을 지켜주소서', '승리하소서, 승리하소서, 왕이시여', '크메르 민족을 창건하신 분', '황금빛 돌처럼 빛나는 나라', '앙코르와트의 영광을 되새기며', '크메르 민족은 영원하리라'] }] } },
+  mn: { original: { lang: '몽골어 (원문)', verses: [{ title: '1절', lines: ['Даяар монголын оргил дээгүүр', 'Далбаалан мандаж байна', 'Чөлөөт эрхт монгол оронд', 'Чандмань болж гийж байна'] }, { title: '후렴', lines: ['Үндэсний эрхэмлэсэн', 'Үүрд тэтгэгч манай орон', 'Жаргалант чөлөөт монгол орон', 'Мөнхийн дэлхийд мандтугай'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['온 몽골의 봉우리 위로', '깃발이 날리며 빛나네', '자유롭고 독립된 몽골 땅에', '보석처럼 빛나고 있네'] }, { title: '후렴', lines: ['민족이 소중히 여기는', '영원히 지속되는 우리 나라', '행복하고 자유로운 몽골 땅', '영원한 세상에서 번영하라'] }] } },
+  np: { original: { lang: '네팔어 (원문)', verses: [{ title: '', lines: ['सयौँ थुँगा फूलका हामी, एउटै माला नेपाली', 'सार्वभौม भई फैलिएका, मेची-महाकाली', 'प्रकृतिका कोटी-कोटी सम्पदाको आँचल', 'वीरहरूका रगतле, स्वतन्त्र र अटल', 'ज्ञान-भूमि शान्ติ-भूमि تराई, पहाड, हिमाल', 'अखण्ड यो प्यारो हाम्रो मातृभूमि नेपाल', 'बहुल जाति, भाषा, धर्म, संस्कृति छन् विशाल', 'अग्रगामी राष्ट्र हाम्रो, जय जय नेपाल'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['수백 송이 꽃으로 이루어진 우리, 하나의 화환 네팔인', '메치에서 마하칼리까지 주권을 펼쳐', '자연의 수천만 가지 보물의 품속', '영웅들의 피로 자유롭고 굳건하네', '지식의 땅 평화의 땅, 평원, 산, 히말라야', '온전하고 사랑스러운 우리 어머니의 땅 네팔', '다양한 민족, 언어, 종교, 문화가 드넓고', '전진하는 우리 나라, 네팔이여 만세'] }] } },
+  pk: { original: { lang: '우르두어 (원문)', verses: [{ title: '', lines: ['پاک سرزمین شاد باد', 'کشورِ حسین شاد باد', 'تو نشانِ عزمِ عالیِ شان', 'ارضِ پاکستان', 'مرکزِ یقین شاد باد', 'پاک سرزمین کا نظام', 'قوتِ اخوتِ عوام', 'قوم، ملک، سلطنت', 'پائندہ تابندہ باد', 'شاد باد منزلِ مراد'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['축복받은 땅이여 번영하라', '아름다운 나라여 번영하라', '그대는 높은 결의의 상징', '파키스탄의 땅이여', '믿음의 중심이여 번영하라', '축복받은 땅의 질서', '국민 형제애의 힘', '민족, 나라, 국가여', '영원하고 빛나라', '목적지의 목표여 번영하라'] }] } },
+  sa: { original: { lang: '아랍어 (원문)', verses: [{ title: '', lines: ['سارعي للمجد والعليا', 'وارفعي العلم الخفاق', 'وارفعي العلم المخفق', 'واحمدي الله على التوفيق', 'النشيد الوطني السعودي'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['영광과 높은 곳을 향해 서두르라', '펄럭이는 깃발을 높이 들어라', '나부끼는 깃발을 높이 들어라', '성공에 대해 신께 감사드리라', '사우디 왕국의 국가'] }] } },
+  ir: { original: { lang: '페르시아어 (원문)', verses: [{ title: '', lines: ['سر زد از افق مهر خاوران', 'فروغ دیدهٔ حق‌باوران', 'بهمن فرّ ایمان ماست', 'پیامت ای امام، استقلال، آزادی، نقش جان ماست', 'شهیدان پیچیده در خون، جاری در خاطرهٔ ماست', 'پاینده بمان تا ابد، جمهوری اسلامی ایران'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['동방의 지평선에서 태양이 떠오르네', '진실을 믿는 이들의 눈의 빛이여', '바흐만은 우리 믿음의 영광이라', '오 이맘이여, 당신의 메시지 독립과 자유는 우리 영혼에 새겨졌네', '피에 젖은 순교자들이 우리 기억 속에 흐르네', '영원히 지속되라, 이란 이슬람 공화국'] }] } },
+  il: { original: { lang: '히브리어 (원문)', verses: [{ title: '', lines: ['כֹּל עוֹד בַּלֵּבָב פְּנִימָה', 'נֶפֶשׁ יְהוּדִי הוֹמִיָּה,', 'וּלְפَאֲתֵי מִזְרָח קָדִיਮָה,', 'עַיִן לְצִיּוֹן צוֹפִיָּה;', 'עוֹד לֹא אָבְדָה תִּקְוָתֵנוּ,', 'הַתִּקְוָה בַּת שְׁנוֹת אַלְפัּיִם,', 'לִהְיוֹת עַם חׇפְשִׁי בְּאַרְצֵנוּ,', 'אֶרֶץ צִיּוֹן וִירוُשָׁלַיִם.'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['마음 깊은 곳에서', '유대인의 영혼이 그리워하는 한,', '동방을 향해,', '눈은 시온을 바라보는 한;', '우리의 희망은 아직 사라지지 않았네,', '이천 년의 희망,', '우리 땅에서 자유로운 민족이 되기를,', '시온의 땅, 예루살렘에서.'] }] } },
+  tr: { original: { lang: '튀르키예어 (원문)', verses: [{ title: '1절', lines: ['Korkma, sönmez bu şafaklarda yüzen al sancak;', 'Sönmeden yurdumun üstünde tüten en son ocak.', 'O benim milletimin yıldızıdır, parlayacak;', 'O benimdir, o benim milletimindir ancak.'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['두려워 마라, 이 새벽빛 속에 떠있는 붉은 깃발은 꺼지지 않는다;', '내 조국 위에서 마지막까지 타오르는 불꽃도 꺼지지 않으리.', '저것은 내 민족의 별이니 빛날 것이다;', '저것은 나의 것, 오직 내 민족의 것이다.'] }] } },
+  kr: { original: { lang: '한국어', verses: [{ title: '1절', lines: ['동해 물과 백두산이 마르고 닳도록', '하느님이 보우하사 우리나라 만세'] }, { title: '후렴', lines: ['무궁화 삼천리 화려강산', '대한 사람 대한으로 길이 보전하세'] }, { title: '2절', lines: ['남산 위에 저 소나무 철갑을 두른 듯', '바람서리 불변함은 우리 기상일세'] }, { title: '3절', lines: ['가을 하늘 공활한데 높고 구름 없이', '밝은 달은 우리 가슴 일편단심일세'] }, { title: '4절', lines: ['이 기상과 이 맘으로 충성을 다하여', '괴로우나 즐거우나 나라 사랑하세'] }] }, translation: null },
+  cn: { original: { lang: '중국어 (원문)', verses: [{ title: '1절', lines: ['起来！不愿做奴隶的人们！', '把我们的血肉，筑成我们新的长城！', '中华民族到了最危险的时候，', '每个人被迫着发出最后的吼声。', '起来！起来！起来！', 'We万众一心，', '冒着敌人的炮火，前进！', '冒着敌人的炮火，前进！', '前进！前进！前进！'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['일어나라! 노예가 되기 싫은 자들이여!', '우리의 피와 살로 새로운 만리장성을 쌓자!', '중화 민족이 가장 위험한 시기에 처했을 때,', '모든 이가 마지막 함성을 내지르도록 강요받는다.', '일어나라! 일어나라! 일어나라!', '우리 모두 한마음으로,', '적의 포화를 뚫고 전진하라!', '적의 포화를 뚫고 전진하라!', '전진! 전진! 전진!'] }] } },
+  jp: { original: { lang: '일본어 (원문)', verses: [{ title: '', lines: ['君が代は', '千代に八千代に', 'さざれ石의', 'いわおとなりて', 'こけのむすまで'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['임금의 치세는', '천 년이고 팔천 년이고', '조약돌이', '큰 바위가 되어', '이끼가 낄 때까지'] }] } }
 };
 
 function renderAnthem(code) {
@@ -804,7 +582,6 @@ function renderAnthem(code) {
 
   const hasTranslation = !!data.translation;
   const id = 'anthem-' + code;
-
   let html = '<div class="anthem-viewer" id="' + id + '">';
 
   if (hasTranslation) {
@@ -818,7 +595,6 @@ function renderAnthem(code) {
   if (hasTranslation) {
     html += renderVerses(data.translation.verses, code, 'translation', true);
   }
-
   html += '</div>';
   return html;
 }
@@ -840,15 +616,89 @@ function switchAnthem(code, type) {
   viewer.querySelectorAll('.anthem-verses').forEach(el => {
     el.style.display = el.dataset.type === type ? 'block' : 'none';
   });
-  viewer.querySelectorAll('.atbtn').forEach((btn, i) => {
-    btn.classList.toggle('active', (i === 0 && type === 'original') || (i === 1 && type === 'translation'));
+  viewer.querySelectorAll('.atbtn').forEach((btn) => {
+    if(type === 'original') {
+      btn.classList.toggle('active', btn.textContent.includes('원문') || btn.textContent === '한국어');
+    } else {
+      btn.classList.toggle('active', btn.textContent.includes('번역'));
+    }
   });
 }
 
-loadFromSheet();
+/* ── [수정] 일부 강제 크기 SVG 파일들의 스타일 무력화 및 유연한 렌더링 ── */
+async function loadEmblemSVG(url, containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  
+  if (!url || !url.toLowerCase().endsWith('.svg')) {
+    wrap.innerHTML = `<img class="emblem-img" src="${url || ''}" alt="국장" onerror="this.style.display='none'">`;
+    return;
+  }
+  
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('SVG fetch failed');
+    let svgText = await res.text();
+    
+    // 주석 및 XML 선언 가공 제거
+    svgText = svgText.replace(/\]>/g, '').replace(/<\?xml[^?]*\?>/g, '').replace(/<!DOCTYPE[^>]*>/g, '');
+    
+    const svgTagMatch = svgText.match(/<svg([^>]*?)>/i);
+    if (svgTagMatch) {
+      let attrs = svgTagMatch[1];
+      
+      // 내부에 하드코딩된 크기 속성 및 인라인 스타일을 강제 제거 (대소문자 무시)
+      attrs = attrs.replace(/\s*width="[^"]*"/gi, '');
+      attrs = attrs.replace(/\s*height="[^"]*"/gi, '');
+      attrs = attrs.replace(/\s*style="[^"]*"/gi, ''); 
+      
+      // 유연한 반응형 인라인 스타일과 비율 유지를 위한 정렬 설정 주입
+      const cleanedSvgTag = `<svg${attrs} style="width:100%; height:100%; max-height:250px; display:block;" preserveAspectRatio="xMidYMid meet">`;
+      svgText = svgText.replace(/<svg[^>]*?>/i, cleanedSvgTag);
+    }
+    
+    wrap.innerHTML = svgText;
+  } catch(e) {
+    console.warn('SVG 파싱 실패로 일반 이미지 태그 대체 처리:', e);
+    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="국장">`;
+  }
+}
+
+function switchMobileTab(tab, btn) {
+  document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.getElementById('col-info').classList.remove('mobile-active');
+  document.querySelectorAll('.content-col').forEach(c => c.classList.remove('mobile-active'));
+
+  if (tab === 'info') document.getElementById('col-info').classList.add('mobile-active');
+  else if (tab === 'flag') document.getElementById('col-flag').classList.add('mobile-active');
+  else if (tab === 'emblem') document.getElementById('col-emblem').classList.add('mobile-active');
+  else if (tab === 'anthem') document.getElementById('col-anthem').classList.add('mobile-active');
+}
+
+function goHome() {
+  document.getElementById('country-page').style.display = 'none';
+  document.getElementById('welcome').style.display = 'flex';
+  document.querySelectorAll('.country-item').forEach(el => el.classList.remove('active'));
+}
+
+function selectRandom() {
+  const pool = filtered.length > 0 ? filtered : COUNTRIES;
+  if (pool.length === 0) return;
+  const idx = Math.floor(Math.random() * pool.length);
+  const targetCode = pool[idx].code;
+  const filteredIdx = filtered.findIndex(c => c.code === targetCode);
+  if (filteredIdx >= 0) {
+    selectCountry(filteredIdx);
+    const items = document.querySelectorAll('.country-item');
+    if (items[filteredIdx]) items[filteredIdx].scrollIntoView({block:'nearest'});
+  }
+}
 
 document.addEventListener('keydown', function(e) {
   if (['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(e.key)) {
+    if (document.activeElement.id === 'search') return; 
     e.preventDefault();
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       if (currentIdx > 0) {
@@ -864,450 +714,7 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-
-
-
-
-async function loadEmblemSVG(url, containerId) {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  if (!url || !url.endsWith('.svg')) {
-    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="국장" style="width:100%;max-width:100%;height:auto;max-height:300px;object-fit:contain;">`;
-    return;
-  }
-  try {
-    const res = await fetch(url);
-    const svgText = await res.text();
-    // SVG width/height 속성 제거하고 viewBox 유지
-    const svgCleaned = svgText.replace(/\]>/g, '').replace(/<\?xml[^?]*\?>/g, '').replace(/<!DOCTYPE[^>]*>/g, '');
-      const cleaned = svgCleaned
-      .replace(/<svg([^>]*)width="[^"]*"/, '<svg$1')
-      .replace(/<svg([^>]*)height="[^"]*"/, '<svg$1')
-      .replace(/<svg([^>]*?)>/, (match, attrs) => {
-        // width/height 제거, viewBox 유지
-        attrs = attrs.replace(/\s*width="[^"]*"/, '').replace(/\s*height="[^"]*"/, '');
-        return `<svg${attrs} style="width:100%;max-width:100%;height:auto;display:block;">`;
-      });
-    wrap.innerHTML = cleaned;
-  } catch(e) {
-    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="국장" style="width:100%;max-width:100%;height:auto;max-height:300px;object-fit:contain;">`;
-  }
-}
-
-function switchMobileTab(tab, btn) {
-  // 버튼 활성화
-  document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-
-  // 모든 패널 숨기기
-  document.getElementById('col-info').classList.remove('mobile-active');
-  document.querySelectorAll('.content-col').forEach(c => c.classList.remove('mobile-active'));
-
-  // 선택 탭 보이기
-  if (tab === 'info') {
-    document.getElementById('col-info').classList.add('mobile-active');
-  } else if (tab === 'flag') {
-    document.getElementById('col-flag').classList.add('mobile-active');
-  } else if (tab === 'emblem') {
-    document.getElementById('col-emblem').classList.add('mobile-active');
-  } else if (tab === 'anthem') {
-    document.getElementById('col-anthem').classList.add('mobile-active');
-  }
-}
-
-function syncEmblemHeight(flagImg) {
-  const h = flagImg.offsetHeight;
-  const wrap = document.querySelector('.emblem-wrap');
-  if (wrap && h > 0) {
-    wrap.style.height = h + 'px';
-    const emblemImg = wrap.querySelector('.emblem-img');
-    if (emblemImg) emblemImg.style.maxHeight = h + 'px';
-  }
-}
-
-function goHome() {
-  if (filtered.length > 0) {
-    const randIdx = Math.floor(Math.random() * filtered.length);
-    selectCountry(randIdx);
-    const items = document.querySelectorAll('.country-item');
-    if (items[randIdx]) items[randIdx].scrollIntoView({block:'nearest'});
-  }
-}
-
-function selectRandom() {
-  const pool = filtered.length > 0 ? filtered : COUNTRIES;
-  const idx = Math.floor(Math.random() * pool.length);
-  // find index in filtered
-  const targetCode = pool[idx].code;
-  const filteredIdx = filtered.findIndex(c => c.code === targetCode);
-  if (filteredIdx >= 0) {
-    selectCountry(filteredIdx);
-    // scroll to active item in sidebar
-    const items = document.querySelectorAll('.country-item');
-    if (items[filteredIdx]) items[filteredIdx].scrollIntoView({block:'nearest'});
-  }
-}
-}
-
-
-
-
-// Collect all unique tags and colors
-
-function buildTagFilter() {
-  const allTags = new Set();
-  const allColors = new Set();
-  COUNTRIES.forEach(c => {
-    (c.tags||[]).forEach(t => allTags.add(t));
-    (c.colors||[]).forEach(t => allColors.add(t));
-  });
-  
-  const container = document.getElementById('tag-pills');
-  container.innerHTML = '';
-  
-  [...allTags].sort().forEach(tag => {
-    const btn = document.createElement('button');
-    btn.className = 'tag-pill symbol';
-    btn.textContent = tag;
-    btn.onclick = () => toggleTagFilter(tag, 'symbol', btn);
-    container.appendChild(btn);
-  });
-  
-  [...allColors].sort().forEach(color => {
-    const btn = document.createElement('button');
-    btn.className = 'tag-pill color-tag';
-    btn.textContent = color;
-    btn.onclick = () => toggleTagFilter(color, 'color', btn);
-    container.appendChild(btn);
-  });
-}
-
-function toggleTagFilter(value, type, btn) {
-  const isActive = btn.classList.contains('active');
-  // Clear all active
-  document.querySelectorAll('#tag-pills .tag-pill').forEach(b => b.classList.remove('active'));
-  if (!isActive) {
-    btn.classList.add('active');
-    activeTagFilter = { value, type };
-  } else {
-    activeTagFilter = null;
-  }
-  applyFilter(document.getElementById('search').value.trim().toLowerCase(), currentRegion);
-}
-
-
-function ytSearchUrl(en) { return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(en + ' national anthem official'); }
-
-const ANTHEMS = {
-  in: {
-    original: { lang: '힌디어/산스크리트어 (원문)', verses: [
-      { title: '1절', lines: ['জন গণ মন অধিনায়ক জয় হে', 'ভারত ভাগ্য বিধাতা', 'পঞ্জাব সিন্ধু গুজরাট মরাঠা', 'দ্রাবিড় উৎকল বঙ্গ', 'বিন্ধ্য হিমাচল যমুনা গঙ্গা', 'উচ্ছল জলধি তরঙ্গ', 'তব শুভ নামে জাগে', 'তব শুভ আশিষ মাগে', 'গাহে তব জয় গাথা', 'জন গণ মঙ্গলদায়ক জয় হে', 'ভারত ভাগ্য বিধাতা', 'জয় হে জয় হে জয় হে', 'জয় জয় জয় জয় হে'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['모든 이의 마음을 이끄는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '펀자브, 신드, 구자라트, 마라타', '드라비다, 오리사, 벵갈', '빈디야, 히말라야, 야무나, 갠지스', '출렁이는 바다의 물결', '그대의 축복된 이름으로 깨어나고', '그대의 축복을 구하며', '그대의 승리를 노래하네', '모든 이에게 행복을 주는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '승리 승리 승리 승리하소서'] }
-    ]}
-  },
-  id: {
-    original: { lang: '인도네시아어 (원문)', verses: [
-      { title: '1절', lines: ['Indonesia, tanah airku', 'Tanah tumpah darahku', 'Di sanalah aku berdiri', 'Jadi pandu ibuku', 'Indonesia, kebangsaanku', 'Bangsa dan tanah airku', 'Marilah kita berseru', 'Indonesia bersatu'] },
-      { title: '후렴', lines: ['Hiduplah tanahku', 'Hiduplah negeriku', 'Bangsaku, rakyatku, semuanya', 'Bangunlah jiwanya', 'Bangunlah badannya', 'Untuk Indonesia Raya'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['인도네시아, 나의 조국', '내 피가 흐르는 땅', '그곳에서 나는 서 있네', '어머니의 안내자로서', '인도네시아, 나의 민족', '나의 민족과 조국', '함께 외치세', '인도네시아여 하나 되어라'] },
-      { title: '후렴', lines: ['나의 땅이여 살아있어라', '나의 나라여 살아있어라', '나의 민족, 나의 국민, 모두 다', '그 정신을 세워라', '그 몸을 세워라', '위대한 인도네시아를 위하여'] }
-    ]}
-  },
-  th: {
-    original: { lang: '태국어 (원문)', verses: [
-      { title: '', lines: ['ประเทศไทยรวมเลือดเนื้อชาติเชื้อไทย', 'เป็นประชารัฐ ไผทของไทยทุกส่วน', 'อยู่ดำรงคงไว้ได้ทั้งมวล', 'ด้วยไทยล้วนหมาย รักสามัคคี', 'ไทยนี้รักสงบ แต่ถึงรบไม่ขลาด', 'เอกราชจะไม่ให้ใครข่มขี่', 'ยอมเสียเลือดทุกหยาดเป็นชาติพลี', 'เถลิงประเทศชาติไทยทวี มีชัย ชโย'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['태국은 태국 민족의 피와 살로 이루어졌다', '모든 땅은 태국 국민의 것이다', '오랫동안 그것은 온전히 유지되어 왔다', '태국인들은 단결과 사랑을 원하기 때문이다', '태국인은 평화를 사랑하지만 싸울 때 두려워하지 않는다', '독립은 누구에게도 짓밟히지 않을 것이다', '나라를 위해 피 한 방울도 기꺼이 바치리', '태국이여 번영하고 승리하라'] }
-    ]}
-  },
-  vn: {
-    original: { lang: '베트남어 (원문)', verses: [
-      { title: '1절', lines: ['Đoàn quân Việt Nam đi', 'Chung lòng cứu quốc', 'Bước chân dồn vang trên đường gập ghềnh xa', 'Cờ in máu chiến thắng mang hồn nước', 'Súng ngoài xa chen khúc quân hành ca', 'Đường vinh quang xây xác quân thù', 'Thắng gian lao cùng nhau lập chiến khu', 'Vì nhân dân chiến đấu không ngừng', 'Tiến mau ra sa trường', 'Tiến lên cùng tiến lên', 'Nước non Việt Nam ta vững bền'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['베트남 군대여 나아가라', '조국 구원을 위해 한마음으로', '험난한 먼 길 위에 발걸음이 울려 퍼진다', '깃발에 전승의 피가 물들어 나라의 혼을 담았네', '저 멀리 총소리가 군가와 어우러지고', '영광의 길은 적군의 시체 위에 세워지고', '고난을 이겨내며 함께 전진기지를 세우리', '인민을 위해 끊임없이 싸우며', '빨리 전장으로 나아가라', '앞으로 함께 나아가라', '우리 베트남 강산 영원하리'] }
-    ]}
-  },
-  sg: {
-    original: { lang: '말레이어 (원문)', verses: [
-      { title: '', lines: ['Mari kita rakyat Singapura', 'Sama-sama menuju bahagia', 'Cita-cita kita yang mulia', 'Berjaya Singapura', 'Marilah kita bersatu', 'Dengan semangat yang baru', 'Semua kita berseru', 'Majulah Singapura', 'Majulah Singapura'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['싱가포르 국민이여 함께 나아가자', '행복을 향해 함께 나아가자', '우리의 고귀한 염원', '싱가포르여 성공하라', '우리 하나 되어 나아가자', '새로운 정신으로', '우리 모두 외치네', '싱가포르여 전진하라', '싱가포르여 전진하라'] }
-    ]}
-  },
-  my: {
-    original: { lang: '말레이어 (원문)', verses: [
-      { title: '', lines: ['Negaraku', 'Tanah tumpahnya darahku', 'Rakyat hidup', 'Bersatu dan maju', 'Rahmat bahagia', 'Tuhan kurniakan', 'Raja kita', 'Selamat bertakhta', 'Rahmat bahagia', 'Tuhan kurniakan', 'Raja kita', 'Selamat bertakhta'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['나의 조국', '내 피가 흘렀던 땅', '국민은 살아가네', '단결하고 전진하며', '행복한 축복을', '신이 내려주시고', '우리 국왕이여', '왕좌에 평안하소서', '행복한 축복을', '신이 내려주시고', '우리 국왕이여', '왕좌에 평안하소서'] }
-    ]}
-  },
-  kh: {
-    original: { lang: '크메르어 (원문)', verses: [
-      { title: '1절', lines: ['សូមពុទ្ធាក្សត្រព្រះ​ ជ័យ​ជ័យ', 'ព្រះ​ជ័យ​ជ័យ​ ព្រះ​នរបតី​​', 'ដែល​បង្កើត​ ជាតិខ្មែរ​ ជា​ ​អ​ច្ឆ​រិយ', 'ដូច​ថ្ម​មាស​ ត្រចះ​ ​ ​រុងរឿង​ ​ ​ ​ ​ ​ ​ ​ ​', 'ឧត្ដ​ ​ ​ ​ ​​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['하늘이여, 왕을 지켜주소서', '승리하소서, 승리하소서, 왕이시여', '크메르 민족을 창건하신 분', '황금빛 돌처럼 빛나는 나라', '앙코르와트의 영광을 되새기며', '크메르 민족은 영원하리라'] }
-    ]}
-  },
-  mn: {
-    original: { lang: '몽골어 (원문)', verses: [
-      { title: '1절', lines: ['Даяар монголын оргил дээгүүр', 'Далбаалан мандаж байна', 'Чөлөөт эрхт монгол оронд', 'Чандмань болж гийж байна'] },
-      { title: '후렴', lines: ['Үндэсний эрхэмлэсэн', 'Үүрд тэтгэгч манай орон', 'Жаргалант чөлөөт монгол орон', 'Мөнхийн дэлхийд мандтугай'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['온 몽골의 봉우리 위로', '깃발이 날리며 빛나네', '자유롭고 독립된 몽골 땅에', '보석처럼 빛나고 있네'] },
-      { title: '후렴', lines: ['민족이 소중히 여기는', '영원히 지속되는 우리 나라', '행복하고 자유로운 몽골 땅', '영원한 세상에서 번영하라'] }
-    ]}
-  },
-  np: {
-    original: { lang: '네팔어 (원문)', verses: [
-      { title: '', lines: ['सयौँ थुँगा फूलका हामी, एउटै माला नेपाली', 'सार्वभौम भई फैलिएका, मेची-महाकाली', 'प्रकृतिका कोटी-कोटी सम्पदाको आँचल', 'वीरहरूका रगतले, स्वतन्त्र र अटल', 'ज्ञान-भूमि शान्ति-भूमि तराई, पहाड, हिमाल', 'अखण्ड यो प्यारो हाम्रो मातृभूमि नेपाल', 'बहुल जाति, भाषा, धर्म, संस्कृति छन् विशाल', 'अग्रगामी राष्ट्र हाम्रो, जय जय नेपाल'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['수백 송이 꽃으로 이루어진 우리, 하나의 화환 네팔인', '메치에서 마하칼리까지 주권을 펼쳐', '자연의 수천만 가지 보물의 품속', '영웅들의 피로 자유롭고 굳건하네', '지식의 땅 평화의 땅, 평원, 산, 히말라야', '온전하고 사랑스러운 우리 어머니의 땅 네팔', '다양한 민족, 언어, 종교, 문화가 드넓고', '전진하는 우리 나라, 네팔이여 만세'] }
-    ]}
-  },
-  pk: {
-    original: { lang: '우르두어 (원문)', verses: [
-      { title: '', lines: ['پاک سرزمین شاد باد', 'کشورِ حسین شاد باد', 'تو نشانِ عزمِ عالیِ شان', 'ارضِ پاکستان', 'مرکزِ یقین شاد باد', 'پاک سرزمین کا نظام', 'قوتِ اخوتِ عوام', 'قوم، ملک، سلطنت', 'پائندہ تابندہ باد', 'شاد باد منزلِ مراد'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['축복받은 땅이여 번영하라', '아름다운 나라여 번영하라', '그대는 높은 결의의 상징', '파키스탄의 땅이여', '믿음의 중심이여 번영하라', '축복받은 땅의 질서', '국민 형제애의 힘', '민족, 나라, 국가여', '영원하고 빛나라', '목적지의 목표여 번영하라'] }
-    ]}
-  },
-  sa: {
-    original: { lang: '아랍어 (원문)', verses: [
-      { title: '', lines: ['سارعي للمجد والعليا', 'وارفعي العلم الخفاق', 'وارفعي العلم المخفق', 'واحمدي الله على التوفيق', 'النشيد الوطني السعودي'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['영광과 높은 곳을 향해 서두르라', '펄럭이는 깃발을 높이 들어라', '나부끼는 깃발을 높이 들어라', '성공에 대해 신께 감사드리라', '사우디 왕국의 국가'] }
-    ]}
-  },
-  ir: {
-    original: { lang: '페르시아어 (원문)', verses: [
-      { title: '', lines: ['سر زد از افق مهر خاوران', 'فروغ دیدهٔ حق‌باوران', 'بهمن فرّ ایمان ماست', 'پیامت ای امام، استقلال، آزادی، نقش جان ماست', 'شهیدان پیچیده در خون، جاری در خاطرهٔ ماست', 'پاینده بمان تا ابد، جمهوری اسلامی ایران'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['동방의 지평선에서 태양이 떠오르네', '진실을 믿는 이들의 눈의 빛이여', '바흐만은 우리 믿음의 영광이라', '오 이맘이여, 당신의 메시지 독립과 자유는 우리 영혼에 새겨졌네', '피에 젖은 순교자들이 우리 기억 속에 흐르네', '영원히 지속되라, 이란 이슬람 공화국'] }
-    ]}
-  },
-  il: {
-    original: { lang: '히브리어 (원문)', verses: [
-      { title: '', lines: ['כֹּל עוֹד בַּלֵּבָב פְּנִימָה', 'נֶפֶשׁ יְהוּדִי הוֹמִיָּה,', 'וּלְפַאֲתֵי מִזְרָח קָדִימָה,', 'עַיִן לְצִיּוֹן צוֹפִיָּה;', 'עוֹד לֹא אָבְדָה תִּקְוָתֵנוּ,', 'הַתִּקְוָה בַּת שְׁנוֹת אַלְפַּיִם,', 'לִהְיוֹת עַם חׇפְשִׁי בְּאַרְצֵנוּ,', 'אֶרֶץ צִיּוֹן וִירוּשָׁלַיִם.'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '', lines: ['마음 깊은 곳에서', '유대인의 영혼이 그리워하는 한,', '동방을 향해,', '눈은 시온을 바라보는 한;', '우리의 희망은 아직 사라지지 않았네,', '이천 년의 희망,', '우리 땅에서 자유로운 민족이 되기를,', '시온의 땅, 예루살렘에서.'] }
-    ]}
-  },
-  tr: {
-    original: { lang: '튀르키예어 (원문)', verses: [
-      { title: '1절', lines: ['Korkma, sönmez bu şafaklarda yüzen al sancak;', 'Sönmeden yurdumun üstünde tüten en son ocak.', 'O benim milletimin yıldızıdır, parlayacak;', 'O benimdir, o benim milletimindir ancak.'] }
-    ]},
-    translation: { lang: '한국어 번역', verses: [
-      { title: '1절', lines: ['두려워 마라, 이 새벽빛 속에 떠있는 붉은 깃발은 꺼지지 않는다;', '내 조국 위에서 마지막까지 타오르는 불꽃도 꺼지지 않으리.', '저것은 내 민족의 별이니 빛날 것이다;', '저것은 나의 것, 오직 내 민족의 것이다.'] }
-    ]}
-  },
-
-  kr: {
-    original: {
-      lang: '한국어',
-      verses: [
-        { title: '1절', lines: ['동해 물과 백두산이 마르고 닳도록', '하느님이 보우하사 우리나라 만세'] },
-        { title: '후렴', lines: ['무궁화 삼천리 화려강산', '대한 사람 대한으로 길이 보전하세'] },
-        { title: '2절', lines: ['남산 위에 저 소나무 철갑을 두른 듯', '바람서리 불변함은 우리 기상일세'] },
-        { title: '3절', lines: ['가을 하늘 공활한데 높고 구름 없이', '밝은 달은 우리 가슴 일편단심일세'] },
-        { title: '4절', lines: ['이 기상과 이 맘으로 충성을 다하여', '괴로우나 즐거우나 나라 사랑하세'] },
-      ]
-    },
-    translation: null
-  },
-  cn: {
-    original: {
-      lang: '중국어 (원문)',
-      verses: [
-        { title: '1절', lines: ['起来！不愿做奴隶的人们！', '把我们的血肉，筑成我们新的长城！', '中华民族到了最危险的时候，', '每个人被迫着发出最后的吼声。', '起来！起来！起来！', '我们万众一心，', '冒着敌人的炮火，前进！', '冒着敌人的炮火，前进！', '前进！前进！前进！'] }
-      ]
-    },
-    translation: {
-      lang: '한국어 번역',
-      verses: [
-        { title: '1절', lines: ['일어나라! 노예가 되기 싫은 자들이여!', '우리의 피와 살로 새로운 만리장성을 쌓자!', '중화 민족이 가장 위험한 시기에 처했을 때,', '모든 이가 마지막 함성을 내지르도록 강요받는다.', '일어나라! 일어나라! 일어나라!', '우리 모두 한마음으로,', '적의 포화를 뚫고 전진하라!', '적의 포화를 뚫고 전진하라!', '전진! 전진! 전진!'] }
-      ]
-    }
-  },
-  jp: {
-    original: {
-      lang: '일본어 (원문)',
-      verses: [
-        { title: '', lines: ['君が代は', '千代に八千代に', 'さざれ石の', 'いわおとなりて', 'こけのむすまで'] }
-      ]
-    },
-    translation: {
-      lang: '한국어 번역',
-      verses: [
-        { title: '', lines: ['임금의 치세는', '천 년이고 팔천 년이고', '조약돌이', '큰 바위가 되어', '이끼가 낄 때까지'] }
-      ]
-    }
-  }
-};
-
-function renderAnthem(code) {
-  const data = ANTHEMS[code];
-  if (!data) return '<div class="coming-soon">가사 준비 중입니다.</div>';
-
-  const hasTranslation = !!data.translation;
-  const id = 'anthem-' + code;
-
-  let html = '<div class="anthem-viewer" id="' + id + '">';
-
-  if (hasTranslation) {
-    html += '<div class="anthem-toggle">';
-    html += '<button class="atbtn" onclick="switchAnthem(\''+code+'\', \'original\')">'+data.original.lang+'</button>';
-    html += '<button class="atbtn active" onclick="switchAnthem(\''+code+'\', \'translation\')">'+data.translation.lang+'</button>';
-    html += '</div>';
-  }
-
-  html += renderVerses(data.original.verses, code, 'original', !hasTranslation);
-  if (hasTranslation) {
-    html += renderVerses(data.translation.verses, code, 'translation', true);
-  }
-
-  html += '</div>';
-  return html;
-}
-
-function renderVerses(verses, code, type, visible) {
-  let html = '<div class="anthem-verses" data-code="'+code+'" data-type="'+type+'" style="display:'+(visible?'block':'none')+'">';
-  verses.forEach(v => {
-    if (v.title) html += '<div class="verse-title">'+v.title+'</div>';
-    html += '<div class="verse-lines">';
-    v.lines.forEach(l => { html += '<div class="verse-line">'+l+'</div>'; });
-    html += '</div>';
-  });
-  html += '</div>';
-  return html;
-}
-
-function switchAnthem(code, type) {
-  const viewer = document.getElementById('anthem-' + code);
-  viewer.querySelectorAll('.anthem-verses').forEach(el => {
-    el.style.display = el.dataset.type === type ? 'block' : 'none';
-  });
-  viewer.querySelectorAll('.atbtn').forEach((btn, i) => {
-    btn.classList.toggle('active', (i === 0 && type === 'original') || (i === 1 && type === 'translation'));
-  });
-}
-
 loadFromSheet();
-
-document.addEventListener('keydown', function(e) {
-  if (['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(e.key)) {
-    e.preventDefault();
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      if (currentIdx > 0) {
-        selectCountry(currentIdx - 1);
-        document.querySelectorAll('.country-item')[currentIdx]?.scrollIntoView({block:'nearest'});
-      }
-    } else {
-      if (currentIdx < filtered.length - 1) {
-        selectCountry(currentIdx + 1);
-        document.querySelectorAll('.country-item')[currentIdx]?.scrollIntoView({block:'nearest'});
-      }
-    }
-  }
-});
-
-
-
-
-
-async function loadEmblemSVG(url, containerId) {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  if (!url || !url.endsWith('.svg')) {
-    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="국장" style="width:100%;max-width:100%;height:auto;max-height:300px;object-fit:contain;">`;
-    return;
-  }
-  try {
-    const res = await fetch(url);
-    const svgText = await res.text();
-    // SVG width/height 속성 제거하고 viewBox 유지
-    const svgCleaned = svgText.replace(/\]>/g, '').replace(/<\?xml[^?]*\?>/g, '').replace(/<!DOCTYPE[^>]*>/g, '');
-      const cleaned = svgCleaned
-      .replace(/<svg([^>]*)width="[^"]*"/, '<svg$1')
-      .replace(/<svg([^>]*)height="[^"]*"/, '<svg$1')
-      .replace(/<svg([^>]*?)>/, (match, attrs) => {
-        // width/height 제거, viewBox 유지
-        attrs = attrs.replace(/\s*width="[^"]*"/, '').replace(/\s*height="[^"]*"/, '');
-        return `<svg${attrs} style="width:100%;max-width:100%;height:auto;display:block;">`;
-      });
-    wrap.innerHTML = cleaned;
-  } catch(e) {
-    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="국장" style="width:100%;max-width:100%;height:auto;max-height:300px;object-fit:contain;">`;
-  }
-}
-
-function switchMobileTab(tab, btn) {
-  // 버튼 활성화
-  document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-
-  // 모든 패널 숨기기
-  document.getElementById('col-info').classList.remove('mobile-active');
-  document.querySelectorAll('.content-col').forEach(c => c.classList.remove('mobile-active'));
-
-  // 선택 탭 보이기
-  if (tab === 'info') {
-    document.getElementById('col-info').classList.add('mobile-active');
-  } else if (tab === 'flag') {
-    document.getElementById('col-flag').classList.add('mobile-active');
-  } else if (tab === 'emblem') {
-    document.getElementById('col-emblem').classList.add('mobile-active');
-  } else if (tab === 'anthem') {
-    document.getElementById('col-anthem').classList.add('mobile-active');
-  }
-}
-
-function syncEmblemHeight(flagImg) {
-  const h = flagImg.offsetHeight;
-  const wrap = document.querySelector('.emblem-wrap');
-  if (wrap && h > 0) {
-    wrap.style.height = h + 'px';
-    const emblemImg = wrap.querySelector('.emblem-img');
-    if (emblemImg) emblemImg.style.maxHeight = h + 'px';
-  }
-}
-
-function goHome() {
-  if (filtered.length > 0) {
-    const randIdx = Math.floor(Math.random() * filtered.length);
-    selectCountry(randIdx);
-    const items = document.querySelectorAll('.country-item');
-    if (items[randIdx]) items[randIdx].scrollIntoView({block:'nearest'});
-  }
-}
-
-function selectRandom() {
-  const pool = filtered.length > 0 ? filtered : COUNTRIES;
-  const idx = Math.floor(Math.random() * pool.length);
-  // find index in filtered
-  const targetCode = pool[idx].code;
-  const filteredIdx = filtered.findIndex(c => c.code === targetCode);
-  if (filteredIdx >= 0) {
-    selectCountry(filteredIdx);
-    // scroll to active item in sidebar
-    const items = document.querySelectorAll('.country-item');
-    if (items[filteredIdx]) items[filteredIdx].scrollIntoView({block:'nearest'});
-  }
-}
 </script>
 </body>
 </html>
