@@ -119,7 +119,10 @@
   .flag-img { width: 100%; height: auto; border: 1px solid var(--border); display: block; margin-bottom: 1.25rem; }
   /* Emblem */
   .emblem-wrap { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 1.25rem; }
-  .emblem-img { width: 100%; max-width: 100%; height: auto; object-fit: contain; }
+  .emblem-img { width: 100% !important; height: auto !important; max-width: 100% !important; object-fit: contain; }
+  .emblem-img[src$=".svg"] { width: 100% !important; height: auto !important; }
+  /* SVG 내부 고정크기 무력화 */
+  .emblem-img svg { width: 100% !important; height: auto !important; }
   /* Text */
   .col-desc { font-size: 13px; line-height: 1.95; color: var(--ink); }
   .col-desc br { display: block; margin-top: 0.75rem; content: ''; }
@@ -530,12 +533,13 @@ function renderPage(c) {
   // COL 2: Emblem
   document.getElementById('col-emblem').innerHTML = `
     <div class="col-header"><div class="col-icon">🔰</div><span class="col-title">국장</span></div>
-    <div class="emblem-wrap"><img class="emblem-img" src="${c.emblem}" alt="${c.name} 국장" onerror="this.style.opacity=0.15"></div>
+    <div class="emblem-wrap" id="emblem-svg-wrap"></div>
     ${c.ready
       ? `<div class="col-desc">${c.emblemDesc.replace(/\n\n/g,'<br><br>')}</div>
          ${c.sources ? `<div class="source-line">출처: ${c.sources.map(s=>`<a href="${s.url}" target="_blank">${s.label}</a>`).join(' · ')}</div>` : ''}`
       : '<div class="coming-soon">해설 준비 중입니다</div>'}
   `;
+  loadEmblemSVG(c.emblem, 'emblem-svg-wrap');
 
   // COL 3: Anthem
   document.getElementById('col-anthem').innerHTML = `
@@ -725,6 +729,28 @@ function switchAnthem(code, type) {
 loadFromSheet();
 
 
+
+
+async function loadEmblemSVG(url, containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  if (!url || !url.endsWith('.svg')) {
+    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="국장" style="width:100%;height:auto;">`;
+    return;
+  }
+  try {
+    const res = await fetch(url);
+    const svgText = await res.text();
+    // SVG width/height 속성 제거하고 viewBox 유지
+    const cleaned = svgText
+      .replace(/<svg([^>]*)width="[^"]*"/, '<svg$1')
+      .replace(/<svg([^>]*)height="[^"]*"/, '<svg$1')
+      .replace(/<svg/, '<svg style="width:100%;height:auto;display:block;"');
+    wrap.innerHTML = cleaned;
+  } catch(e) {
+    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="국장" style="width:100%;height:auto;">`;
+  }
+}
 
 function switchMobileTab(tab, btn) {
   // 버튼 활성화
@@ -928,6 +954,28 @@ function switchAnthem(code, type) {
 loadFromSheet();
 
 
+
+
+async function loadEmblemSVG(url, containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  if (!url || !url.endsWith('.svg')) {
+    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="국장" style="width:100%;height:auto;">`;
+    return;
+  }
+  try {
+    const res = await fetch(url);
+    const svgText = await res.text();
+    // SVG width/height 속성 제거하고 viewBox 유지
+    const cleaned = svgText
+      .replace(/<svg([^>]*)width="[^"]*"/, '<svg$1')
+      .replace(/<svg([^>]*)height="[^"]*"/, '<svg$1')
+      .replace(/<svg/, '<svg style="width:100%;height:auto;display:block;"');
+    wrap.innerHTML = cleaned;
+  } catch(e) {
+    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="국장" style="width:100%;height:auto;">`;
+  }
+}
 
 function switchMobileTab(tab, btn) {
   // 버튼 활성화
