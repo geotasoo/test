@@ -12,6 +12,12 @@
     --paper: #fdf6e3; --paper-dark: #eef2f7;
     --accent: #3d6b8a; --accent-light: #ddeef7;
     --border: #d0d8df; --col1: 210px;
+    --col-flag-bg: #fdf6e3; --col-emblem-bg: #eef2f7; --col-anthem-bg: #fdf4f4; --col-info-bg: #e8f0e9;
+  }
+  /* ── 🎨 화이트 테마: 1단(사이드바) 제외 전부 흰 배경 ── */
+  body[data-theme="white"] {
+    --paper: #ffffff; --paper-dark: #f4f6f8;
+    --col-flag-bg: #ffffff; --col-emblem-bg: #ffffff; --col-anthem-bg: #ffffff; --col-info-bg: #ffffff;
   }
   body { font-family: 'Noto Sans KR', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; display: flex; }
 
@@ -24,6 +30,15 @@
   #sidebar-header { padding: 1.1rem 1.1rem 0.8rem; border-bottom: 1px solid #4d6070; flex-shrink: 0; }
   #sidebar-header h1 { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
   #sidebar-header p { font-size: 10px; color: #6b7494; margin-top: 2px; letter-spacing: 0.05em; }
+
+  /* 테마 팔레트 */
+  #theme-picker { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+  .theme-dot { width: 15px; height: 15px; border-radius: 50%; cursor: pointer; border: 1px solid #8a9aa8; padding: 0; transition: box-shadow 0.15s; }
+  .theme-dot[data-theme="paper"] { background: #fdf6e3; }
+  .theme-dot[data-theme="white"] { background: #ffffff; }
+  .theme-dot.active { box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
+  #theme-picker .tp-label { font-size: 9px; color: #6b7494; letter-spacing: 0.05em; margin-right: 2px; }
+
   #search-wrap { padding: 0.6rem 1.1rem; border-bottom: 1px solid #4d6070; flex-shrink: 0; }
   #search {
     width: 100%; background: #4d6070; border: 1px solid #4d6070; border-radius: 3px;
@@ -45,9 +60,9 @@
   .ci-flag { width: 20px; height: 13px; object-fit: cover; border-radius: 1px; flex-shrink: 0; border: 1px solid #252525; }
   .ci-name { font-size: 11px; color: #c5c9d8; flex: 1; line-height: 1.3; }
   .ci-name small { display: block; font-size: 9px; color: #8a9db0; margin-top: 1px; }
+  .ci-name .fav-star { color: #e8b339; font-size: 9px; }
   .ci-status { width: 5px; height: 5px; border-radius: 50%; background: #222; flex-shrink: 0; }
   .ci-status.ready { background: var(--accent); }
-  #count-info { padding: 0.5rem 1.1rem; border-top: 1px solid #4d6070; font-size: 10px; color: #8a9aa8; flex-shrink: 0; }
 
   /* ── MAIN ── */
   #main { margin-left: var(--col1); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
@@ -61,13 +76,20 @@
   .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; }
   .progress-label { margin-top: 5px; font-size: 11px; color: var(--ink-faint); }
 
+  /* 로딩 스피너 */
+  .spinner {
+    width: 22px; height: 22px; border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.8s linear infinite; margin: 1rem auto 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   /* Country page */
   #country-page { display: none; flex-direction: column; flex: 1; }
 
   /* TOP BAR */
   #top-bar {
     padding: 1.25rem 2rem 1rem; background: #fff; border-bottom: 1px solid var(--border);
-    display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 10;
   }
   #top-bar h2 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 600; color: var(--ink); flex-shrink: 0; }
   #top-bar .en { font-size: 13px; color: var(--ink-faint); letter-spacing: 0.03em; flex-shrink: 0; }
@@ -79,6 +101,16 @@
   .tag-pill.color-tag { background: var(--paper-dark); color: var(--ink-muted); border: 1px solid var(--border); }
   .tag-pill.color-tag:hover, .tag-pill.color-tag.active { background: var(--ink); color: #fff; border-color: var(--ink); }
 
+  /* 이전/다음/즐겨찾기 버튼 */
+  #tb-actions { margin-left: auto; display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+  .nav-btn, #fav-btn {
+    border: 1px solid var(--border); background: #fff; border-radius: 3px;
+    font-size: 13px; padding: 3px 10px; cursor: pointer; color: var(--ink-muted);
+    font-family: inherit; transition: all 0.15s; line-height: 1.4;
+  }
+  .nav-btn:hover, #fav-btn:hover { background: var(--paper-dark); }
+  #fav-btn.faved { color: #e8b339; border-color: #e8b339; }
+
   /* Sidebar tag pills */
   .tag-filter-bar .tag-pill.symbol { background: #4d6070; color: #c5c9d8; border: 1px solid #4d6070; }
   .tag-filter-bar .tag-pill.symbol:hover, .tag-filter-bar .tag-pill.symbol.active { background: #4a6278; color: #fff; border-color: #4a6278; }
@@ -89,9 +121,9 @@
   #content-cols { flex: 1; align-items: start; }
   .content-col { padding: 1.75rem 1.75rem 4rem; border-right: 1px solid var(--border); min-width: 0; }
   .content-col:last-child { border-right: none; }
-  .col-flag { background: #fdf6e3; }
-  .col-emblem { background: #eef2f7; color: #1e2a35; }
-  .col-anthem { background: #fdf4f4; }
+  .col-flag { background: var(--col-flag-bg); }
+  .col-emblem { background: var(--col-emblem-bg); color: #1e2a35; }
+  .col-anthem { background: var(--col-anthem-bg); }
 
   .col-header { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
   .col-icon { width: 22px; height: 22px; background: var(--accent-light); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
@@ -100,34 +132,13 @@
   /* 국기: 단 가로폭 100%, 비율 유지 */
   .flag-img { width: 100%; height: auto; border: 1px solid var(--border); display: block; margin-bottom: 1.25rem; }
 
-  /* ── 국장 영역 ──
-     컨테이너는 가로 100% / 높이 200px 고정.
-     내부 svg 또는 img는 width/height 100%로 채우되,
-     img는 object-fit:contain, 인라인 svg는 preserveAspectRatio="xMidYMid meet"
-     (JS에서 주입)가 비율을 유지해 준다.
-     주의: `.emblem-wrap svg *`에 max-width/max-height를 거는 규칙은
-     SVG 내부 도형(rect, use, image 등)의 기하 구조를 직접 변형시켜
-     그림을 깨뜨릴 수 있으므로 절대 넣지 말 것. */
-  .emblem-wrap {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 1.25rem;
-    width: 100%;
-    height: 200px;
-    overflow: hidden;
-  }
-  .emblem-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-  }
-  .emblem-wrap svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
+  /* ── 국장: 높이 제한 없이 단 가로폭에 정확히 맞춤 ──
+     고정 height를 없애고 width:100% + height:auto 로 변경.
+     인라인 SVG는 viewBox 비율(JS에서 aspect-ratio로 보강)에 따라
+     단이 커지면 함께 커지고 줄어들면 함께 줄어든다. */
+  .emblem-wrap { width: 100%; margin-bottom: 1.25rem; }
+  .emblem-img { width: 100%; height: auto; display: block; }
+  .emblem-wrap svg { width: 100%; height: auto; display: block; }
 
   .col-desc { font-size: 13px; line-height: 1.95; color: var(--ink); }
   .col-desc br { display: block; margin-top: 0.75rem; content: ''; }
@@ -140,7 +151,7 @@
   .anthem-name { margin-bottom: 1.25rem; }
   .anthem-name .title { font-family: 'Noto Sans KR', sans-serif; font-size: 17px; font-weight: 600; color: var(--ink); }
   .anthem-name .sub { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
-  .anthem-toggle { display: flex; gap: 4px; margin-bottom: 1rem; }
+  .anthem-toggle { display: flex; gap: 4px; margin-bottom: 1rem; flex-wrap: wrap; }
   .atbtn { font-size: 11px; padding: 3px 9px; border-radius: 2px; border: 1px solid var(--border); background: transparent; color: var(--ink-muted); cursor: pointer; font-family: inherit; transition: all 0.15s; }
   .atbtn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .atbtn:hover:not(.active) { background: #e8e0d5; }
@@ -156,7 +167,7 @@
 
   /* ── INFO COLUMN (col 2) ── */
   #col-info {
-    background: #e8f0e9; color: #1e2a35; padding: 2rem 1.5rem 4rem; min-height: 100vh;
+    background: var(--col-info-bg); color: #1e2a35; padding: 2rem 1.5rem 4rem; min-height: 100vh;
     border-right: 1px solid var(--border); min-width: 180px; max-width: 260px; width: fit-content; flex-shrink: 0;
   }
   .info-name-kr { font-family: 'Noto Serif KR', serif; font-size: clamp(16px, 2vw, 26px); font-weight: 600; color: var(--ink); line-height: 1.25; white-space: nowrap; overflow: visible; }
@@ -224,7 +235,7 @@
   }
 </style>
 </head>
-<body>
+<body data-theme="paper">
 
 <nav id="sidebar">
   <div id="sidebar-header">
@@ -233,6 +244,11 @@
         <h1 style="cursor:pointer;" onclick="goHome()" title="홈으로">세계 상징 사전</h1>
         <p>WORLD SYMBOL DICTIONARY</p>
         <p style="font-size:9px;color:#8a9aa8;margin-top:3px;letter-spacing:0.03em;">@geotasoo / 20260612</p>
+        <div id="theme-picker">
+          <span class="tp-label">THEME</span>
+          <button class="theme-dot active" data-theme="paper" title="크림 테마" onclick="setTheme('paper')"></button>
+          <button class="theme-dot" data-theme="white" title="화이트 테마" onclick="setTheme('white')"></button>
+        </div>
       </div>
       <button id="random-btn" title="랜덤 나라" onclick="selectRandom()" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px;line-height:1;opacity:0.7;transition:opacity 0.15s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">🎲</button>
     </div>
@@ -241,12 +257,13 @@
     <input id="search" type="text" placeholder="나라 이름 검색..." />
   </div>
   <div id="region-tabs">
-    <button class="rtab active" data-region="all">전체</button>
-    <button class="rtab" data-region="아시아">아시아</button>
-    <button class="rtab" data-region="유럽">유럽</button>
-    <button class="rtab" data-region="아프리카">아프리카</button>
-    <button class="rtab" data-region="아메리카">아메리카</button>
-    <button class="rtab" data-region="오세아니아">오세아니아</button>
+    <button class="rtab active" data-region="all" data-label="전체">전체</button>
+    <button class="rtab" data-region="아시아" data-label="아시아">아시아</button>
+    <button class="rtab" data-region="유럽" data-label="유럽">유럽</button>
+    <button class="rtab" data-region="아프리카" data-label="아프리카">아프리카</button>
+    <button class="rtab" data-region="아메리카" data-label="아메리카">아메리카</button>
+    <button class="rtab" data-region="오세아니아" data-label="오세아니아">오세아니아</button>
+    <button class="rtab" data-region="fav" data-label="★" title="즐겨찾기">★</button>
   </div>
   <div class="tag-filter-bar">
     <button class="tag-toggle-btn" style="color:#6b7494;margin-top:0;" onclick="this.classList.toggle('open');document.getElementById('tag-pills-wrap').classList.toggle('open')">
@@ -257,7 +274,6 @@
     </div>
   </div>
   <div id="country-list"></div>
-  <div id="count-info"></div>
 </nav>
 
 <main id="main">
@@ -266,7 +282,8 @@
     <h2>세계 상징 사전</h2>
     <p>국기·국장·국가 속에 담긴 그 땅의 지리, 역사, 삶의 방식을 읽어보세요.</p>
     <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-    <p class="progress-label" id="progress-label"></p>
+    <p class="progress-label" id="progress-label">데이터를 불러오는 중...</p>
+    <div class="spinner" id="load-spinner"></div>
   </div>
 
   <div id="country-page">
@@ -274,6 +291,11 @@
       <h2 id="tb-name"></h2>
       <span class="en" id="tb-en"></span>
       <div class="tag-list" id="tb-tags"></div>
+      <div id="tb-actions">
+        <button id="fav-btn" title="즐겨찾기" onclick="toggleFav()">☆</button>
+        <button class="nav-btn" title="이전 나라" onclick="navCountry(-1)">←</button>
+        <button class="nav-btn" title="다음 나라" onclick="navCountry(1)">→</button>
+      </div>
     </div>
     <div class="mobile-tabs" id="mobile-tabs">
       <button class="mobile-tab-btn active" onclick="switchMobileTab('info', this)">🌍 정보</button>
@@ -293,6 +315,47 @@
 </main>
 
 <script>
+/* ════════════════════════════════════════════════════════════
+   구글 시트 열 구성 (헤더 이름으로 읽으므로 열 순서는 자유.
+   아래는 권장 배치 — 사람이 보기 편한 순서)
+
+   A  code           나라 코드 (kr, jp ...)  ※ URL 해시 공유에도 사용
+   B  name           한글 이름
+   C  name_en        영문 이름
+   D  name_local     현지어 이름
+   E  region         아시아 / 유럽 / 아프리카 / 아메리카 / 오세아니아
+   F  nicknames      별명 (쉼표 구분)
+   G  tags           태그 (쉼표 구분)
+   H  colors         색 태그 (쉼표 구분)
+   I  flag_url       국기 이미지 URL
+   J  flag_desc      국기 해설
+   K  emblem_url     국장 이미지 URL
+   L  emblem_desc    국장 해설
+   M  anthem_title   국가 제목
+   N  anthem_sub     국가 부제
+   O  anthem_lyrics  국가 가사 (아래 형식 참고)
+   P  safety_url     외교부 0404 링크
+   Q  flag_wiki      국기 위키 원문 링크
+   R  emblem_wiki    국장 위키 원문 링크
+
+   ── anthem_lyrics 셀 작성 형식 ──
+   한 셀 안에 줄바꿈(Alt+Enter 또는 Cmd+Enter)으로 작성.
+   원문 블록과 번역 블록은 `===` 한 줄로 구분 (번역 블록은 생략 가능).
+   각 블록 첫 줄은 [언어 라벨], 절 제목은 # 으로 시작, 절 사이는 빈 줄.
+
+   [일본어 (원문)]
+   #1절
+   君が代は
+   千代に八千代に
+   ===
+   [한국어 번역]
+   #1절
+   임금의 치세는
+   천 년이고 팔천 년이고
+
+   가사 셀이 비어 있으면 코드 안의 ANTHEMS 폴백 데이터를 사용한다.
+   ════════════════════════════════════════════════════════════ */
+
 const FALLBACK_COUNTRIES = [];
 const SHEET_ID = '18HUgccAJurqfaIpn8wWuwUOdB0Q_pMTPPxg28a5oZ58';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
@@ -303,34 +366,80 @@ let currentIdx = 0;
 let currentRegion = 'all';
 let activeTagFilter = null;
 
+/* ── 즐겨찾기 (localStorage 저장) ── */
+let FAVS = new Set();
+try { FAVS = new Set(JSON.parse(localStorage.getItem('wsd-favs') || '[]')); } catch(e) {}
+function saveFavs() { try { localStorage.setItem('wsd-favs', JSON.stringify([...FAVS])); } catch(e) {} }
+
+/* ── 테마 ── */
+function setTheme(t) {
+  document.body.dataset.theme = t;
+  document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === t));
+  try { localStorage.setItem('wsd-theme', t); } catch(e) {}
+}
+try { const saved = localStorage.getItem('wsd-theme'); if (saved) setTheme(saved); } catch(e) {}
+
+/* ── 🌟 [수정] CSV 파서 v2: 따옴표 안 줄바꿈 지원 ──
+   가사처럼 셀 안에 줄바꿈이 들어가는 데이터가 생기면서
+   '줄 단위로 먼저 자르는' 기존 방식은 데이터를 깨뜨린다.
+   전체 텍스트를 문자 단위로 스캔하며 따옴표 상태를 추적한다. */
 function parseCSV(text) {
-  const lines = text.split('\n').filter(l => l.trim());
-  const headers = parseCSVLine(lines[0]);
-  return lines.slice(1).map(line => {
-    const vals = parseCSVLine(line);
+  const rows = [];
+  let row = [], cur = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"') {
+        if (text[i+1] === '"') { cur += '"'; i++; }   // "" → 따옴표 이스케이프
+        else inQ = false;
+      } else cur += ch;
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === ',') { row.push(cur); cur = ''; }
+      else if (ch === '\n' || ch === '\r') {
+        if (ch === '\r' && text[i+1] === '\n') i++;
+        row.push(cur); cur = '';
+        if (row.length > 1 || (row[0] && row[0].trim() !== '')) rows.push(row);
+        row = [];
+      } else cur += ch;
+    }
+  }
+  if (cur !== '' || row.length) {
+    row.push(cur);
+    if (row.length > 1 || (row[0] && row[0].trim() !== '')) rows.push(row);
+  }
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).map(vals => {
     const obj = {};
-    headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+    headers.forEach((h, i) => obj[h] = (vals[i] || '').trim());
     return obj;
   }).filter(r => r.code);
 }
 
-function parseCSVLine(line) {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      inQuotes = !inQuotes;
-    } else if (ch === ',' && !inQuotes) {
-      result.push(current);
-      current = '';
-    } else {
-      current += ch;
-    }
-  }
-  result.push(current);
-  return result;
+/* ── 가사 텍스트 파서 ── */
+function parseAnthemText(raw) {
+  if (!raw || !raw.trim()) return null;
+  const blocks = raw.split(/\r?\n\s*===+\s*\r?\n/);
+  const parseBlock = (b) => {
+    const lines = b.split(/\r?\n/);
+    let lang = '';
+    const verses = [];
+    let cur = null;
+    lines.forEach(line => {
+      const t = line.trim();
+      if (!lang && /^\[.*\]$/.test(t)) { lang = t.slice(1, -1).trim(); return; }
+      if (t.startsWith('#')) { cur = { title: t.slice(1).trim(), lines: [] }; verses.push(cur); return; }
+      if (t === '') { cur = null; return; }
+      if (!cur) { cur = { title: '', lines: [] }; verses.push(cur); }
+      cur.lines.push(t);
+    });
+    return verses.length ? { lang: lang, verses: verses } : null;
+  };
+  const original = parseBlock(blocks[0]);
+  if (!original) return null;
+  const translation = blocks.length > 1 ? parseBlock(blocks.slice(1).join('\n===\n')) : null;
+  return { original, translation };
 }
 
 function csvToCountry(row) {
@@ -346,9 +455,12 @@ function csvToCountry(row) {
     emblem: row.emblem_url || '',
     flag: row.flag_url || '',
     anthem: { title: row.anthem_title || '', sub: row.anthem_sub || '' },
+    anthemData: parseAnthemText(row.anthem_lyrics || ''),   // 시트 가사 (있으면 우선)
     emblemDesc: row.emblem_desc || '',
     flagDesc: row.flag_desc || '',
     safetyUrl: row.safety_url || '',
+    flagWiki: row.flag_wiki || row.flag_wiki_link || '',
+    emblemWiki: row.emblem_wiki || row.emblem_wiki_link || '',
     ready: !!(row.emblem_desc && row.flag_desc)
   };
 }
@@ -366,17 +478,43 @@ async function loadFromSheet() {
     COUNTRIES = FALLBACK_COUNTRIES;
   }
 
-  /* 🌟 [추가] 나라 리스트 가나다 순 정렬 (한국어 로캘 기준) */
+  // 가나다 순 정렬
   COUNTRIES.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
+
+  // 로딩 스피너 종료
+  const sp = document.getElementById('load-spinner');
+  if (sp) sp.style.display = 'none';
 
   filtered = [...COUNTRIES];
   buildTagFilter();
+  updateRegionCounts();
   buildList();
   updateProgress();
+
   if (filtered.length > 0) {
-    const randIdx = Math.floor(Math.random() * filtered.length);
-    selectCountry(randIdx);
+    // URL 해시(#kr 등)가 있으면 해당 나라로, 없으면 랜덤
+    const hashCode = decodeURIComponent(location.hash.slice(1));
+    const hi = hashCode ? filtered.findIndex(c => c.code === hashCode) : -1;
+    if (hi >= 0) {
+      selectCountry(hi);
+      document.querySelectorAll('.country-item')[hi]?.scrollIntoView({block:'nearest'});
+    } else {
+      selectCountry(Math.floor(Math.random() * filtered.length));
+    }
   }
+}
+
+/* ── 지역 탭에 나라 수 표시: 전체 (17), 아시아 (17) ... ── */
+function updateRegionCounts() {
+  document.querySelectorAll('.rtab').forEach(btn => {
+    const r = btn.dataset.region;
+    const label = btn.dataset.label || btn.textContent;
+    let n;
+    if (r === 'all') n = COUNTRIES.length;
+    else if (r === 'fav') n = COUNTRIES.filter(c => FAVS.has(c.code)).length;
+    else n = COUNTRIES.filter(c => c.region === r).length;
+    btn.textContent = `${label} (${n})`;
+  });
 }
 
 function updateProgress() {
@@ -395,18 +533,15 @@ function buildList() {
   filtered.forEach((c, i) => {
     const div = document.createElement('div');
     div.className = 'country-item' + (i === currentIdx ? ' active' : '');
+    const star = FAVS.has(c.code) ? ' <span class="fav-star">★</span>' : '';
     div.innerHTML = `
       <img class="ci-flag" src="${c.flag}" alt="" loading="lazy" onerror="this.style.display='none'">
-      <span class="ci-name">${c.name}<small>${c.en}</small></span>
+      <span class="ci-name">${c.name}${star}<small>${c.en}</small></span>
       <span class="ci-status ${c.ready ? 'ready' : ''}"></span>
     `;
     div.onclick = () => selectCountry(i);
     ul.appendChild(div);
   });
-
-  const ready = filtered.filter(c => c.ready).length;
-  document.getElementById('count-info').textContent = `${filtered.length}개 나라 · 해설 완성 ${ready}개`;
-  updateProgress();
 }
 
 function selectCountry(idx) {
@@ -415,10 +550,47 @@ function selectCountry(idx) {
   document.querySelectorAll('.country-item').forEach((el, i) => {
     el.classList.toggle('active', i === idx);
   });
-  renderPage(filtered[idx]);
+  const c = filtered[idx];
+  renderPage(c);
+
+  // URL 해시 갱신 (히스토리 누적 없이) → 링크 복사로 바로 공유 가능
+  if (c.code) history.replaceState(null, '', '#' + c.code);
 
   document.getElementById('welcome').style.display = 'none';
   document.getElementById('country-page').style.display = 'flex';
+}
+
+/* 이전/다음 나라 버튼 */
+function navCountry(dir) {
+  const ni = currentIdx + dir;
+  if (ni < 0 || ni >= filtered.length) return;
+  selectCountry(ni);
+  document.querySelectorAll('.country-item')[ni]?.scrollIntoView({block:'nearest'});
+}
+
+/* 즐겨찾기 토글 */
+function toggleFav() {
+  const c = filtered[currentIdx];
+  if (!c) return;
+  if (FAVS.has(c.code)) FAVS.delete(c.code);
+  else FAVS.add(c.code);
+  saveFavs();
+  updateFavBtn(c);
+  updateRegionCounts();
+  if (currentRegion === 'fav') {
+    // 즐겨찾기 보기 중 해제하면 목록에서 빠져야 하므로 필터 재적용
+    applyFilter(document.getElementById('search').value.trim().toLowerCase(), currentRegion);
+  } else {
+    buildList();
+  }
+}
+
+function updateFavBtn(c) {
+  const btn = document.getElementById('fav-btn');
+  if (!btn) return;
+  const on = FAVS.has(c.code);
+  btn.textContent = on ? '★' : '☆';
+  btn.classList.toggle('faved', on);
 }
 
 function renderPage(c) {
@@ -448,7 +620,7 @@ function renderPage(c) {
       <iframe src="${mapUrl}" allowfullscreen loading="lazy"></iframe>
     </div>
     ${c.safetyUrl ? `
-    <a class="safety-btn" href="${c.safetyUrl}" target="_blank">
+    <a class="safety-btn" href="${c.safetyUrl}" target="_blank" rel="noopener">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       외교부 해외안전여행 정보
     </a>` : ''}
@@ -460,17 +632,20 @@ function renderPage(c) {
     + (c.tags||[]).map(t=>`<span class="tag-pill symbol" style="cursor:default">${t}</span>`).join('')
     + (c.colors||[]).map(t=>`<span class="tag-pill color-tag" style="cursor:default">${t}</span>`).join('');
   document.getElementById('tb-tags').innerHTML = tagHtml;
+  updateFavBtn(c);
 
   document.getElementById('col-flag').innerHTML = `
     <div class="col-header"><div class="col-icon">🏳️</div><span class="col-title">국기</span></div>
     <img class="flag-img" src="${c.flag}" alt="${c.name} 국기" onerror="this.style.opacity=0.15" >
     ${c.ready ? `<div class="col-desc">${c.flagDesc}</div>` : '<div class="coming-soon">해설 준비 중입니다</div>'}
+    ${c.flagWiki ? `<div class="source-line"><a href="${c.flagWiki}" target="_blank" rel="noopener">위키백과 원문 보기 ↗</a></div>` : ''}
   `;
 
   document.getElementById('col-emblem').innerHTML = `
     <div class="col-header"><div class="col-icon">🔰</div><span class="col-title">국장</span></div>
     <div class="emblem-wrap" id="emblem-svg-wrap"></div>
     ${c.ready ? `<div class="col-desc">${c.emblemDesc.replace(/\n\n/g,'<br><br>')}</div>` : '<div class="coming-soon">해설 준비 중입니다</div>'}
+    ${c.emblemWiki ? `<div class="source-line"><a href="${c.emblemWiki}" target="_blank" rel="noopener">위키백과 원문 보기 ↗</a></div>` : ''}
   `;
   loadEmblemSVG(c.emblem, 'emblem-svg-wrap');
 
@@ -481,18 +656,19 @@ function renderPage(c) {
         <div class="title">${c.anthem.title || '국가 정보 없음'}</div>
         <div class="sub">${c.anthem.sub || ''}</div>
       </div>
-      <a class="yt-btn-sm" href="${ytSearchUrl(c.en)}" target="_blank">
+      <a class="yt-btn-sm" href="${ytSearchUrl(c.en)}" target="_blank" rel="noopener">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
         듣기
       </a>
     </div>
-    ${renderAnthem(c.code)}
+    ${renderAnthem(c)}
   `;
 }
 
 function applyFilter(q, region) {
   filtered = COUNTRIES.filter(c => {
-    const matchRegion = region === 'all' || c.region === region;
+    const matchRegion = region === 'all'
+      || (region === 'fav' ? FAVS.has(c.code) : c.region === region);
     const matchQ = !q || c.name.includes(q) || c.en.toLowerCase().includes(q);
     const matchTag = !activeTagFilter || 
       (activeTagFilter.type === 'symbol' && (c.tags||[]).includes(activeTagFilter.value)) ||
@@ -564,6 +740,8 @@ function toggleTagFilter(value, type, btn) {
 
 function ytSearchUrl(en) { return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(en + ' national anthem official'); }
 
+/* ── 가사 폴백 데이터 (시트의 anthem_lyrics 셀이 비어 있을 때만 사용) ──
+   시트로 모두 옮기고 나면 이 블록은 통째로 지워도 된다. */
 const ANTHEMS = {
   in: { original: { lang: '힌디어/산스크리트어 (원문)', verses: [{ title: '1절', lines: ['জন গণ মন অধ인ায়ক জয় হে', 'ভারত ভাগ্য বিধাতা', 'পঞ্জাব সিন্ধু গুজরাট মরাठा', 'द्रাবিড় উৎকল বঙ্গ', 'বিন্ধ্য হিমাচল यমুনা গঙ্গা', 'উচ্ছল জলধি তরঙ্গ', 'তব শুভ নামে জাগে', 'তব শুভ আশিष মাগে', 'গাহে তব জয় গাथा', 'জন গণ মঙ্গলদায়ক জয় হে', 'ভারত ভাগ্য বিধাতা', 'জয় হে জয় হে জয় হে', 'জয় জয় জয় জয় হে'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['모든 이의 마음을 이끄는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '펀자브, 신드, 구자라트, 마라타', '드라비다, 오리사, 벵갈', '빈디야, 히말라야, 야무나, 갠지스', '출렁이는 바다의 물결', '그대의 축복된 이름으로 깨어나고', '그대의 축복을 구하며', '그대의 승리를 노래하네', '모든 이에게 행복을 주는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '승리 승리 승리 승리하소서'] }] } },
   id: { original: { lang: '인도네시아어 (원문)', verses: [{ title: '1절', lines: ['Indonesia, tanah airku', 'Tanah tumpah darahku', 'Di sanalah aku berdiri', 'Jadi pandu ibuku', 'Indonesia, kebangsaanku', 'Bangsa dan tanah airku', 'Marilah kita berseru', 'Indonesia bersatu'] }, { title: '후렴', lines: ['Hiduplah tanahku', 'Hiduplah negeriku', 'Bangsaku, rakyatku, semuanya', 'Bangunlah jiwanya', 'Bangunlah badannya', 'Untuk Indonesia Raya'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['인도네시아, 나의 조국', '내 피가 흐르는 땅', '그곳에서 나는 서 있네', '어머니의 안내자로서', '인도네시아, 나의 민족', '나의 민족과 조국', '함께 외치세', '인도네시아여 하나 되어라'] }, { title: '후렴', lines: ['나의 땅이여 살아있어라', '나의 나라여 살아있어라', '나의 민족, 나의 국민, 모두 다', '그 정신을 세워라', '그 몸을 세워라', '위대한 인도네시아를 위하여'] }] } },
@@ -584,24 +762,25 @@ const ANTHEMS = {
   jp: { original: { lang: '일본어 (원문)', verses: [{ title: '', lines: ['君が代は', '千代に八千代に', 'さざれ石の', 'いわおとなりて', 'こけのむすまで'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['임금의 치세는', '천 년이고 팔천 년이고', '조약돌이', '큰 바위가 되어', '이끼가 낄 때까지'] }] } }
 };
 
-function renderAnthem(code) {
-  const data = ANTHEMS[code];
+/* 시트 가사(c.anthemData)가 있으면 우선, 없으면 ANTHEMS 폴백 */
+function renderAnthem(c) {
+  const data = c.anthemData || ANTHEMS[c.code];
   if (!data) return '<div class="coming-soon">가사 준비 중입니다.</div>';
 
   const hasTranslation = !!data.translation;
-  const id = 'anthem-' + code;
+  const id = 'anthem-' + c.code;
   let html = '<div class="anthem-viewer" id="' + id + '">';
 
   if (hasTranslation) {
     html += '<div class="anthem-toggle">';
-    html += '<button class="atbtn" onclick="switchAnthem(\''+code+'\', \'original\')">'+data.original.lang+'</button>';
-    html += '<button class="atbtn active" onclick="switchAnthem(\''+code+'\', \'translation\')">'+data.translation.lang+'</button>';
+    html += '<button class="atbtn" data-atype="original" onclick="switchAnthem(\''+c.code+'\', \'original\')">'+(data.original.lang || '원문')+'</button>';
+    html += '<button class="atbtn active" data-atype="translation" onclick="switchAnthem(\''+c.code+'\', \'translation\')">'+(data.translation.lang || '한국어 번역')+'</button>';
     html += '</div>';
   }
 
-  html += renderVerses(data.original.verses, code, 'original', !hasTranslation);
+  html += renderVerses(data.original.verses, c.code, 'original', !hasTranslation);
   if (hasTranslation) {
-    html += renderVerses(data.translation.verses, code, 'translation', true);
+    html += renderVerses(data.translation.verses, c.code, 'translation', true);
   }
   html += '</div>';
   return html;
@@ -619,41 +798,20 @@ function renderVerses(verses, code, type, visible) {
   return html;
 }
 
+/* 버튼 활성화를 텍스트 매칭 대신 data-atype 으로 판별 (시트 가사의 자유로운 라벨 대응) */
 function switchAnthem(code, type) {
   const viewer = document.getElementById('anthem-' + code);
+  if (!viewer) return;
   viewer.querySelectorAll('.anthem-verses').forEach(el => {
     el.style.display = el.dataset.type === type ? 'block' : 'none';
   });
-  viewer.querySelectorAll('.atbtn').forEach((btn) => {
-    if(type === 'original') {
-      btn.classList.toggle('active', btn.textContent.includes('원문') || btn.textContent === '한국어');
-    } else {
-      btn.classList.toggle('active', btn.textContent.includes('번역'));
-    }
+  viewer.querySelectorAll('.atbtn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.atype === type);
   });
 }
 
-/* ── 🌟 [수정] 국장 SVG 로더 v2 ──
-   핵심 원리 3가지:
-
-   1) <style> 태그를 절대 지우지 않는다.
-      위키미디어 계열 국장 SVG는 색상을 <style> 안의 CSS 클래스
-      (.st0 { fill:#e30613 } 같은 형태)로 정의하는 경우가 많다.
-      스타일을 지우면 도형들이 SVG 기본값인 '검정 채움'으로 떨어져서
-      국장 전체가 까맣게 나온다. (기존 버그의 원인)
-
-   2) 크기 조절은 viewBox로 한다.
-      viewBox가 있어야 SVG가 비율을 유지하며 컨테이너에 맞게 늘고 준다.
-      viewBox가 없는 파일은 임의의 "0 0 500 500"을 박는 대신,
-      파일이 원래 갖고 있던 width/height 속성값으로 복원해서 만든다.
-      그 후 width/height 속성을 제거하면 CSS(width:100%)가 주도권을 갖는다.
-
-   3) 정규식 대신 DOMParser를 쓴다.
-      줄바꿈이 섞인 svg 태그, 중첩된 <svg>, 특이한 속성 순서 등
-      정규식이 놓치는 변칙 파일도 안전하게 처리된다.
-      파싱에 실패하면 <img> 태그로 폴백한다. */
-
-const EMBLEM_CACHE = {}; // 한 번 받은 SVG 원문은 캐싱 (재방문 시 재요청 방지)
+/* ── 국장 SVG 로더 v2 (스타일 보존 + viewBox 복원 + DOMParser) ── */
+const EMBLEM_CACHE = {};
 
 async function loadEmblemSVG(url, containerId) {
   const wrap = document.getElementById(containerId);
@@ -661,7 +819,6 @@ async function loadEmblemSVG(url, containerId) {
 
   if (!url) { wrap.innerHTML = ''; return; }
 
-  // SVG가 아니면(png/jpg 등) 일반 이미지로. object-fit:contain이 크기를 맞춰준다.
   const cleanUrl = url.toLowerCase().split('?')[0];
   if (!cleanUrl.endsWith('.svg')) {
     wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="국장" onerror="this.style.display='none'">`;
@@ -687,22 +844,27 @@ async function loadEmblemSVG(url, containerId) {
     if (!svg.hasAttribute('viewBox')) {
       const wAttr = svg.getAttribute('width') || '';
       const hAttr = svg.getAttribute('height') || '';
-      // %단위는 실제 크기 정보가 아니므로 제외
       const w = wAttr.includes('%') ? 0 : parseFloat(wAttr);
       const h = hAttr.includes('%') ? 0 : parseFloat(hAttr);
       if (w > 0 && h > 0) {
         svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
       } else {
-        // 크기 정보가 전혀 없는 파일은 인라인 렌더링 포기 → img 폴백
         throw new Error('no size info for viewBox');
       }
     }
 
-    // 고정 크기 속성/스타일 제거 → CSS(.emblem-wrap svg)가 크기 결정
+    // 고정 크기 속성 제거 → CSS(width:100%; height:auto)가 크기 결정
     svg.removeAttribute('width');
     svg.removeAttribute('height');
     svg.removeAttribute('style');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+    // 🌟 viewBox 비율을 aspect-ratio 로 명시 → height:auto 가 모든 브라우저에서
+    //     정확히 동작, 단이 커지는 만큼 국장도 무제한으로 함께 커진다
+    const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+    if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) {
+      svg.style.aspectRatio = vb[2] + ' / ' + vb[3];
+    }
 
     wrap.innerHTML = '';
     wrap.appendChild(document.importNode(svg, true));
@@ -729,6 +891,7 @@ function goHome() {
   document.getElementById('country-page').style.display = 'none';
   document.getElementById('welcome').style.display = 'flex';
   document.querySelectorAll('.country-item').forEach(el => el.classList.remove('active'));
+  history.replaceState(null, '', location.pathname + location.search);
 }
 
 function selectRandom() {
@@ -744,21 +907,36 @@ function selectRandom() {
   }
 }
 
+/* ── URL 해시로 진입/이동 (#kr → 대한민국) ── */
+function goToCode(code) {
+  let i = filtered.findIndex(c => c.code === code);
+  if (i < 0 && COUNTRIES.some(c => c.code === code)) {
+    // 필터에 걸려 안 보이는 나라면 필터를 초기화하고 다시 찾는다
+    document.getElementById('search').value = '';
+    currentRegion = 'all';
+    activeTagFilter = null;
+    document.querySelectorAll('.rtab').forEach(b => b.classList.toggle('active', b.dataset.region === 'all'));
+    document.querySelectorAll('#tag-pills .tag-pill').forEach(b => b.classList.remove('active'));
+    applyFilter('', 'all');
+    i = filtered.findIndex(c => c.code === code);
+  }
+  if (i >= 0) {
+    selectCountry(i);
+    document.querySelectorAll('.country-item')[i]?.scrollIntoView({block:'nearest'});
+  }
+}
+
+window.addEventListener('hashchange', function() {
+  const code = decodeURIComponent(location.hash.slice(1));
+  if (code) goToCode(code);
+});
+
 document.addEventListener('keydown', function(e) {
   if (['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(e.key)) {
     if (document.activeElement.id === 'search') return; 
     e.preventDefault();
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      if (currentIdx > 0) {
-        selectCountry(currentIdx - 1);
-        document.querySelectorAll('.country-item')[currentIdx]?.scrollIntoView({block:'nearest'});
-      }
-    } else {
-      if (currentIdx < filtered.length - 1) {
-        selectCountry(currentIdx + 1);
-        document.querySelectorAll('.country-item')[currentIdx]?.scrollIntoView({block:'nearest'});
-      }
-    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navCountry(-1);
+    else navCountry(1);
   }
 });
 
