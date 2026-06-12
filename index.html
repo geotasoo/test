@@ -60,28 +60,15 @@
   .ci-flag { width: 20px; height: 13px; object-fit: cover; border-radius: 1px; flex-shrink: 0; border: 1px solid #252525; }
   .ci-name { font-size: 11px; color: #c5c9d8; flex: 1; line-height: 1.3; }
   .ci-name small { display: block; font-size: 9px; color: #8a9db0; margin-top: 1px; }
-  .ci-name .fav-star { color: #e8b339; font-size: 9px; }
   .ci-status { width: 5px; height: 5px; border-radius: 50%; background: #222; flex-shrink: 0; }
   .ci-status.ready { background: var(--accent); }
 
   /* ── MAIN ── */
   #main { margin-left: var(--col1); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
 
-  /* Welcome */
+  /* Welcome: 지구본만 (추후 직접 꾸밀 영역) */
   #welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 3rem; text-align: center; }
-  #welcome .globe { font-size: 52px; margin-bottom: 1rem; opacity: 0.4; }
-  #welcome h2 { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 600; margin-bottom: 0.5rem; }
-  #welcome p { font-size: 13px; color: var(--ink-muted); line-height: 1.8; max-width: 340px; }
-  .progress-bar { margin-top: 1.25rem; width: 240px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; }
-  .progress-label { margin-top: 5px; font-size: 11px; color: var(--ink-faint); }
-
-  /* 로딩 스피너 */
-  .spinner {
-    width: 22px; height: 22px; border: 2px solid var(--border); border-top-color: var(--accent);
-    border-radius: 50%; animation: spin 0.8s linear infinite; margin: 1rem auto 0;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  #welcome .globe { font-size: 52px; opacity: 0.4; }
 
   /* Country page */
   #country-page { display: none; flex-direction: column; flex: 1; }
@@ -101,15 +88,14 @@
   .tag-pill.color-tag { background: var(--paper-dark); color: var(--ink-muted); border: 1px solid var(--border); }
   .tag-pill.color-tag:hover, .tag-pill.color-tag.active { background: var(--ink); color: #fff; border-color: var(--ink); }
 
-  /* 이전/다음/즐겨찾기 버튼 */
+  /* 이전/다음 버튼 */
   #tb-actions { margin-left: auto; display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
-  .nav-btn, #fav-btn {
+  .nav-btn {
     border: 1px solid var(--border); background: #fff; border-radius: 3px;
     font-size: 13px; padding: 3px 10px; cursor: pointer; color: var(--ink-muted);
     font-family: inherit; transition: all 0.15s; line-height: 1.4;
   }
-  .nav-btn:hover, #fav-btn:hover { background: var(--paper-dark); }
-  #fav-btn.faved { color: #e8b339; border-color: #e8b339; }
+  .nav-btn:hover { background: var(--paper-dark); }
 
   /* Sidebar tag pills */
   .tag-filter-bar .tag-pill.symbol { background: #4d6070; color: #c5c9d8; border: 1px solid #4d6070; }
@@ -132,10 +118,7 @@
   /* 국기: 단 가로폭 100%, 비율 유지 */
   .flag-img { width: 100%; height: auto; border: 1px solid var(--border); display: block; margin-bottom: 1.25rem; }
 
-  /* ── 국장: 높이 제한 없이 단 가로폭에 정확히 맞춤 ──
-     고정 height를 없애고 width:100% + height:auto 로 변경.
-     인라인 SVG는 viewBox 비율(JS에서 aspect-ratio로 보강)에 따라
-     단이 커지면 함께 커지고 줄어들면 함께 줄어든다. */
+  /* 국장: 높이 제한 없이 단 가로폭에 정확히 맞춤 */
   .emblem-wrap { width: 100%; margin-bottom: 1.25rem; }
   .emblem-img { width: 100%; height: auto; display: block; }
   .emblem-wrap svg { width: 100%; height: auto; display: block; }
@@ -150,6 +133,7 @@
   /* Anthem */
   .anthem-name { margin-bottom: 1.25rem; }
   .anthem-name .title { font-family: 'Noto Sans KR', sans-serif; font-size: 17px; font-weight: 600; color: var(--ink); }
+  .anthem-name .title .title-meaning { font-size: 12px; font-weight: 400; color: var(--ink-muted); }
   .anthem-name .sub { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
   .anthem-toggle { display: flex; gap: 4px; margin-bottom: 1rem; flex-wrap: wrap; }
   .atbtn { font-size: 11px; padding: 3px 9px; border-radius: 2px; border: 1px solid var(--border); background: transparent; color: var(--ink-muted); cursor: pointer; font-family: inherit; transition: all 0.15s; }
@@ -241,7 +225,7 @@
   <div id="sidebar-header">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div>
-        <h1 style="cursor:pointer;" onclick="goHome()" title="홈으로">세계 상징 사전</h1>
+        <h1 style="cursor:pointer;" onclick="selectRandom()" title="랜덤 나라 보기">세계 상징 사전</h1>
         <p>WORLD SYMBOL DICTIONARY</p>
         <p style="font-size:9px;color:#8a9aa8;margin-top:3px;letter-spacing:0.03em;">@geotasoo / 20260612</p>
         <div id="theme-picker">
@@ -263,7 +247,6 @@
     <button class="rtab" data-region="아프리카" data-label="아프리카">아프리카</button>
     <button class="rtab" data-region="아메리카" data-label="아메리카">아메리카</button>
     <button class="rtab" data-region="오세아니아" data-label="오세아니아">오세아니아</button>
-    <button class="rtab" data-region="fav" data-label="★" title="즐겨찾기">★</button>
   </div>
   <div class="tag-filter-bar">
     <button class="tag-toggle-btn" style="color:#6b7494;margin-top:0;" onclick="this.classList.toggle('open');document.getElementById('tag-pills-wrap').classList.toggle('open')">
@@ -277,13 +260,9 @@
 </nav>
 
 <main id="main">
+  <!-- 웰컴 화면: 지구본만 (꾸미기는 추후 직접) -->
   <div id="welcome">
     <div class="globe">🌍</div>
-    <h2>세계 상징 사전</h2>
-    <p>국기·국장·국가 속에 담긴 그 땅의 지리, 역사, 삶의 방식을 읽어보세요.</p>
-    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-    <p class="progress-label" id="progress-label">데이터를 불러오는 중...</p>
-    <div class="spinner" id="load-spinner"></div>
   </div>
 
   <div id="country-page">
@@ -292,7 +271,6 @@
       <span class="en" id="tb-en"></span>
       <div class="tag-list" id="tb-tags"></div>
       <div id="tb-actions">
-        <button id="fav-btn" title="즐겨찾기" onclick="toggleFav()">☆</button>
         <button class="nav-btn" title="이전 나라" onclick="navCountry(-1)">←</button>
         <button class="nav-btn" title="다음 나라" onclick="navCountry(1)">→</button>
       </div>
@@ -316,8 +294,7 @@
 
 <script>
 /* ════════════════════════════════════════════════════════════
-   구글 시트 열 구성 (헤더 이름으로 읽으므로 열 순서는 자유.
-   아래는 권장 배치 — 사람이 보기 편한 순서)
+   구글 시트 열 구성 (헤더 이름으로 읽으므로 열 순서는 자유)
 
    A  code           나라 코드 (kr, jp ...)  ※ URL 해시 공유에도 사용
    B  name           한글 이름
@@ -331,29 +308,14 @@
    J  flag_desc      국기 해설
    K  emblem_url     국장 이미지 URL
    L  emblem_desc    국장 해설
-   M  anthem_title   국가 제목
+   M  anthem_title   국가 제목  ※ "자나 가나 마나 (모든 국민의 마음)" 처럼
+                     괄호로 뜻을 직접 적으면 그대로 표시되고,
+                     괄호가 없으면 아래 TITLE_MEANINGS 의 뜻이 자동으로 붙는다
    N  anthem_sub     국가 부제
-   O  anthem_lyrics  국가 가사 (아래 형식 참고)
+   O  anthem_lyrics  국가 가사 (블록 형식, 비어 있으면 코드 폴백 사용)
    P  safety_url     외교부 0404 링크
    Q  flag_wiki      국기 위키 원문 링크
    R  emblem_wiki    국장 위키 원문 링크
-
-   ── anthem_lyrics 셀 작성 형식 ──
-   한 셀 안에 줄바꿈(Alt+Enter 또는 Cmd+Enter)으로 작성.
-   원문 블록과 번역 블록은 `===` 한 줄로 구분 (번역 블록은 생략 가능).
-   각 블록 첫 줄은 [언어 라벨], 절 제목은 # 으로 시작, 절 사이는 빈 줄.
-
-   [일본어 (원문)]
-   #1절
-   君が代は
-   千代に八千代に
-   ===
-   [한국어 번역]
-   #1절
-   임금의 치세는
-   천 년이고 팔천 년이고
-
-   가사 셀이 비어 있으면 코드 안의 ANTHEMS 폴백 데이터를 사용한다.
    ════════════════════════════════════════════════════════════ */
 
 const FALLBACK_COUNTRIES = [];
@@ -366,10 +328,25 @@ let currentIdx = 0;
 let currentRegion = 'all';
 let activeTagFilter = null;
 
-/* ── 즐겨찾기 (localStorage 저장) ── */
-let FAVS = new Set();
-try { FAVS = new Set(JSON.parse(localStorage.getItem('wsd-favs') || '[]')); } catch(e) {}
-function saveFavs() { try { localStorage.setItem('wsd-favs', JSON.stringify([...FAVS])); } catch(e) {} }
+/* ── 국가(애국가) 제목의 한글 뜻 ──
+   시트의 anthem_title 에 괄호가 이미 있으면 그쪽을 우선한다.
+   새 나라를 추가할 때는 시트 제목에 직접 괄호로 적는 것을 권장. */
+const TITLE_MEANINGS = {
+  kr: '나라를 사랑하는 노래',
+  jp: '임금의 치세',
+  in: '모든 국민의 마음',
+  id: '위대한 인도네시아',
+  th: '태국의 노래',
+  vn: '진군가',
+  sg: '전진하라 싱가포르여',
+  my: '나의 조국',
+  kh: '장엄한 왕국',
+  np: '수백 송이의 꽃',
+  pk: '국가(國歌)',
+  sa: '군주여 만세',
+  il: '희망',
+  tr: '독립 행진곡'
+};
 
 /* ── 테마 ── */
 function setTheme(t) {
@@ -379,10 +356,7 @@ function setTheme(t) {
 }
 try { const saved = localStorage.getItem('wsd-theme'); if (saved) setTheme(saved); } catch(e) {}
 
-/* ── 🌟 [수정] CSV 파서 v2: 따옴표 안 줄바꿈 지원 ──
-   가사처럼 셀 안에 줄바꿈이 들어가는 데이터가 생기면서
-   '줄 단위로 먼저 자르는' 기존 방식은 데이터를 깨뜨린다.
-   전체 텍스트를 문자 단위로 스캔하며 따옴표 상태를 추적한다. */
+/* ── CSV 파서: 따옴표 안 줄바꿈 지원 (가사 셀 대응) ── */
 function parseCSV(text) {
   const rows = [];
   let row = [], cur = '', inQ = false;
@@ -390,7 +364,7 @@ function parseCSV(text) {
     const ch = text[i];
     if (inQ) {
       if (ch === '"') {
-        if (text[i+1] === '"') { cur += '"'; i++; }   // "" → 따옴표 이스케이프
+        if (text[i+1] === '"') { cur += '"'; i++; }
         else inQ = false;
       } else cur += ch;
     } else {
@@ -455,7 +429,7 @@ function csvToCountry(row) {
     emblem: row.emblem_url || '',
     flag: row.flag_url || '',
     anthem: { title: row.anthem_title || '', sub: row.anthem_sub || '' },
-    anthemData: parseAnthemText(row.anthem_lyrics || ''),   // 시트 가사 (있으면 우선)
+    anthemData: parseAnthemText(row.anthem_lyrics || ''),
     emblemDesc: row.emblem_desc || '',
     flagDesc: row.flag_desc || '',
     safetyUrl: row.safety_url || '',
@@ -481,15 +455,10 @@ async function loadFromSheet() {
   // 가나다 순 정렬
   COUNTRIES.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
 
-  // 로딩 스피너 종료
-  const sp = document.getElementById('load-spinner');
-  if (sp) sp.style.display = 'none';
-
   filtered = [...COUNTRIES];
   buildTagFilter();
   updateRegionCounts();
   buildList();
-  updateProgress();
 
   if (filtered.length > 0) {
     // URL 해시(#kr 등)가 있으면 해당 나라로, 없으면 랜덤
@@ -499,7 +468,7 @@ async function loadFromSheet() {
       selectCountry(hi);
       document.querySelectorAll('.country-item')[hi]?.scrollIntoView({block:'nearest'});
     } else {
-      selectCountry(Math.floor(Math.random() * filtered.length));
+      selectRandom();
     }
   }
 }
@@ -509,22 +478,9 @@ function updateRegionCounts() {
   document.querySelectorAll('.rtab').forEach(btn => {
     const r = btn.dataset.region;
     const label = btn.dataset.label || btn.textContent;
-    let n;
-    if (r === 'all') n = COUNTRIES.length;
-    else if (r === 'fav') n = COUNTRIES.filter(c => FAVS.has(c.code)).length;
-    else n = COUNTRIES.filter(c => c.region === r).length;
+    const n = (r === 'all') ? COUNTRIES.length : COUNTRIES.filter(c => c.region === r).length;
     btn.textContent = `${label} (${n})`;
   });
-}
-
-function updateProgress() {
-  const total = COUNTRIES.length;
-  const ready = COUNTRIES.filter(c=>c.ready).length;
-  const pct = total ? Math.round(ready/total*100) : 0;
-  const pf = document.getElementById('progress-fill');
-  const pl = document.getElementById('progress-label');
-  if(pf) pf.style.width = pct + '%';
-  if(pl) pl.textContent = `해설 완성 ${ready} / ${total}개 나라 (${pct}%)`;
 }
 
 function buildList() {
@@ -533,10 +489,9 @@ function buildList() {
   filtered.forEach((c, i) => {
     const div = document.createElement('div');
     div.className = 'country-item' + (i === currentIdx ? ' active' : '');
-    const star = FAVS.has(c.code) ? ' <span class="fav-star">★</span>' : '';
     div.innerHTML = `
       <img class="ci-flag" src="${c.flag}" alt="" loading="lazy" onerror="this.style.display='none'">
-      <span class="ci-name">${c.name}${star}<small>${c.en}</small></span>
+      <span class="ci-name">${c.name}<small>${c.en}</small></span>
       <span class="ci-status ${c.ready ? 'ready' : ''}"></span>
     `;
     div.onclick = () => selectCountry(i);
@@ -568,29 +523,13 @@ function navCountry(dir) {
   document.querySelectorAll('.country-item')[ni]?.scrollIntoView({block:'nearest'});
 }
 
-/* 즐겨찾기 토글 */
-function toggleFav() {
-  const c = filtered[currentIdx];
-  if (!c) return;
-  if (FAVS.has(c.code)) FAVS.delete(c.code);
-  else FAVS.add(c.code);
-  saveFavs();
-  updateFavBtn(c);
-  updateRegionCounts();
-  if (currentRegion === 'fav') {
-    // 즐겨찾기 보기 중 해제하면 목록에서 빠져야 하므로 필터 재적용
-    applyFilter(document.getElementById('search').value.trim().toLowerCase(), currentRegion);
-  } else {
-    buildList();
-  }
-}
-
-function updateFavBtn(c) {
-  const btn = document.getElementById('fav-btn');
-  if (!btn) return;
-  const on = FAVS.has(c.code);
-  btn.textContent = on ? '★' : '☆';
-  btn.classList.toggle('faved', on);
+/* 국가 제목 + (뜻) 조합 */
+function anthemTitleHtml(c) {
+  const title = c.anthem.title || '국가 정보 없음';
+  // 시트 제목에 이미 괄호가 있으면 그대로, 없으면 내장 뜻을 덧붙임
+  if (/[(（]/.test(title)) return title;
+  const meaning = TITLE_MEANINGS[c.code];
+  return meaning ? `${title} <span class="title-meaning">(${meaning})</span>` : title;
 }
 
 function renderPage(c) {
@@ -632,7 +571,6 @@ function renderPage(c) {
     + (c.tags||[]).map(t=>`<span class="tag-pill symbol" style="cursor:default">${t}</span>`).join('')
     + (c.colors||[]).map(t=>`<span class="tag-pill color-tag" style="cursor:default">${t}</span>`).join('');
   document.getElementById('tb-tags').innerHTML = tagHtml;
-  updateFavBtn(c);
 
   document.getElementById('col-flag').innerHTML = `
     <div class="col-header"><div class="col-icon">🏳️</div><span class="col-title">국기</span></div>
@@ -653,7 +591,7 @@ function renderPage(c) {
     <div class="col-header"><div class="col-icon">🎵</div><span class="col-title">국가</span></div>
     <div class="anthem-name" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <div>
-        <div class="title">${c.anthem.title || '국가 정보 없음'}</div>
+        <div class="title">${anthemTitleHtml(c)}</div>
         <div class="sub">${c.anthem.sub || ''}</div>
       </div>
       <a class="yt-btn-sm" href="${ytSearchUrl(c.en)}" target="_blank" rel="noopener">
@@ -667,8 +605,7 @@ function renderPage(c) {
 
 function applyFilter(q, region) {
   filtered = COUNTRIES.filter(c => {
-    const matchRegion = region === 'all'
-      || (region === 'fav' ? FAVS.has(c.code) : c.region === region);
+    const matchRegion = region === 'all' || c.region === region;
     const matchQ = !q || c.name.includes(q) || c.en.toLowerCase().includes(q);
     const matchTag = !activeTagFilter || 
       (activeTagFilter.type === 'symbol' && (c.tags||[]).includes(activeTagFilter.value)) ||
@@ -740,8 +677,7 @@ function toggleTagFilter(value, type, btn) {
 
 function ytSearchUrl(en) { return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(en + ' national anthem official'); }
 
-/* ── 가사 폴백 데이터 (시트의 anthem_lyrics 셀이 비어 있을 때만 사용) ──
-   시트로 모두 옮기고 나면 이 블록은 통째로 지워도 된다. */
+/* ── 가사 폴백 데이터 (시트의 anthem_lyrics 셀이 비어 있을 때만 사용) ── */
 const ANTHEMS = {
   in: { original: { lang: '힌디어/산스크리트어 (원문)', verses: [{ title: '1절', lines: ['জন গণ মন অধ인ায়ক জয় হে', 'ভারত ভাগ্য বিধাতা', 'পঞ্জাব সিন্ধু গুজরাট মরাठा', 'द्रাবিড় উৎকল বঙ্গ', 'বিন্ধ্য হিমাচল यমুনা গঙ্গা', 'উচ্ছল জলধি তরঙ্গ', 'তব শুভ নামে জাগে', 'তব শুভ আশিष মাগে', 'গাহে তব জয় গাथा', 'জন গণ মঙ্গলদায়ক জয় হে', 'ভারত ভাগ্য বিধাতা', 'জয় হে জয় হে জয় হে', 'জয় জয় জয় জয় হে'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['모든 이의 마음을 이끄는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '펀자브, 신드, 구자라트, 마라타', '드라비다, 오리사, 벵갈', '빈디야, 히말라야, 야무나, 갠지스', '출렁이는 바다의 물결', '그대의 축복된 이름으로 깨어나고', '그대의 축복을 구하며', '그대의 승리를 노래하네', '모든 이에게 행복을 주는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '승리 승리 승리 승리하소서'] }] } },
   id: { original: { lang: '인도네시아어 (원문)', verses: [{ title: '1절', lines: ['Indonesia, tanah airku', 'Tanah tumpah darahku', 'Di sanalah aku berdiri', 'Jadi pandu ibuku', 'Indonesia, kebangsaanku', 'Bangsa dan tanah airku', 'Marilah kita berseru', 'Indonesia bersatu'] }, { title: '후렴', lines: ['Hiduplah tanahku', 'Hiduplah negeriku', 'Bangsaku, rakyatku, semuanya', 'Bangunlah jiwanya', 'Bangunlah badannya', 'Untuk Indonesia Raya'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['인도네시아, 나의 조국', '내 피가 흐르는 땅', '그곳에서 나는 서 있네', '어머니의 안내자로서', '인도네시아, 나의 민족', '나의 민족과 조국', '함께 외치세', '인도네시아여 하나 되어라'] }, { title: '후렴', lines: ['나의 땅이여 살아있어라', '나의 나라여 살아있어라', '나의 민족, 나의 국민, 모두 다', '그 정신을 세워라', '그 몸을 세워라', '위대한 인도네시아를 위하여'] }] } },
@@ -798,7 +734,6 @@ function renderVerses(verses, code, type, visible) {
   return html;
 }
 
-/* 버튼 활성화를 텍스트 매칭 대신 data-atype 으로 판별 (시트 가사의 자유로운 라벨 대응) */
 function switchAnthem(code, type) {
   const viewer = document.getElementById('anthem-' + code);
   if (!viewer) return;
@@ -859,8 +794,7 @@ async function loadEmblemSVG(url, containerId) {
     svg.removeAttribute('style');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-    // 🌟 viewBox 비율을 aspect-ratio 로 명시 → height:auto 가 모든 브라우저에서
-    //     정확히 동작, 단이 커지는 만큼 국장도 무제한으로 함께 커진다
+    // viewBox 비율을 aspect-ratio로 명시 → 단이 커지는 만큼 국장도 무제한으로 커짐
     const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
     if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) {
       svg.style.aspectRatio = vb[2] + ' / ' + vb[3];
@@ -887,13 +821,7 @@ function switchMobileTab(tab, btn) {
   else if (tab === 'anthem') document.getElementById('col-anthem').classList.add('mobile-active');
 }
 
-function goHome() {
-  document.getElementById('country-page').style.display = 'none';
-  document.getElementById('welcome').style.display = 'flex';
-  document.querySelectorAll('.country-item').forEach(el => el.classList.remove('active'));
-  history.replaceState(null, '', location.pathname + location.search);
-}
-
+/* 타이틀 클릭 = 🎲 = 랜덤 나라 */
 function selectRandom() {
   const pool = filtered.length > 0 ? filtered : COUNTRIES;
   if (pool.length === 0) return;
@@ -911,7 +839,6 @@ function selectRandom() {
 function goToCode(code) {
   let i = filtered.findIndex(c => c.code === code);
   if (i < 0 && COUNTRIES.some(c => c.code === code)) {
-    // 필터에 걸려 안 보이는 나라면 필터를 초기화하고 다시 찾는다
     document.getElementById('search').value = '';
     currentRegion = 'all';
     activeTagFilter = null;
