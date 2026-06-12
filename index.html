@@ -116,10 +116,10 @@
   .col-title { font-size: 11px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; font-weight: 500; }
 
   /* Flag */
-  .flag-img { width: 100%; max-width: 300px; height: auto; border: 1px solid var(--border); display: block; margin: 0 auto 1.25rem; }
+  .flag-img { width: 100%; height: auto; border: 1px solid var(--border); display: block; margin-bottom: 1.25rem; }
   /* Emblem */
-  .emblem-wrap { display: flex; justify-content: center; align-items: center; margin-bottom: 1.25rem; height: 200px; }
-  .emblem-img { max-width: 180px; max-height: 200px; width: auto; height: auto; object-fit: contain; }
+  .emblem-wrap { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 1.25rem; }
+  .emblem-img { width: 100%; max-width: 100%; height: auto; object-fit: contain; }
   /* Text */
   .col-desc { font-size: 13px; line-height: 1.95; color: var(--ink); }
   .col-desc br { display: block; margin-top: 0.75rem; content: ''; }
@@ -222,6 +222,52 @@
   .tags-collapsible { overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s; max-height: 0; opacity: 0; }
   .tags-collapsible.open { max-height: 300px; opacity: 1; }
 
+
+  /* ── 모바일 탭 ── */
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    #sidebar {
+      width: 100%; height: auto; position: relative;
+      min-height: auto;
+    }
+    #main { margin-left: 0; flex-direction: column; }
+    #country-page { flex-direction: column; }
+    #four-col-wrap { flex-direction: column; }
+
+    /* 모바일 탭 바 */
+    .mobile-tabs {
+      display: flex !important;
+      position: sticky; top: 0; z-index: 20;
+      background: #fff; border-bottom: 1px solid var(--border);
+    }
+    .mobile-tab-btn {
+      flex: 1; padding: 10px 4px; font-size: 12px; font-weight: 500;
+      border: none; background: transparent; cursor: pointer;
+      color: var(--ink-muted); border-bottom: 2px solid transparent;
+      font-family: inherit; transition: all 0.15s;
+    }
+    .mobile-tab-btn.active {
+      color: var(--accent); border-bottom-color: var(--accent);
+    }
+
+    /* 모바일에서 col 숨기기/보이기 */
+    #col-info, .content-col {
+      display: none;
+      width: 100% !important; max-width: 100% !important;
+      min-height: auto !important; height: auto !important;
+      border-right: none !important; border-bottom: 1px solid var(--border);
+      position: relative !important;
+    }
+    #col-info.mobile-active, .content-col.mobile-active { display: block; }
+
+    #content-cols {
+      grid-template-columns: 1fr !important;
+    }
+  }
+
+  /* 데스크탑에서 모바일 탭 숨기기 */
+  .mobile-tabs { display: none; }
+
 </style>
 </head>
 <body>
@@ -274,8 +320,14 @@
       <span class="en" id="tb-en"></span>
       <div class="tag-list" id="tb-tags"></div>
     </div>
+    <div class="mobile-tabs" id="mobile-tabs">
+      <button class="mobile-tab-btn active" onclick="switchMobileTab('info', this)">🌍 정보</button>
+      <button class="mobile-tab-btn" onclick="switchMobileTab('flag', this)">🏳️ 국기</button>
+      <button class="mobile-tab-btn" onclick="switchMobileTab('emblem', this)">🔰 국장</button>
+      <button class="mobile-tab-btn" onclick="switchMobileTab('anthem', this)">🎵 국가</button>
+    </div>
     <div id="four-col-wrap" style="display:flex;flex:1;align-items:stretch;min-height:100vh;">
-      <div id="col-info"></div>
+      <div id="col-info" class="mobile-active"></div>
       <div id="content-cols" style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;align-items:stretch;">
       <div class="content-col col-flag" id="col-flag"></div>
       <div class="content-col col-emblem" id="col-emblem"></div>
@@ -469,7 +521,7 @@ function renderPage(c) {
   // COL 1: Flag
   document.getElementById('col-flag').innerHTML = `
     <div class="col-header"><div class="col-icon">🏳️</div><span class="col-title">국기</span></div>
-    <img class="flag-img" src="${c.flag}" alt="${c.name} 국기" onerror="this.style.opacity=0.15" onload="syncEmblemHeight(this)">
+    <img class="flag-img" src="${c.flag}" alt="${c.name} 국기" onerror="this.style.opacity=0.15" >
     ${c.ready
       ? `<div class="col-desc">${c.flagDesc}</div>`
       : '<div class="coming-soon">해설 준비 중입니다</div>'}
@@ -673,6 +725,28 @@ function switchAnthem(code, type) {
 loadFromSheet();
 
 
+
+function switchMobileTab(tab, btn) {
+  // 버튼 활성화
+  document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // 모든 패널 숨기기
+  document.getElementById('col-info').classList.remove('mobile-active');
+  document.querySelectorAll('.content-col').forEach(c => c.classList.remove('mobile-active'));
+
+  // 선택 탭 보이기
+  if (tab === 'info') {
+    document.getElementById('col-info').classList.add('mobile-active');
+  } else if (tab === 'flag') {
+    document.getElementById('col-flag').classList.add('mobile-active');
+  } else if (tab === 'emblem') {
+    document.getElementById('col-emblem').classList.add('mobile-active');
+  } else if (tab === 'anthem') {
+    document.getElementById('col-anthem').classList.add('mobile-active');
+  }
+}
+
 function syncEmblemHeight(flagImg) {
   const h = flagImg.offsetHeight;
   const wrap = document.querySelector('.emblem-wrap');
@@ -853,6 +927,28 @@ function switchAnthem(code, type) {
 
 loadFromSheet();
 
+
+
+function switchMobileTab(tab, btn) {
+  // 버튼 활성화
+  document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // 모든 패널 숨기기
+  document.getElementById('col-info').classList.remove('mobile-active');
+  document.querySelectorAll('.content-col').forEach(c => c.classList.remove('mobile-active'));
+
+  // 선택 탭 보이기
+  if (tab === 'info') {
+    document.getElementById('col-info').classList.add('mobile-active');
+  } else if (tab === 'flag') {
+    document.getElementById('col-flag').classList.add('mobile-active');
+  } else if (tab === 'emblem') {
+    document.getElementById('col-emblem').classList.add('mobile-active');
+  } else if (tab === 'anthem') {
+    document.getElementById('col-anthem').classList.add('mobile-active');
+  }
+}
 
 function syncEmblemHeight(flagImg) {
   const h = flagImg.offsetHeight;
