@@ -667,10 +667,7 @@ async function loadEmblemSVG(url, containerId) {
     svg.removeAttribute('height');
     svg.removeAttribute('style');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
-    if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) {
-      svg.style.aspectRatio = vb[2] + ' / ' + vb[3];
-    }
+
     wrap.innerHTML = '';
     wrap.appendChild(document.importNode(svg, true));
   } catch(e) {
