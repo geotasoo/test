@@ -13,18 +13,14 @@
     --accent: #3d6b8a; --accent-light: #ddeef7;
     --border: #d0d8df; --col1: 210px;
     --col-flag-bg: #fdf6e3; --col-emblem-bg: #eef2f7; --col-football-bg: #fdf4f4; --col-info-bg: #e8f0e9;
-    /* 사이드바 가독성 개선 팔레트 */
     --sb-bg: #2b3a45; --sb-line: #3e5160; --sb-hover: #3e5160;
     --sb-text: #e8eef4; --sb-text-sub: #a8bac8; --sb-text-dim: #8da1b0;
   }
-  /* ── 🎨 화이트 테마: 1단(사이드바) 제외 전부 흰 배경 ── */
   body[data-theme="white"] {
     --paper: #ffffff; --paper-dark: #f4f6f8;
     --col-flag-bg: #ffffff; --col-emblem-bg: #ffffff; --col-football-bg: #ffffff; --col-info-bg: #ffffff;
   }
   body { font-family: 'Noto Sans KR', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; display: flex; }
-
-  /* ── SIDEBAR (가독성 개선: 더 어두운 배경 + 더 밝은 글씨) ── */
   #sidebar {
     width: var(--col1); height: 100vh; background: var(--sb-bg); color: var(--sb-text);
     position: fixed; top: 0; left: 0; display: flex; flex-direction: column;
@@ -33,15 +29,12 @@
   #sidebar-header { padding: 1.1rem 1.1rem 0.8rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   #sidebar-header h1 { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: #fff; }
   #sidebar-header p { font-size: 10px; color: var(--sb-text-dim); margin-top: 2px; letter-spacing: 0.05em; }
-
-  /* 테마 팔레트 */
   #theme-picker { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
   .theme-dot { width: 15px; height: 15px; border-radius: 50%; cursor: pointer; border: 1px solid var(--sb-text-dim); padding: 0; transition: box-shadow 0.15s; }
   .theme-dot[data-theme="paper"] { background: #fdf6e3; }
   .theme-dot[data-theme="white"] { background: #ffffff; }
   .theme-dot.active { box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
   #theme-picker .tp-label { font-size: 9px; color: var(--sb-text-dim); letter-spacing: 0.05em; margin-right: 2px; }
-
   #search-wrap { padding: 0.6rem 1.1rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   #search {
     width: 100%; background: var(--sb-hover); border: 1px solid var(--sb-line); border-radius: 3px;
@@ -63,18 +56,10 @@
   .ci-flag { width: 20px; height: 13px; object-fit: cover; border-radius: 1px; flex-shrink: 0; border: 1px solid #1c262e; }
   .ci-name { font-size: 11px; color: var(--sb-text); flex: 1; line-height: 1.3; font-weight: 400; }
   .ci-name small { display: block; font-size: 9px; color: var(--sb-text-sub); margin-top: 1px; }
-
-  /* ── MAIN ── */
   #main { margin-left: var(--col1); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
-
-  /* Welcome: 지구본만 (추후 직접 꾸밀 영역) */
   #welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 3rem; text-align: center; }
   #welcome .globe { font-size: 52px; opacity: 0.4; }
-
-  /* Country page */
   #country-page { display: none; flex-direction: column; flex: 1; }
-
-  /* TOP BAR */
   #top-bar {
     padding: 1.25rem 2rem 1rem; background: #fff; border-bottom: 1px solid var(--border);
     display: flex; align-items: center; flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 10;
@@ -88,8 +73,6 @@
   .tag-pill.symbol:hover, .tag-pill.symbol.active { background: #4a6278; color: #fff; }
   .tag-pill.color-tag { background: var(--paper-dark); color: var(--ink-muted); border: 1px solid var(--border); }
   .tag-pill.color-tag:hover, .tag-pill.color-tag.active { background: var(--ink); color: #fff; border-color: var(--ink); }
-
-  /* 이전/다음 버튼 */
   #tb-actions { margin-left: auto; display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
   .nav-btn {
     border: 1px solid var(--border); background: #fff; border-radius: 3px;
@@ -97,41 +80,29 @@
     font-family: inherit; transition: all 0.15s; line-height: 1.4;
   }
   .nav-btn:hover { background: var(--paper-dark); }
-
-  /* Sidebar tag pills */
   .tag-filter-bar .tag-pill.symbol { background: var(--sb-hover); color: var(--sb-text); border: 1px solid var(--sb-line); }
   .tag-filter-bar .tag-pill.symbol:hover, .tag-filter-bar .tag-pill.symbol.active { background: #4a6278; color: #fff; border-color: #4a6278; }
   .tag-filter-bar .tag-pill.color-tag { background: var(--sb-hover); color: var(--sb-text); border: 1px solid var(--sb-line); }
   .tag-filter-bar .tag-pill.color-tag:hover, .tag-filter-bar .tag-pill.color-tag.active { background: #667; color: #fff; border-color: #667; }
-
-  /* 3-COLUMN CONTENT: 국기 · 국장 · 축구 (이미지 3개가 나란히) */
   #content-cols { flex: 1; align-items: start; }
   .content-col { padding: 1.75rem 1.75rem 4rem; border-right: 1px solid var(--border); min-width: 0; }
   .content-col:last-child { border-right: none; }
   .col-flag { background: var(--col-flag-bg); }
   .col-emblem { background: var(--col-emblem-bg); color: #1e2a35; }
   .col-football { background: var(--col-football-bg); }
-
   .col-header { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
   .col-icon { width: 22px; height: 22px; background: var(--accent-light); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
   .col-title { font-size: 11px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; font-weight: 500; }
-
-  /* 국기: 단 가로폭 100%, 비율 유지 */
   .flag-img { width: 100%; height: auto; border: 1px solid var(--border); display: block; margin-bottom: 1.25rem; }
-
-  /* 국장·축구 엠블럼: 높이 제한 없이 단 가로폭에 정확히 맞춤 */
   .emblem-wrap { width: 100%; margin-bottom: 1.25rem; }
   .emblem-img { width: 100%; height: auto; display: block; }
   .emblem-wrap svg { width: 100%; height: auto; display: block; }
-
   .col-desc { font-size: 13px; line-height: 1.95; color: var(--ink); }
   .col-desc br { display: block; margin-top: 0.75rem; content: ''; }
   .source-line { margin-top: 0.75rem; font-size: 10px; color: var(--ink-faint); }
   .source-line a { color: var(--accent); text-decoration: none; }
   .source-line a:hover { text-decoration: underline; }
   .coming-soon { font-size: 12px; color: var(--ink-faint); font-style: italic; padding: 1rem; background: rgba(0,0,0,0.03); border-radius: 2px; border: 1px dashed var(--border); text-align: center; }
-
-  /* Anthem (2단 안에서 사용) */
   .anthem-name { margin-bottom: 1rem; }
   .anthem-name .title { font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.5; }
   .anthem-name .title .title-meaning { font-size: 11px; font-weight: 400; color: var(--ink-muted); }
@@ -143,23 +114,18 @@
   .verse-title { font-size: 9px; letter-spacing: 0.08em; color: var(--ink-faint); text-transform: uppercase; margin: 0.9rem 0 3px; font-weight: 500; }
   .verse-title:first-child { margin-top: 0; }
   .verse-line { font-size: 12px; line-height: 1.95; color: var(--ink); font-family: 'Noto Sans KR', sans-serif; }
-
   .yt-btn-sm {
     display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: #f00; color: #fff; border-radius: 2px;
     font-size: 10px; font-weight: 500; text-decoration: none; font-family: inherit; border: none; cursor: pointer; transition: background 0.15s; flex-shrink: 0;
   }
   .yt-btn-sm:hover { background: #c00; }
-
-  /* ── INFO COLUMN (2단) ── */
   #col-info {
     background: var(--col-info-bg); color: #1e2a35; padding: 2rem 1.5rem 4rem; min-height: 100vh;
     border-right: 1px solid var(--border); min-width: 220px; max-width: 300px; width: 300px; flex-shrink: 0;
   }
-  .info-name-kr { font-family: 'Noto Serif KR', serif; font-size: clamp(16px, 2vw, 26px); font-weight: 600; color: var(--ink); line-height: 1.25; white-space: nowrap; overflow: visible; }
-  .info-name-en { font-size: 11px; color: var(--ink-faint); margin-top: 4px; letter-spacing: 0.03em; line-height: 1.4; }
-  .info-meaning { font-size: 11px; color: var(--ink-muted); margin-top: 6px; line-height: 1.6; }
-  .info-meaning::before { content: '뜻 · '; color: var(--accent); font-weight: 500; }
-  .info-region { display: inline-block; margin-top: 8px; font-size: 10px; padding: 2px 8px; background: var(--accent-light); color: var(--accent); border-radius: 2px; }
+  .info-meaning { font-size: 12px; color: var(--ink-muted); margin-top: 0; line-height: 1.6; }
+  .info-meaning::before { content: '뜻'; display: block; color: var(--ink-faint); font-weight: 500; font-size: 9px; letter-spacing: 0.1em; margin-bottom: 5px; }
+  .info-meaning .dot::before { content: '·  '; color: var(--accent); }
   .info-divider { border: none; border-top: 1px solid var(--border); margin: 1.1rem 0; }
   .info-section-title { font-size: 9px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; margin-bottom: 5px; font-weight: 500; }
   .info-line { font-size: 13px; color: var(--ink); line-height: 1.6; }
@@ -169,17 +135,14 @@
   .greet-row { display: flex; gap: 8px; font-size: 12px; line-height: 1.9; align-items: baseline; }
   .greet-row .g-label { color: var(--ink-faint); flex-shrink: 0; width: 60px; font-size: 11px; }
   .greet-row .g-val { color: var(--ink); }
-
-  .map-wrap { margin-top: 1.1rem; border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
+  .map-wrap { border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
   .map-wrap iframe { display: block; width: 100%; height: 200px; border: none; }
-
   .safety-btn {
-    display: inline-flex; align-items: center; gap: 6px; margin-top: 1rem; padding: 7px 10px;
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 0.75rem; padding: 7px 10px;
     background: #f0fdf4; color: #16a34a; border-radius: 3px; font-size: 11px; font-weight: 500;
     text-decoration: none; font-family: inherit; border: 1px solid #bbf7d0; transition: all 0.15s; width: 100%;
   }
   .safety-btn:hover { background: #dcfce7; }
-
   .tag-toggle-btn {
     display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--sb-text-dim); cursor: pointer;
     background: none; border: none; padding: 0; font-family: inherit; transition: color 0.15s;
@@ -189,10 +152,7 @@
   .tag-toggle-btn.open .arrow { transform: rotate(180deg); }
   .tags-collapsible { overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s; max-height: 0; opacity: 0; }
   .tags-collapsible.open { max-height: 300px; opacity: 1; }
-
-  /* ── 모바일 탭 & 반응형 ── */
   .mobile-tabs { display: none; }
-
   @media (max-width: 860px) {
     body { flex-direction: column; }
     #sidebar { width: 100%; height: auto; position: relative; min-height: auto; }
@@ -200,7 +160,6 @@
     #four-col-wrap { flex-direction: column; }
     #content-cols { grid-template-columns: 1fr !important; }
     .content-col { min-height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-
     .mobile-tabs {
       display: flex !important; position: sticky; top: 0; z-index: 20;
       background: #fff; border-bottom: 1px solid var(--border);
@@ -212,7 +171,6 @@
       font-family: inherit; transition: all 0.15s;
     }
     .mobile-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-
     #col-info, .content-col {
       display: none; width: 100% !important; max-width: 100% !important;
       min-height: auto !important; height: auto !important;
@@ -264,7 +222,6 @@
 </nav>
 
 <main id="main">
-  <!-- 웰컴 화면: 지구본만 (꾸미기는 추후 직접) -->
   <div id="welcome">
     <div class="globe">🌍</div>
   </div>
@@ -297,29 +254,6 @@
 </main>
 
 <script>
-/* ════════════════════════════════════════════════════════════
-   구글 시트 열 구성 (헤더 이름으로 읽으므로 열 순서는 자유)
-
-   code            나라 코드 (kr, jp ...)  ※ URL 해시 공유에도 사용
-   name            한글 이름
-   name_en         영문 이름
-   name_local      현지어 이름
-   region          아시아 / 유럽 / 아프리카 / 아메리카 / 오세아니아
-   name_meaning    ★새 나라 이름의 뜻 (예: 해가 떠오르는 근원의 나라)
-   nicknames       별명 (쉼표 구분)
-   capital         ★새 수도
-   language        ★새 언어 (예: 일본어)
-   greet_hello     ★새 안녕하세요 (예: こんにちは (곤니치와))
-   greet_thanks    ★새 고맙습니다 (예: ありがとう (아리가토))
-   greet_love      ★새 사랑합니다 (예: 愛してる (아이시테루))
-   tags / colors   태그
-   flag_url / flag_desc / flag_wiki          국기
-   emblem_url / emblem_desc / emblem_wiki    국장
-   football_url / football_desc / football_wiki  ★새 축구협회 엠블럼
-   anthem_title / anthem_sub / anthem_lyrics 국가
-   safety_url      외교부 0404 링크
-   ════════════════════════════════════════════════════════════ */
-
 const FALLBACK_COUNTRIES = [];
 const SHEET_ID = '18HUgccAJurqfaIpn8wWuwUOdB0Q_pMTPPxg28a5oZ58';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
@@ -330,25 +264,13 @@ let currentIdx = 0;
 let currentRegion = 'all';
 let activeTagFilter = null;
 
-/* ── 국가(애국가) 제목의 한글 뜻 (시트 제목에 괄호가 있으면 시트 우선) ── */
 const TITLE_MEANINGS = {
-  kr: '나라를 사랑하는 노래',
-  jp: '임금의 치세',
-  in: '모든 국민의 마음',
-  id: '위대한 인도네시아',
-  th: '태국의 노래',
-  vn: '진군가',
-  sg: '전진하라 싱가포르여',
-  my: '나의 조국',
-  kh: '장엄한 왕국',
-  np: '수백 송이의 꽃',
-  pk: '국가(國歌)',
-  sa: '군주여 만세',
-  il: '희망',
-  tr: '독립 행진곡'
+  kr: '나라를 사랑하는 노래', jp: '임금의 치세', in: '모든 국민의 마음',
+  id: '위대한 인도네시아', th: '태국의 노래', vn: '진군가', sg: '전진하라 싱가포르여',
+  my: '나의 조국', kh: '장엄한 왕국', np: '수백 송이의 꽃', pk: '국가(國歌)',
+  sa: '군주여 만세', il: '희망', tr: '독립 행진곡'
 };
 
-/* ── 테마 ── */
 function setTheme(t) {
   document.body.dataset.theme = t;
   document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === t));
@@ -356,7 +278,6 @@ function setTheme(t) {
 }
 try { const saved = localStorage.getItem('wsd-theme'); if (saved) setTheme(saved); } catch(e) {}
 
-/* ── CSV 파서: 따옴표 안 줄바꿈 지원 (가사 셀 대응) ── */
 function parseCSV(text) {
   const rows = [];
   let row = [], cur = '', inQ = false;
@@ -391,7 +312,6 @@ function parseCSV(text) {
   }).filter(r => r.code);
 }
 
-/* ── 가사 텍스트 파서 ── */
 function parseAnthemText(raw) {
   if (!raw || !raw.trim()) return null;
   const blocks = raw.split(/\r?\n\s*===+\s*\r?\n/);
@@ -418,29 +338,18 @@ function parseAnthemText(raw) {
 
 function csvToCountry(row) {
   return {
-    code: row.code,
-    name: row.name,
-    en: row.name_en,
-    local: row.name_local || '',
-    region: row.region,
-    meaning: row.name_meaning || '',
-    capital: row.capital || '',
-    language: row.language || '',
-    greetHello: row.greet_hello || '',
-    greetThanks: row.greet_thanks || '',
-    greetLove: row.greet_love || '',
+    code: row.code, name: row.name, en: row.name_en, local: row.name_local || '',
+    region: row.region, meaning: row.name_meaning || '', capital: row.capital || '',
+    language: row.language || '', greetHello: row.greet_hello || '',
+    greetThanks: row.greet_thanks || '', greetLove: row.greet_love || '',
     nicknames: row.nicknames ? row.nicknames.split(',').map(s=>s.trim()).filter(Boolean) : [],
     tags: row.tags ? row.tags.split(',').map(s=>s.trim()).filter(Boolean) : [],
     colors: row.colors ? row.colors.split(',').map(s=>s.trim()).filter(Boolean) : [],
-    emblem: row.emblem_url || '',
-    flag: row.flag_url || '',
-    football: row.football_url || '',
-    footballDesc: row.football_desc || '',
-    footballWiki: row.football_wiki || '',
+    emblem: row.emblem_url || '', flag: row.flag_url || '', football: row.football_url || '',
+    footballDesc: row.football_desc || '', footballWiki: row.football_wiki || '',
     anthem: { title: row.anthem_title || '', sub: row.anthem_sub || '' },
     anthemData: parseAnthemText(row.anthem_lyrics || ''),
-    emblemDesc: row.emblem_desc || '',
-    flagDesc: row.flag_desc || '',
+    emblemDesc: row.emblem_desc || '', flagDesc: row.flag_desc || '',
     safetyUrl: row.safety_url || '',
     flagWiki: row.flag_wiki || row.flag_wiki_link || '',
     emblemWiki: row.emblem_wiki || row.emblem_wiki_link || '',
@@ -460,14 +369,11 @@ async function loadFromSheet() {
     console.warn('시트 로드 실패, 로컬 데이터 사용:', e);
     COUNTRIES = FALLBACK_COUNTRIES;
   }
-
   COUNTRIES.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
-
   filtered = [...COUNTRIES];
   buildTagFilter();
   updateRegionCounts();
   buildList();
-
   if (filtered.length > 0) {
     const hashCode = decodeURIComponent(location.hash.slice(1));
     const hi = hashCode ? filtered.findIndex(c => c.code === hashCode) : -1;
@@ -512,9 +418,7 @@ function selectCountry(idx) {
   });
   const c = filtered[idx];
   renderPage(c);
-
   if (c.code) history.replaceState(null, '', '#' + c.code);
-
   document.getElementById('welcome').style.display = 'none';
   document.getElementById('country-page').style.display = 'flex';
 }
@@ -526,7 +430,6 @@ function navCountry(dir) {
   document.querySelectorAll('.country-item')[ni]?.scrollIntoView({block:'nearest'});
 }
 
-/* 국가 제목 + (뜻) 조합 */
 function anthemTitleHtml(c) {
   const title = c.anthem.title || '국가 정보 없음';
   if (/[(（]/.test(title)) return title;
@@ -542,7 +445,6 @@ function renderPage(c) {
   const mapQuery = encodeURIComponent(c.en);
   const mapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=m&z=4&output=embed`;
 
-  /* 인사말 3종 (값이 있는 것만 표시) */
   const greetHtml = [
     ['안녕하세요', c.greetHello],
     ['고맙습니다', c.greetThanks],
@@ -551,46 +453,39 @@ function renderPage(c) {
    .map(g => `<div class="greet-row"><span class="g-label">${g[0]}</span><span class="g-val">${g[1]}</span></div>`)
    .join('');
 
-  /* ── 2단: 이름 → 뜻 → 별명 → 수도 → 언어·인사말 → 국가(가사·듣기) → 지도 → 외교부 ── */
-document.getElementById('col-info').innerHTML = `
-    ${c.meaning ? `<div class="info-meaning">${c.meaning}</div><hr class="info-divider">` : ''}
-    <div class="info-section-title">별명</div>
-    <div class="nickname-list">${nicknameHtml}</div>
+  /* 2단 블록들을 배열로 조립 (순서: 지도 → 안전정보 → 뜻 → 별명 → 수도 → 언어 → 국가) */
+  const parts = [];
 
-    ${c.capital ? `
-    <hr class="info-divider">
-    <div class="info-section-title">수도</div>
-    <div class="info-line">${c.capital}</div>` : ''}
+  parts.push(`<div class="map-wrap"><iframe src="${mapUrl}" allowfullscreen loading="lazy"></iframe></div>`);
 
-    ${c.language || greetHtml ? `
-    <hr class="info-divider">
-    <div class="info-section-title">언어</div>
-    ${c.language ? `<div class="info-line" style="margin-bottom:5px">${c.language}</div>` : ''}
-    ${greetHtml}` : ''}
+  if (c.safetyUrl) {
+    parts.push(`<a class="safety-btn" href="${c.safetyUrl}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>외교부 해외안전여행 정보</a>`);
+  }
 
-    <hr class="info-divider">
-    <div class="info-section-title">국가 (國歌)</div>
-    <div class="anthem-name" style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;">
-      <div style="flex:1;min-width:0;">
-        <div class="title">${anthemTitleHtml(c)}</div>
-        <div class="sub">${c.anthem.sub || ''}</div>
-      </div>
-      <a class="yt-btn-sm" href="${ytSearchUrl(c.en)}" target="_blank" rel="noopener">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
-        듣기
-      </a>
-    </div>
-    ${renderAnthem(c)}
+  if (c.meaning) {
+    parts.push(`<hr class="info-divider"><div class="info-meaning"><span class="dot">${c.meaning}</span></div>`);
+  }
 
-    <div class="map-wrap">
-      <iframe src="${mapUrl}" allowfullscreen loading="lazy"></iframe>
-    </div>
-    ${c.safetyUrl ? `
-    <a class="safety-btn" href="${c.safetyUrl}" target="_blank" rel="noopener">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      외교부 해외안전여행 정보
-    </a>` : ''}
-  `;
+  parts.push(`<hr class="info-divider"><div class="info-section-title">별명</div><div class="nickname-list">${nicknameHtml}</div>`);
+
+  if (c.capital) {
+    parts.push(`<hr class="info-divider"><div class="info-section-title">수도</div><div class="info-line">${c.capital}</div>`);
+  }
+
+  if (c.language || greetHtml) {
+    let block = `<hr class="info-divider"><div class="info-section-title">언어</div>`;
+    if (c.language) block += `<div class="info-line" style="margin-bottom:5px">${c.language}</div>`;
+    block += greetHtml;
+    parts.push(block);
+  }
+
+  let anthemBlock = `<hr class="info-divider"><div class="info-section-title">국가 (國歌)</div>`;
+  anthemBlock += `<div class="anthem-name" style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;"><div style="flex:1;min-width:0;"><div class="title">${anthemTitleHtml(c)}</div><div class="sub">${c.anthem.sub || ''}</div></div>`;
+  anthemBlock += `<a class="yt-btn-sm" href="${ytSearchUrl(c.en)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>듣기</a></div>`;
+  anthemBlock += renderAnthem(c);
+  parts.push(anthemBlock);
+
+  document.getElementById('col-info').innerHTML = parts.join('');
 
   document.getElementById('tb-name').textContent = c.name;
   document.getElementById('tb-en').textContent = c.en;
@@ -599,7 +494,6 @@ document.getElementById('col-info').innerHTML = `
     + (c.colors||[]).map(t=>`<span class="tag-pill color-tag" style="cursor:default">${t}</span>`).join('');
   document.getElementById('tb-tags').innerHTML = tagHtml;
 
-  /* ── 3단: 국기 ── */
   document.getElementById('col-flag').innerHTML = `
     <div class="col-header"><div class="col-icon">🏳️</div><span class="col-title">국기</span></div>
     <img class="flag-img" src="${c.flag}" alt="${c.name} 국기" onerror="this.style.opacity=0.15" >
@@ -607,7 +501,6 @@ document.getElementById('col-info').innerHTML = `
     ${c.flagWiki ? `<div class="source-line"><a href="${c.flagWiki}" target="_blank" rel="noopener">위키백과 원문 보기 ↗</a></div>` : ''}
   `;
 
-  /* ── 4단: 국장 ── */
   document.getElementById('col-emblem').innerHTML = `
     <div class="col-header"><div class="col-icon">🔰</div><span class="col-title">국장</span></div>
     <div class="emblem-wrap" id="emblem-svg-wrap"></div>
@@ -616,7 +509,6 @@ document.getElementById('col-info').innerHTML = `
   `;
   loadEmblemSVG(c.emblem, 'emblem-svg-wrap');
 
-  /* ── 5단: 축구협회 엠블럼 (국기·국장과 같은 구성: 이미지 + 해설 + 출처) ── */
   document.getElementById('col-football').innerHTML = `
     <div class="col-header"><div class="col-icon">⚽</div><span class="col-title">축구</span></div>
     <div class="emblem-wrap" id="football-svg-wrap"></div>
@@ -630,7 +522,7 @@ function applyFilter(q, region) {
   filtered = COUNTRIES.filter(c => {
     const matchRegion = region === 'all' || c.region === region;
     const matchQ = !q || c.name.includes(q) || c.en.toLowerCase().includes(q);
-    const matchTag = !activeTagFilter || 
+    const matchTag = !activeTagFilter ||
       (activeTagFilter.type === 'symbol' && (c.tags||[]).includes(activeTagFilter.value)) ||
       (activeTagFilter.type === 'color' && (c.colors||[]).includes(activeTagFilter.value));
     return matchRegion && matchQ && matchTag;
@@ -665,10 +557,8 @@ function buildTagFilter() {
     (c.tags||[]).forEach(t => allTags.add(t));
     (c.colors||[]).forEach(t => allColors.add(t));
   });
-  
   const container = document.getElementById('tag-pills');
   container.innerHTML = '';
-  
   [...allTags].sort().forEach(tag => {
     const btn = document.createElement('button');
     btn.className = 'tag-pill symbol';
@@ -676,7 +566,6 @@ function buildTagFilter() {
     btn.onclick = () => toggleTagFilter(tag, 'symbol', btn);
     container.appendChild(btn);
   });
-  
   [...allColors].sort().forEach(color => {
     const btn = document.createElement('button');
     btn.className = 'tag-pill color-tag';
@@ -701,20 +590,17 @@ function toggleTagFilter(value, type, btn) {
 function ytSearchUrl(en) { return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(en + ' national anthem official'); }
 
 function renderAnthem(c) {
-const data = c.anthemData;
+  const data = c.anthemData;
   if (!data) return '<div class="coming-soon">가사 준비 중입니다.</div>';
-
   const hasTranslation = !!data.translation;
   const id = 'anthem-' + c.code;
   let html = '<div class="anthem-viewer" id="' + id + '" style="margin-bottom:0.5rem;">';
-
   if (hasTranslation) {
     html += '<div class="anthem-toggle">';
     html += '<button class="atbtn" data-atype="original" onclick="switchAnthem(\''+c.code+'\', \'original\')">'+(data.original.lang || '원문')+'</button>';
     html += '<button class="atbtn active" data-atype="translation" onclick="switchAnthem(\''+c.code+'\', \'translation\')">'+(data.translation.lang || '한국어 번역')+'</button>';
     html += '</div>';
   }
-
   html += renderVerses(data.original.verses, c.code, 'original', !hasTranslation);
   if (hasTranslation) {
     html += renderVerses(data.translation.verses, c.code, 'translation', true);
@@ -746,21 +632,16 @@ function switchAnthem(code, type) {
   });
 }
 
-/* ── 국장·축구 엠블럼 공용 SVG 로더 (스타일 보존 + viewBox 복원 + DOMParser) ── */
 const EMBLEM_CACHE = {};
-
 async function loadEmblemSVG(url, containerId) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
-
   if (!url) { wrap.innerHTML = ''; return; }
-
   const cleanUrl = url.toLowerCase().split('?')[0];
   if (!cleanUrl.endsWith('.svg')) {
     wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="엠블럼" onerror="this.style.display='none'">`;
     return;
   }
-
   try {
     let svgText = EMBLEM_CACHE[url];
     if (!svgText) {
@@ -769,35 +650,27 @@ async function loadEmblemSVG(url, containerId) {
       svgText = await res.text();
       EMBLEM_CACHE[url] = svgText;
     }
-
     const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
     const svg = doc.documentElement;
     if (svg.nodeName.toLowerCase() !== 'svg' || doc.querySelector('parsererror')) {
       throw new Error('SVG parse failed');
     }
-
     if (!svg.hasAttribute('viewBox')) {
       const wAttr = svg.getAttribute('width') || '';
       const hAttr = svg.getAttribute('height') || '';
       const w = wAttr.includes('%') ? 0 : parseFloat(wAttr);
       const h = hAttr.includes('%') ? 0 : parseFloat(hAttr);
-      if (w > 0 && h > 0) {
-        svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-      } else {
-        throw new Error('no size info for viewBox');
-      }
+      if (w > 0 && h > 0) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      else throw new Error('no size info for viewBox');
     }
-
     svg.removeAttribute('width');
     svg.removeAttribute('height');
     svg.removeAttribute('style');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-
     const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
     if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) {
       svg.style.aspectRatio = vb[2] + ' / ' + vb[3];
     }
-
     wrap.innerHTML = '';
     wrap.appendChild(document.importNode(svg, true));
   } catch(e) {
@@ -809,17 +682,14 @@ async function loadEmblemSVG(url, containerId) {
 function switchMobileTab(tab, btn) {
   document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-
   document.getElementById('col-info').classList.remove('mobile-active');
   document.querySelectorAll('.content-col').forEach(c => c.classList.remove('mobile-active'));
-
   if (tab === 'info') document.getElementById('col-info').classList.add('mobile-active');
   else if (tab === 'flag') document.getElementById('col-flag').classList.add('mobile-active');
   else if (tab === 'emblem') document.getElementById('col-emblem').classList.add('mobile-active');
   else if (tab === 'football') document.getElementById('col-football').classList.add('mobile-active');
 }
 
-/* 타이틀 클릭 = 🎲 = 랜덤 나라 */
 function selectRandom() {
   const pool = filtered.length > 0 ? filtered : COUNTRIES;
   if (pool.length === 0) return;
@@ -833,7 +703,6 @@ function selectRandom() {
   }
 }
 
-/* ── URL 해시로 진입/이동 (#kr → 대한민국) ── */
 function goToCode(code) {
   let i = filtered.findIndex(c => c.code === code);
   if (i < 0 && COUNTRIES.some(c => c.code === code)) {
@@ -858,7 +727,7 @@ window.addEventListener('hashchange', function() {
 
 document.addEventListener('keydown', function(e) {
   if (['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(e.key)) {
-    if (document.activeElement.id === 'search') return; 
+    if (document.activeElement.id === 'search') return;
     e.preventDefault();
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navCountry(-1);
     else navCountry(1);
