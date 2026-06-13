@@ -63,8 +63,6 @@
   .ci-flag { width: 20px; height: 13px; object-fit: cover; border-radius: 1px; flex-shrink: 0; border: 1px solid #1c262e; }
   .ci-name { font-size: 11px; color: var(--sb-text); flex: 1; line-height: 1.3; font-weight: 400; }
   .ci-name small { display: block; font-size: 9px; color: var(--sb-text-sub); margin-top: 1px; }
-  .ci-status { width: 5px; height: 5px; border-radius: 50%; background: #1c262e; flex-shrink: 0; }
-  .ci-status.ready { background: #7db4d8; }
 
   /* ── MAIN ── */
   #main { margin-left: var(--col1); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
@@ -500,7 +498,6 @@ function buildList() {
     div.innerHTML = `
       <img class="ci-flag" src="${c.flag}" alt="" loading="lazy" onerror="this.style.display='none'">
       <span class="ci-name">${c.name}<small>${c.en}</small></span>
-      <span class="ci-status ${c.ready ? 'ready' : ''}"></span>
     `;
     div.onclick = () => selectCountry(i);
     ul.appendChild(div);
@@ -555,13 +552,8 @@ function renderPage(c) {
    .join('');
 
   /* ── 2단: 이름 → 뜻 → 별명 → 수도 → 언어·인사말 → 국가(가사·듣기) → 지도 → 외교부 ── */
-  document.getElementById('col-info').innerHTML = `
-    <div class="info-name-kr">${c.name}</div>
-    <div class="info-name-en">${c.en}</div>
-    ${c.meaning ? `<div class="info-meaning">${c.meaning}</div>` : ''}
-    <span class="info-region">${c.region}</span>
-
-    <hr class="info-divider">
+document.getElementById('col-info').innerHTML = `
+    ${c.meaning ? `<div class="info-meaning">${c.meaning}</div><hr class="info-divider">` : ''}
     <div class="info-section-title">별명</div>
     <div class="nickname-list">${nicknameHtml}</div>
 
@@ -708,29 +700,8 @@ function toggleTagFilter(value, type, btn) {
 
 function ytSearchUrl(en) { return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(en + ' national anthem official'); }
 
-/* ── 가사 폴백 데이터 (시트의 anthem_lyrics 셀이 비어 있을 때만 사용) ── */
-const ANTHEMS = {
-  in: { original: { lang: '힌디어/산스크리트어 (원문)', verses: [{ title: '1절', lines: ['জন গণ মন অধ인ায়ক জয় হে', 'ভারত ভাগ্য বিধাতা', 'পঞ্জাব সিন্ধু গুজরাট মরাठा', 'द्रাবিড় উৎকল বঙ্গ', 'বিন্ধ্য হিমাচল यমুনা গঙ্গা', 'উচ্ছল জলধি তরঙ্গ', 'তব শুভ নামে জাগে', 'তব শুভ আশিष মাগে', 'গাহে তব জয় গাथा', 'জন গণ মঙ্গলদায়ক জয় হে', 'ভারত ভাগ্য বিধাতা', 'জয় হে জয় হে জয় হে', 'জয় জয় জয় জয় হে'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['모든 이의 마음을 이끄는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '펀자브, 신드, 구자라트, 마라타', '드라비다, 오리사, 벵갈', '빈디야, 히말라야, 야무나, 갠지스', '출렁이는 바다의 물결', '그대의 축복된 이름으로 깨어나고', '그대의 축복을 구하며', '그대의 승리를 노래하네', '모든 이에게 행복을 주는 자여, 승리하소서', '인도의 운명을 결정하는 자여', '승리 승리 승리 승리하소서'] }] } },
-  id: { original: { lang: '인도네시아어 (원문)', verses: [{ title: '1절', lines: ['Indonesia, tanah airku', 'Tanah tumpah darahku', 'Di sanalah aku berdiri', 'Jadi pandu ibuku', 'Indonesia, kebangsaanku', 'Bangsa dan tanah airku', 'Marilah kita berseru', 'Indonesia bersatu'] }, { title: '후렴', lines: ['Hiduplah tanahku', 'Hiduplah negeriku', 'Bangsaku, rakyatku, semuanya', 'Bangunlah jiwanya', 'Bangunlah badannya', 'Untuk Indonesia Raya'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['인도네시아, 나의 조국', '내 피가 흐르는 땅', '그곳에서 나는 서 있네', '어머니의 안내자로서', '인도네시아, 나의 민족', '나의 민족과 조국', '함께 외치세', '인도네시아여 하나 되어라'] }, { title: '후렴', lines: ['나의 땅이여 살아있어라', '나의 나라여 살아있어라', '나의 민족, 나의 국민, 모두 다', '그 정신을 세워라', '그 몸을 세워라', '위대한 인도네시아를 위하여'] }] } },
-  th: { original: { lang: '태국어 (원문)', verses: [{ title: '', lines: ['ประเทศไทยรวมเลือดเนื้อชาติเชื้อไทย', 'เป็นประชารัฐ ไผทของไทยทุกส่วน', 'อยู่ดำรงคงไว้ได้ทั้งมวล', 'ด้วยไทยล้วนหมาย รักสามัคคี', 'ไทยนี้รักสงบ แต่ถึงรบไม่ขลาด', 'เอกราชจะไม่ให้ใครข่มขี่', 'ยอมเสียเลือดทุกหยาดเป็นชาติพลี', 'เถลิงประเทศชาติไทยทวี มีชัย ชโย'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['태국은 태국 민족의 피와 살로 이루어졌다', '모든 땅은 태국 국민의 것이다', '오랫동안 그것은 온전히 유지되어 왔다', '태국인들은 단결과 사랑을 원하기 때문이다', '태국인은 평화를 사랑하지만 싸울 때 두려워하지 않는다', '독립은 누구에게도 짓밟히지 않을 것이다', '나라를 위해 피 한 방울도 기꺼이 바치리', '태국이여 번영하고 승리하라'] }] } },
-  vn: { original: { lang: '베트남어 (원문)', verses: [{ title: '1절', lines: ['Đoàn quân Việt Nam đi', 'Chung lòng cứu quốc', 'Bước chân dồn vang trên đường gập ghềnh xa', 'Cờ in máu chiến thắng mang hồn nước', 'Súng ngoài xa chen khúc quân hành ca', 'Đường vinh quang xây xác quân thù', 'Thắng gian lao cùng nhau lập chiến khu', 'Vì nhân dân chiến đấu không ngừng', 'Tiến mau ra sa trường', 'Tiến lên cùng tiến lên', 'Nước non Việt Nam ta vững bền'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['베트남 군대여 나아가라', '조국 구원을 위해 한마음으로', '험난한 먼 길 위에 발걸음이 울려 퍼진다', '깃발에 전승의 피가 물들어 나라의 혼을 담았네', '저 멀리 총소리가 군가와 어우러지고', '영광의 길은 적군의 시체 위에 세워지고', '고난을 이겨내며 함께 전진기지를 세우리', '인민을 위해 끊임없이 싸우며', '빨리 전장으로 나아가라', '앞으로 함께 나아가라', '우리 베트남 강산 영원하리'] }] } },
-  sg: { original: { lang: '말레이어 (원문)', verses: [{ title: '', lines: ['Mari kita rakyat Singapura', 'Sama-sama menuju bahagia', 'Cita-cita kita yang mulia', 'Berjaya Singapura', 'Marilah kita bersatu', 'Dengan semangat yang baru', 'Smua kita berseru', 'Majulah Singapura', 'Majulah Singapura'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['싱가포르 국민이여 함께 나아가자', '행복을 향해 함께 나아가자', '우리의 고귀한 염원', '싱가포르여 성공하라', '우리 하나 되어 나아가자', '새로운 정신으로', '우리 모두 외치네', '싱가포르여 전진하라', '싱가포르여 전진하라'] }] } },
-  my: { original: { lang: '말레이어 (원문)', verses: [{ title: '', lines: ['Negaraku', 'Tanah tumpahnya darahku', 'Rakyat hidup', 'Bersatu dan maju', 'Rahmat bahagia', 'Tuhan kurniakan', 'Raja kita', 'Selamat bertakhta', 'Rahmat bahagia', 'Tuhan kurniakan', 'Raja kita', 'Selamat bertakhta'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['나의 조국', '내 피가 흘렀던 땅', '국민은 살아가네', '단결하고 전진하며', '행복한 축복을', '신이 내려주시고', '우리 국왕이여', '왕좌에 평안하소서', '행복한 축복을', '신이 내려주시고', '우리 국왕이여', '왕좌에 평안하소서'] }] } },
-  kh: { original: { lang: '크메르어 (원문)', verses: [{ title: '1절', lines: ['សូមពុទ្ធាក្សត្រព្រះ ជ័យជ័យ', 'ព្រះជ័យជ័យ ព្រះនរបតី', 'ដែលបង្កើត ជាតិខ្មែរ ជា อច្ឆរិយ', 'ដូចថ្មមាស ត្រចះ រុងរឿង'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['하늘이여, 왕을 지켜주소서', '승리하소서, 승리하소서, 왕이시여', '크메르 민족을 창건하신 분', '황금빛 돌처럼 빛나는 나라', '앙코르와트의 영광을 되새기며', '크메르 민족은 영원하리라'] }] } },
-  mn: { original: { lang: '몽골어 (원문)', verses: [{ title: '1절', lines: ['Даяар монголын оргил дээгүүр', 'Далбаалан мандаж байна', 'Чөлөөт эрхт монгол оронд', 'Чандмань болж гийж байна'] }, { title: '후렴', lines: ['Үндэсний эрхэмлэсэн', 'Үүрд тэтгэгч манай орон', 'Жаргалант чөлөөт монгол орон', 'Мөнхийн дэлхийд мандтугай'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['온 몽골의 봉우리 위로', '깃발이 날리며 빛나네', '자유롭고 독립된 몽골 땅에', '보석처럼 빛나고 있네'] }, { title: '후렴', lines: ['민족이 소중히 여기는', '영원히 지속되는 우리 나라', '행복하고 자유로운 몽골 땅', '영원한 세상에서 번영하라'] }] } },
-  np: { original: { lang: '네팔어 (원문)', verses: [{ title: '', lines: ['सयौँ थुँगा फूलका हामी, एउटै माला नेपाली', 'सार्वभौম भई फैलिएका, मेची-महाकाली', 'प्रकृतिका कोटी-коटी सम्पदाको आँचल', 'वीरहरूका रगतले, स्वतन्त्र र अटल', 'ज्ञान-भूमि शान्ति-भूमि तराई, पहाद, हिमाल', 'अखण्ड यो प्याро हाम्रो मातृभूमि नेपाल', 'बहुल जाति, भाषा, धर्म, संस्कृति छन् विशाल', 'अग्रगामी राष्ट्र हाम्रो, जय जय नेपाल'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['수백 송이 꽃으로 이루어진 우리, 하나의 화환 네팔인', '메치에서 마하칼리까지 주권을 펼쳐', '자연의 수천만 가지 보물의 품속', '영웅들의 피로 자유롭고 굳건하네', '지식의 땅 평화의 땅, 평원, 산, 히말라야', '온전하고 사랑스러운 우리 어머니의 땅 네팔', '다양한 민족, 언어, 종교, 문화가 드넓고', '전진하는 우리 나라, 네팔이여 만세'] }] } },
-  pk: { original: { lang: '우르두어 (원문)', verses: [{ title: '', lines: ['پاک سرزمین شاد باد', 'کشورِ حسین شاد باد', 'تو نشانِ عزمِ عالیِ شان', 'ارضِ پاکستان', 'مرکزِ یقین شاد باد', 'پاک سرزمین کا نظام', 'قوتِ اخوتِ عوام', 'قوم، ملک، سلطنت', 'پائندہ تابندہ باد', 'شاد باد منزلِ مراد'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['축복받은 땅이여 번영하라', '아름다운 나라여 번영하라', '그대는 높은 결의의 상징', '파키스탄의 땅이여', '믿음의 중심이여 번영하라', '축복받은 땅의 질서', '국민 형제애의 힘', '민족, 나라, 국가여', '영원하고 빛나라', '목적지의 목표여 번영하라'] }] } },
-  sa: { original: { lang: '아랍어 (원문)', verses: [{ title: '', lines: ['سارعي للمجد والعليا', 'وارفعي العلم الخفاق', 'وارفعي العلم المخفق', 'واحمدي الله على التوفيق', 'النشيد الوطني السعودي'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['영광과 높은 곳을 향해 서두르라', '펄럭이는 깃발을 높이 들어라', '나부끼는 깃발을 높이 들어라', '성공에 대해 신께 감사드리라', '사우디 왕국의 국가'] }] } },
-  ir: { original: { lang: '페르시아어 (원문)', verses: [{ title: '', lines: ['سر زد از افق مهر خاوران', 'فروغ دیدهٔ حق‌باوران', 'بهمن فرّ ایمان ماست', 'پیامت ای امام، استقلال، آزادی، نقش جان ماست', 'شهیدان پیچیده در خون، جاری در خاطرهٔ ماست', 'پاینده بمان تا ابد، جمهوری اسلامی ایران'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['동방의 지평선에서 태양이 떠오르네', '진실을 믿는 이들의 눈의 빛이여', '바흐만은 우리 믿음의 영광이라', '오 이맘이여, 당신의 메시지 독립과 자유는 우리 영혼에 새겨졌네', '피에 젖은 순교자들이 우리 기억 속에 흐르네', '영원히 지속되라, 이란 이슬람 공화국'] }] } },
-  il: { original: { lang: '히브리어 (원문)', verses: [{ title: '', lines: ['כֹּל עוֹד בַּלֵּבָב פְּנִימָה', 'נֶפֶשׁ יְהוּדִי הוֹמִיָּה,', 'וּלְפَאֲתֵי מִזְרָח קָדִימָה,', 'עַיִן לְצִיּוֹן צוֹפִיָּה;', 'עוֹד לֹא אָבְדָה תִּקְוָתֵנוּ,', 'הַתִּקְוָה בַּת שְׁנוֹת אַלְפַּיִם,', 'לִהְיוֹת עַם חׇפְשִׁי בְּאַרְצֵנוּ,', 'אֶرֶץ צִיּוֹן וִירוּשָׁلַיִם.'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['마음 깊은 곳에서', '유대인의 영혼이 그리워하는 한,', '동방을 향해,', '눈은 시온을 바라보는 한;', '우리의 희망은 아직 사라지지 않았네,', '이천 년의 희망,', '우리 땅에서 자유로운 민족이 되기를,', '시온의 땅, 예루살렘에서.'] }] } },
-  tr: { original: { lang: '튀르키예어 (원문)', verses: [{ title: '1절', lines: ['Korkma, sönmez bu şafaklarda yüzen al sancak;', 'Sönmeden yurdumun üstünde tüten en son ocak.', 'O benim milletimin yıldızıdır, parlayacak;', 'O benimdir, o benim milletimindir ancak.'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['두려워 마라, 이 새벽빛 속에 떠있는 붉은 깃발은 꺼지지 않는다;', '내 조국 위에서 마지막까지 타오르는 불꽃도 꺼지지 않으리.', '저것은 내 민족의 별이니 빛날 것이다;', '저것은 나의 것, 오직 내 민족의 것이다.'] }] } },
-  kr: { original: { lang: '한국어', verses: [{ title: '1절', lines: ['동해 물과 백두산이 마르고 닳도록', '하느님이 보우하사 우리나라 만세'] }, { title: '후렴', lines: ['무궁화 삼천리 화려강산', '대한 사람 대한으로 길이 보전하세'] }, { title: '2절', lines: ['남산 위에 저 소나무 철갑을 두른 듯', '바람서리 불변함은 우리 기상일세'] }, { title: '3절', lines: ['가을 하늘 공활한데 높고 구름 없이', '밝은 달은 우리 가슴 일편단심일세'] }, { title: '4절', lines: ['이 기상과 이 맘으로 충성을 다하여', '괴로우나 즐거우나 나라 사랑하세'] }] }, translation: null },
-  cn: { original: { lang: '중국어 (원문)', verses: [{ title: '1절', lines: ['起来！不愿做奴隶的人们！', '把我们的血肉，筑成我们新的长城！', '中华民族到了最危险的时候，', '每个人被迫着发出最后的吼声。', '起来！起来！起来！', '我们万众一心，', '冒着敌人的炮火，前进！', '冒着敌人的炮火，前进！', '前进！前进！前进！'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '1절', lines: ['일어나라! 노예가 되기 싫은 자들이여!', '우리의 피와 살로 새로운 만리장성을 쌓자!', '중화 민족이 가장 위험한 시기에 처했을 때,', '모든 이가 마지막 함성을 내지르도록 강요받는다.', '일어나라! 일어나라! 일어나라!', '우리 모두 한마음으로,', '적의 포화를 뚫고 전진하라!', '적의 포화를 뚫고 전진하라!', '전진! 전진! 전진!'] }] } },
-  jp: { original: { lang: '일본어 (원문)', verses: [{ title: '', lines: ['君が代は', '千代に八千代に', 'さざれ石の', 'いわおとなりて', 'こけのむすまで'] }] }, translation: { lang: '한국어 번역', verses: [{ title: '', lines: ['임금의 치세는', '천 년이고 팔천 년이고', '조약돌이', '큰 바위가 되어', '이끼가 낄 때까지'] }] } }
-};
-
 function renderAnthem(c) {
-  const data = c.anthemData || ANTHEMS[c.code];
+const data = c.anthemData;
   if (!data) return '<div class="coming-soon">가사 준비 중입니다.</div>';
 
   const hasTranslation = !!data.translation;
