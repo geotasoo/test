@@ -158,7 +158,10 @@
   .info-name-kr { font-family: 'Noto Serif KR', serif; font-size: clamp(16px, 2vw, 26px); font-weight: 600; color: var(--ink); line-height: 1.25; white-space: nowrap; overflow: visible; }
   .info-name-en { font-size: 11px; color: var(--ink-faint); margin-top: 4px; letter-spacing: 0.03em; line-height: 1.4; }
   .info-meaning { font-size: 11px; color: var(--ink-muted); margin-top: 6px; line-height: 1.6; }
-  .info-meaning::before { content: '뜻 · '; color: var(--accent); font-weight: 500; }
+.info-meaning::before { content: '뜻'; display: block; color: var(--ink-faint); font-weight: 500; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; }
+  .info-meaning { font-size: 12px; color: var(--ink-muted); margin-top: 6px; line-height: 1.6; }
+  .info-meaning .dot::before { content: '· '; color: var(--accent); }
+ 
   .info-region { display: inline-block; margin-top: 8px; font-size: 10px; padding: 2px 8px; background: var(--accent-light); color: var(--accent); border-radius: 2px; }
   .info-divider { border: none; border-top: 1px solid var(--border); margin: 1.1rem 0; }
   .info-section-title { font-size: 9px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; margin-bottom: 5px; font-weight: 500; }
@@ -553,6 +556,16 @@ function renderPage(c) {
 
   /* ── 2단: 이름 → 뜻 → 별명 → 수도 → 언어·인사말 → 국가(가사·듣기) → 지도 → 외교부 ── */
 document.getElementById('col-info').innerHTML = `
+    <div class="map-wrap">
+      <iframe src="${mapUrl}" allowfullscreen loading="lazy"></iframe>
+    </div>
+    ${c.safetyUrl ? `
+    <a class="safety-btn" href="${c.safetyUrl}" target="_blank" rel="noopener">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      외교부 해외안전여행 정보
+    </a>` : ''}
+    <hr class="info-divider">
+ 
     ${c.meaning ? `<div class="info-meaning">${c.meaning}</div><hr class="info-divider">` : ''}
     <div class="info-section-title">별명</div>
     <div class="nickname-list">${nicknameHtml}</div>
@@ -582,15 +595,7 @@ document.getElementById('col-info').innerHTML = `
     </div>
     ${renderAnthem(c)}
 
-    <div class="map-wrap">
-      <iframe src="${mapUrl}" allowfullscreen loading="lazy"></iframe>
-    </div>
-    ${c.safetyUrl ? `
-    <a class="safety-btn" href="${c.safetyUrl}" target="_blank" rel="noopener">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      외교부 해외안전여행 정보
-    </a>` : ''}
-  `;
+
 
   document.getElementById('tb-name').textContent = c.name;
   document.getElementById('tb-en').textContent = c.en;
