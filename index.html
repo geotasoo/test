@@ -9,16 +9,12 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --ink: #1e2a35; --ink-muted: #526070; --ink-faint: #8a9aa8;
-    --paper: #fdf6e3; --paper-dark: #eef2f7;
+    --paper: #ffffff; --paper-dark: #f4f6f8;
     --accent: #3d6b8a; --accent-light: #ddeef7;
     --border: #d0d8df; --col1: 210px;
-    --col-flag-bg: #fdf6e3; --col-emblem-bg: #eef2f7; --col-football-bg: #fdf4f4; --col-info-bg: #e8f0e9;
+    --col-flag-bg: #ffffff; --col-emblem-bg: #ffffff; --col-football-bg: #ffffff; --col-info-bg: #ffffff;
     --sb-bg: #2b3a45; --sb-line: #3e5160; --sb-hover: #3e5160;
     --sb-text: #e8eef4; --sb-text-sub: #a8bac8; --sb-text-dim: #8da1b0;
-  }
-  body[data-theme="white"] {
-    --paper: #ffffff; --paper-dark: #f4f6f8;
-    --col-flag-bg: #ffffff; --col-emblem-bg: #ffffff; --col-football-bg: #ffffff; --col-info-bg: #ffffff;
   }
   body { font-family: 'Noto Sans KR', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; display: flex; }
   #sidebar {
@@ -29,12 +25,6 @@
   #sidebar-header { padding: 1.1rem 1.1rem 0.8rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   #sidebar-header h1 { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: #fff; }
   #sidebar-header p { font-size: 10px; color: var(--sb-text-dim); margin-top: 2px; letter-spacing: 0.05em; }
-  #theme-picker { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
-  .theme-dot { width: 15px; height: 15px; border-radius: 50%; cursor: pointer; border: 1px solid var(--sb-text-dim); padding: 0; transition: box-shadow 0.15s; }
-  .theme-dot[data-theme="paper"] { background: #fdf6e3; }
-  .theme-dot[data-theme="white"] { background: #ffffff; }
-  .theme-dot.active { box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
-  #theme-picker .tp-label { font-size: 9px; color: var(--sb-text-dim); letter-spacing: 0.05em; margin-right: 2px; }
   #search-wrap { padding: 0.6rem 1.1rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   #search {
     width: 100%; background: var(--sb-hover); border: 1px solid var(--sb-line); border-radius: 3px;
@@ -94,8 +84,8 @@
   .col-icon { width: 22px; height: 22px; background: var(--accent-light); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
   .col-title { font-size: 11px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; font-weight: 500; }
   .flag-img { width: 100%; height: auto; border: 1px solid var(--border); display: block; margin-bottom: 1.25rem; }
-.emblem-wrap { width: 100%; margin-bottom: 1.25rem; display: flex; justify-content: center; }
-  .emblem-img { max-width: 100%; max-height: 420px; width: auto; height: auto; display: block; }
+  .emblem-wrap { width: 100%; margin-bottom: 1.25rem; max-height: 420px; display: flex; align-items: center; justify-content: center; overflow: visible; }
+  .emblem-img { max-width: 100%; max-height: 420px; width: auto; height: auto; object-fit: contain; display: block; }
   .emblem-wrap svg { max-width: 100%; max-height: 420px; width: auto; height: auto; display: block; }
   .col-desc { font-size: 13px; line-height: 1.95; color: var(--ink); }
   .col-desc br { display: block; margin-top: 0.75rem; content: ''; }
@@ -181,7 +171,7 @@
   }
 </style>
 </head>
-<body data-theme="paper">
+<body>
 
 <nav id="sidebar">
   <div id="sidebar-header">
@@ -190,11 +180,6 @@
         <h1 style="cursor:pointer;" onclick="selectRandom()" title="랜덤 나라 보기">세계 상징 사전</h1>
         <p>WORLD SYMBOL DICTIONARY</p>
         <p style="font-size:9px;margin-top:3px;letter-spacing:0.03em;">@geotasoo / 20260612</p>
-        <div id="theme-picker">
-          <span class="tp-label">THEME</span>
-          <button class="theme-dot active" data-theme="paper" title="크림 테마" onclick="setTheme('paper')"></button>
-          <button class="theme-dot" data-theme="white" title="화이트 테마" onclick="setTheme('white')"></button>
-        </div>
       </div>
       <button id="random-btn" title="랜덤 나라" onclick="selectRandom()" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px;line-height:1;opacity:0.7;transition:opacity 0.15s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">🎲</button>
     </div>
@@ -270,13 +255,6 @@ const TITLE_MEANINGS = {
   my: '나의 조국', kh: '장엄한 왕국', np: '수백 송이의 꽃', pk: '국가(國歌)',
   sa: '군주여 만세', il: '희망', tr: '독립 행진곡'
 };
-
-function setTheme(t) {
-  document.body.dataset.theme = t;
-  document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === t));
-  try { localStorage.setItem('wsd-theme', t); } catch(e) {}
-}
-try { const saved = localStorage.getItem('wsd-theme'); if (saved) setTheme(saved); } catch(e) {}
 
 function parseCSV(text) {
   const rows = [];
@@ -453,32 +431,24 @@ function renderPage(c) {
    .map(g => `<div class="greet-row"><span class="g-label">${g[0]}</span><span class="g-val">${g[1]}</span></div>`)
    .join('');
 
-  /* 2단 블록들을 배열로 조립 (순서: 지도 → 안전정보 → 뜻 → 별명 → 수도 → 언어 → 국가) */
   const parts = [];
-
   parts.push(`<div class="map-wrap"><iframe src="${mapUrl}" allowfullscreen loading="lazy"></iframe></div>`);
-
   if (c.safetyUrl) {
     parts.push(`<a class="safety-btn" href="${c.safetyUrl}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>외교부 해외안전여행 정보</a>`);
   }
-
   if (c.meaning) {
     parts.push(`<hr class="info-divider"><div class="info-meaning"><span class="dot">${c.meaning}</span></div>`);
   }
-
   parts.push(`<hr class="info-divider"><div class="info-section-title">별명</div><div class="nickname-list">${nicknameHtml}</div>`);
-
   if (c.capital) {
     parts.push(`<hr class="info-divider"><div class="info-section-title">수도</div><div class="info-line">${c.capital}</div>`);
   }
-
   if (c.language || greetHtml) {
     let block = `<hr class="info-divider"><div class="info-section-title">언어</div>`;
     if (c.language) block += `<div class="info-line" style="margin-bottom:5px">${c.language}</div>`;
     block += greetHtml;
     parts.push(block);
   }
-
   let anthemBlock = `<hr class="info-divider"><div class="info-section-title">국가 (國歌)</div>`;
   anthemBlock += `<div class="anthem-name" style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;"><div style="flex:1;min-width:0;"><div class="title">${anthemTitleHtml(c)}</div><div class="sub">${c.anthem.sub || ''}</div></div>`;
   anthemBlock += `<a class="yt-btn-sm" href="${ytSearchUrl(c.en)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>듣기</a></div>`;
@@ -667,7 +637,6 @@ async function loadEmblemSVG(url, containerId) {
     svg.removeAttribute('height');
     svg.removeAttribute('style');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-
     wrap.innerHTML = '';
     wrap.appendChild(document.importNode(svg, true));
   } catch(e) {
