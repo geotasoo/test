@@ -9,16 +9,13 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --ink: #1e2a35; --ink-muted: #526070; --ink-faint: #8a9aa8;
-    --paper: #fdf6e3; --paper-dark: #eef2f7;
+    --paper: #ffffff; --paper-dark: #f4f6f8;
     --accent: #3d6b8a; --accent-light: #ddeef7;
     --border: #d0d8df; --col1: 210px;
-    --col-flag-bg: #fdf6e3; --col-emblem-bg: #eef2f7; --col-football-bg: #fdf4f4; --col-info-bg: #e8f0e9;
+    --col-flag-bg: #ffffff; --col-emblem-bg: #ffffff; --col-football-bg: #ffffff; --col-info-bg: #ffffff;
     --sb-bg: #2b3a45; --sb-line: #3e5160; --sb-hover: #3e5160;
     --sb-text: #e8eef4; --sb-text-sub: #a8bac8; --sb-text-dim: #8da1b0;
-  }
-  body[data-theme="white"] {
-    --paper: #ffffff; --paper-dark: #f4f6f8;
-    --col-flag-bg: #ffffff; --col-emblem-bg: #ffffff; --col-football-bg: #ffffff; --col-info-bg: #ffffff;
+    --hl: #f5c542;
   }
   body { font-family: 'Noto Sans KR', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; display: flex; }
   #sidebar {
@@ -29,12 +26,6 @@
   #sidebar-header { padding: 1.1rem 1.1rem 0.8rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   #sidebar-header h1 { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: #fff; }
   #sidebar-header p { font-size: 10px; color: var(--sb-text-dim); margin-top: 2px; letter-spacing: 0.05em; }
-  #theme-picker { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
-  .theme-dot { width: 15px; height: 15px; border-radius: 50%; cursor: pointer; border: 1px solid var(--sb-text-dim); padding: 0; transition: box-shadow 0.15s; }
-  .theme-dot[data-theme="paper"] { background: #fdf6e3; }
-  .theme-dot[data-theme="white"] { background: #ffffff; }
-  .theme-dot.active { box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
-  #theme-picker .tp-label { font-size: 9px; color: var(--sb-text-dim); letter-spacing: 0.05em; margin-right: 2px; }
   #search-wrap { padding: 0.6rem 1.1rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   #search {
     width: 100%; background: var(--sb-hover); border: 1px solid var(--sb-line); border-radius: 3px;
@@ -45,7 +36,7 @@
   #region-tabs { display: flex; flex-wrap: wrap; gap: 3px; padding: 0.5rem 1.1rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   .rtab { font-size: 10px; padding: 2px 6px; border-radius: 2px; cursor: pointer; background: transparent; color: #dbe3ea; border: 1px solid #506573; transition: all 0.15s; font-family: inherit; }
   .rtab:hover { background: var(--sb-hover); color: #fff; }
-  .rtab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.rtab.active { background: var(--hl); color: #3a2e00; border-color: #d9a800; }
   .tag-filter-bar { padding: 0.5rem 1.1rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   #country-list { flex: 1; overflow-y: auto; }
   #country-list::-webkit-scrollbar { width: 3px; }
@@ -70,9 +61,9 @@
   .tag-pill { font-size: 10px; padding: 2px 8px; border-radius: 99px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
   .tag-pill.region { background: var(--accent-light); color: var(--accent); border: 1px solid #e8d0cb; cursor: default; }
   .tag-pill.symbol { background: #e4ecf2; color: #2d5470; border: 1px solid #b8cdd9; }
-  .tag-pill.symbol:hover, .tag-pill.symbol.active { background: #4a6278; color: #fff; }
+  .tag-pill.symbol:hover, .tag-pill.symbol.active { background: var(--hl); color: #3a2e00; border-color: #d9a800; }
   .tag-pill.color-tag { background: var(--paper-dark); color: var(--ink-muted); border: 1px solid var(--border); }
-  .tag-pill.color-tag:hover, .tag-pill.color-tag.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .tag-pill.color-tag:hover, .tag-pill.color-tag.active { background: var(--hl); color: #3a2e00; border-color: #d9a800; }
   #tb-actions { margin-left: auto; display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
   .nav-btn {
     border: 1px solid var(--border); background: #fff; border-radius: 3px;
@@ -81,9 +72,9 @@
   }
   .nav-btn:hover { background: var(--paper-dark); }
   .tag-filter-bar .tag-pill.symbol { background: var(--sb-hover); color: var(--sb-text); border: 1px solid var(--sb-line); }
-  .tag-filter-bar .tag-pill.symbol:hover, .tag-filter-bar .tag-pill.symbol.active { background: #4a6278; color: #fff; border-color: #4a6278; }
+  .tag-filter-bar .tag-pill.symbol:hover, .tag-filter-bar .tag-pill.symbol.active { background: var(--hl); color: #3a2e00; border-color: #d9a800; }
   .tag-filter-bar .tag-pill.color-tag { background: var(--sb-hover); color: var(--sb-text); border: 1px solid var(--sb-line); }
-  .tag-filter-bar .tag-pill.color-tag:hover, .tag-filter-bar .tag-pill.color-tag.active { background: #667; color: #fff; border-color: #667; }
+  .tag-filter-bar .tag-pill.color-tag:hover, .tag-filter-bar .tag-pill.color-tag.active { background: var(--hl); color: #3a2e00; border-color: #d9a800; }
   #content-cols { flex: 1; align-items: start; }
   .content-col { padding: 1.75rem 1.75rem 4rem; border-right: 1px solid var(--border); min-width: 0; }
   .content-col:last-child { border-right: none; }
@@ -94,9 +85,8 @@
   .col-icon { width: 22px; height: 22px; background: var(--accent-light); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
   .col-title { font-size: 11px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; font-weight: 500; }
   .flag-img { width: 100%; height: auto; border: 1px solid var(--border); display: block; margin-bottom: 1.25rem; }
-.emblem-wrap { width: 100%; margin-bottom: 1.25rem; display: flex; justify-content: center; }
-  .emblem-img { max-width: 100%; max-height: 420px; width: auto; height: auto; display: block; }
-  .emblem-wrap svg { max-width: 100%; max-height: 420px; width: auto; height: auto; display: block; }
+  .emblem-wrap { width: 100%; margin-bottom: 1.25rem; display: flex; justify-content: center; }
+  .emblem-img { width: 100%; height: auto; display: block; }
   .col-desc { font-size: 13px; line-height: 1.95; color: var(--ink); }
   .col-desc br { display: block; margin-top: 0.75rem; content: ''; }
   .source-line { margin-top: 0.75rem; font-size: 10px; color: var(--ink-faint); }
@@ -107,18 +97,13 @@
   .anthem-name .title { font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.5; }
   .anthem-name .title .title-meaning { font-size: 11px; font-weight: 400; color: var(--ink-muted); }
   .anthem-name .sub { font-size: 10px; color: var(--ink-faint); margin-top: 3px; }
-  .anthem-toggle { display: flex; gap: 4px; margin-bottom: 0.75rem; flex-wrap: wrap; }
-  .atbtn { font-size: 10px; padding: 3px 8px; border-radius: 2px; border: 1px solid var(--border); background: transparent; color: var(--ink-muted); cursor: pointer; font-family: inherit; transition: all 0.15s; }
-  .atbtn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .atbtn:hover:not(.active) { background: rgba(0,0,0,0.05); }
-  .verse-title { font-size: 9px; letter-spacing: 0.08em; color: var(--ink-faint); text-transform: uppercase; margin: 0.9rem 0 3px; font-weight: 500; }
-  .verse-title:first-child { margin-top: 0; }
-  .verse-line { font-size: 12px; line-height: 1.95; color: var(--ink); font-family: 'Noto Sans KR', sans-serif; }
   .yt-btn-sm {
     display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: #f00; color: #fff; border-radius: 2px;
     font-size: 10px; font-weight: 500; text-decoration: none; font-family: inherit; border: none; cursor: pointer; transition: background 0.15s; flex-shrink: 0;
   }
   .yt-btn-sm:hover { background: #c00; }
+  .anthem-video { margin-top: 0.85rem; border-radius: 4px; overflow: hidden; border: 1px solid var(--border); background: #000; }
+  .anthem-video iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: none; }
   #col-info {
     background: var(--col-info-bg); color: #1e2a35; padding: 2rem 1.5rem 4rem; min-height: 100vh;
     border-right: 1px solid var(--border); min-width: 220px; max-width: 300px; width: 300px; flex-shrink: 0;
@@ -181,7 +166,7 @@
   }
 </style>
 </head>
-<body data-theme="paper">
+<body>
 
 <nav id="sidebar">
   <div id="sidebar-header">
@@ -190,11 +175,6 @@
         <h1 style="cursor:pointer;" onclick="selectRandom()" title="랜덤 나라 보기">세계 상징 사전</h1>
         <p>WORLD SYMBOL DICTIONARY</p>
         <p style="font-size:9px;margin-top:3px;letter-spacing:0.03em;">@geotasoo / 20260612</p>
-        <div id="theme-picker">
-          <span class="tp-label">THEME</span>
-          <button class="theme-dot active" data-theme="paper" title="크림 테마" onclick="setTheme('paper')"></button>
-          <button class="theme-dot" data-theme="white" title="화이트 테마" onclick="setTheme('white')"></button>
-        </div>
       </div>
       <button id="random-btn" title="랜덤 나라" onclick="selectRandom()" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px;line-height:1;opacity:0.7;transition:opacity 0.15s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">🎲</button>
     </div>
@@ -240,7 +220,7 @@
       <button class="mobile-tab-btn active" onclick="switchMobileTab('info', this)">🌍 정보</button>
       <button class="mobile-tab-btn" onclick="switchMobileTab('flag', this)">🏳️ 국기</button>
       <button class="mobile-tab-btn" onclick="switchMobileTab('emblem', this)">🔰 국장</button>
-      <button class="mobile-tab-btn" onclick="switchMobileTab('football', this)">⚽ 축구</button>
+      <button class="mobile-tab-btn" onclick="switchMobileTab('football', this)">⚽ 축구협회 엠블럼</button>
     </div>
     <div id="four-col-wrap" style="display:flex;flex:1;align-items:stretch;min-height:100vh;">
       <div id="col-info" class="mobile-active"></div>
@@ -270,13 +250,6 @@ const TITLE_MEANINGS = {
   my: '나의 조국', kh: '장엄한 왕국', np: '수백 송이의 꽃', pk: '국가(國歌)',
   sa: '군주여 만세', il: '희망', tr: '독립 행진곡'
 };
-
-function setTheme(t) {
-  document.body.dataset.theme = t;
-  document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === t));
-  try { localStorage.setItem('wsd-theme', t); } catch(e) {}
-}
-try { const saved = localStorage.getItem('wsd-theme'); if (saved) setTheme(saved); } catch(e) {}
 
 function parseCSV(text) {
   const rows = [];
@@ -348,7 +321,7 @@ function csvToCountry(row) {
     emblem: row.emblem_url || '', flag: row.flag_url || '', football: row.football_url || '',
     footballDesc: row.football_desc || '', footballWiki: row.football_wiki || '',
     anthem: { title: row.anthem_title || '', sub: row.anthem_sub || '' },
-    anthemData: parseAnthemText(row.anthem_lyrics || ''),
+    anthemYoutube: row.anthem_youtube || '',
     emblemDesc: row.emblem_desc || '', flagDesc: row.flag_desc || '',
     safetyUrl: row.safety_url || '',
     flagWiki: row.flag_wiki || row.flag_wiki_link || '',
@@ -437,6 +410,20 @@ function anthemTitleHtml(c) {
   return meaning ? `${title} <span class="title-meaning">(${meaning})</span>` : title;
 }
 
+function ytEmbedUrl(raw) {
+  if (!raw) return '';
+  let v = raw.trim();
+  let id = '';
+  let m;
+  if ((m = v.match(/[?&]v=([A-Za-z0-9_-]{6,})/))) id = m[1];
+  else if ((m = v.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/))) id = m[1];
+  else if ((m = v.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/))) id = m[1];
+  else if ((m = v.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/))) id = m[1];
+  else if (/^[A-Za-z0-9_-]{6,}$/.test(v)) id = v;
+  if (!id) return '';
+  return 'https://www.youtube.com/embed/' + id;
+}
+
 function renderPage(c) {
   const nicknameHtml = (c.nicknames||[]).map(n =>
     `<div class="nickname-item">${n}</div>`
@@ -453,36 +440,34 @@ function renderPage(c) {
    .map(g => `<div class="greet-row"><span class="g-label">${g[0]}</span><span class="g-val">${g[1]}</span></div>`)
    .join('');
 
-  /* 2단 블록들을 배열로 조립 (순서: 지도 → 안전정보 → 뜻 → 별명 → 수도 → 언어 → 국가) */
   const parts = [];
-
   parts.push(`<div class="map-wrap"><iframe src="${mapUrl}" allowfullscreen loading="lazy"></iframe></div>`);
-
   if (c.safetyUrl) {
     parts.push(`<a class="safety-btn" href="${c.safetyUrl}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>외교부 해외안전여행 정보</a>`);
   }
-
   if (c.meaning) {
     parts.push(`<hr class="info-divider"><div class="info-meaning"><span class="dot">${c.meaning}</span></div>`);
   }
-
   parts.push(`<hr class="info-divider"><div class="info-section-title">별명</div><div class="nickname-list">${nicknameHtml}</div>`);
-
   if (c.capital) {
     parts.push(`<hr class="info-divider"><div class="info-section-title">수도</div><div class="info-line">${c.capital}</div>`);
   }
-
   if (c.language || greetHtml) {
     let block = `<hr class="info-divider"><div class="info-section-title">언어</div>`;
     if (c.language) block += `<div class="info-line" style="margin-bottom:5px">${c.language}</div>`;
     block += greetHtml;
     parts.push(block);
   }
-
   let anthemBlock = `<hr class="info-divider"><div class="info-section-title">국가 (國歌)</div>`;
   anthemBlock += `<div class="anthem-name" style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;"><div style="flex:1;min-width:0;"><div class="title">${anthemTitleHtml(c)}</div><div class="sub">${c.anthem.sub || ''}</div></div>`;
-  anthemBlock += `<a class="yt-btn-sm" href="${ytSearchUrl(c.en)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>듣기</a></div>`;
-  anthemBlock += renderAnthem(c);
+  const embedUrl = ytEmbedUrl(c.anthemYoutube);
+  if (!embedUrl) {
+    anthemBlock += `<a class="yt-btn-sm" href="${ytSearchUrl(c.en)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>듣기</a>`;
+  }
+  anthemBlock += `</div>`;
+  if (embedUrl) {
+    anthemBlock += `<div class="anthem-video"><iframe src="${embedUrl}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+  }
   parts.push(anthemBlock);
 
   document.getElementById('col-info').innerHTML = parts.join('');
@@ -503,19 +488,17 @@ function renderPage(c) {
 
   document.getElementById('col-emblem').innerHTML = `
     <div class="col-header"><div class="col-icon">🔰</div><span class="col-title">국장</span></div>
-    <div class="emblem-wrap" id="emblem-svg-wrap"></div>
+    <div class="emblem-wrap">${c.emblem ? `<img class="emblem-img" src="${c.emblem}" alt="${c.name} 국장" onerror="this.style.opacity=0.15">` : ''}</div>
     ${c.ready ? `<div class="col-desc">${c.emblemDesc.replace(/\n\n/g,'<br><br>')}</div>` : '<div class="coming-soon">해설 준비 중입니다</div>'}
     ${c.emblemWiki ? `<div class="source-line"><a href="${c.emblemWiki}" target="_blank" rel="noopener">위키백과 원문 보기 ↗</a></div>` : ''}
   `;
-  loadEmblemSVG(c.emblem, 'emblem-svg-wrap');
 
   document.getElementById('col-football').innerHTML = `
-    <div class="col-header"><div class="col-icon">⚽</div><span class="col-title">축구</span></div>
-    <div class="emblem-wrap" id="football-svg-wrap"></div>
-    ${c.footballDesc ? `<div class="col-desc">${c.footballDesc.replace(/\n\n/g,'<br><br>')}</div>` : '<div class="coming-soon">축구 엠블럼 준비 중입니다</div>'}
+    <div class="col-header"><div class="col-icon">⚽</div><span class="col-title">축구협회 엠블럼</span></div>
+    <div class="emblem-wrap">${c.football ? `<img class="emblem-img" src="${c.football}" alt="${c.name} 축구협회 엠블럼" onerror="this.style.opacity=0.15">` : ''}</div>
+    ${c.footballDesc ? `<div class="col-desc">${c.footballDesc.replace(/\n\n/g,'<br><br>')}</div>` : '<div class="coming-soon">축구협회 엠블럼 준비 중입니다</div>'}
     ${c.footballWiki ? `<div class="source-line"><a href="${c.footballWiki}" target="_blank" rel="noopener">원문 보기 ↗</a></div>` : ''}
   `;
-  loadEmblemSVG(c.football, 'football-svg-wrap');
 }
 
 function applyFilter(q, region) {
@@ -588,96 +571,6 @@ function toggleTagFilter(value, type, btn) {
 }
 
 function ytSearchUrl(en) { return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(en + ' national anthem official'); }
-
-function renderAnthem(c) {
-  const data = c.anthemData;
-  if (!data) return '<div class="coming-soon">가사 준비 중입니다.</div>';
-  const hasTranslation = !!data.translation;
-  const id = 'anthem-' + c.code;
-  let html = '<div class="anthem-viewer" id="' + id + '" style="margin-bottom:0.5rem;">';
-  if (hasTranslation) {
-    html += '<div class="anthem-toggle">';
-    html += '<button class="atbtn" data-atype="original" onclick="switchAnthem(\''+c.code+'\', \'original\')">'+(data.original.lang || '원문')+'</button>';
-    html += '<button class="atbtn active" data-atype="translation" onclick="switchAnthem(\''+c.code+'\', \'translation\')">'+(data.translation.lang || '한국어 번역')+'</button>';
-    html += '</div>';
-  }
-  html += renderVerses(data.original.verses, c.code, 'original', !hasTranslation);
-  if (hasTranslation) {
-    html += renderVerses(data.translation.verses, c.code, 'translation', true);
-  }
-  html += '</div>';
-  return html;
-}
-
-function renderVerses(verses, code, type, visible) {
-  let html = '<div class="anthem-verses" data-code="'+code+'" data-type="'+type+'" style="display:'+(visible?'block':'none')+'">';
-  verses.forEach(v => {
-    if (v.title) html += '<div class="verse-title">'+v.title+'</div>';
-    html += '<div class="verse-lines">';
-    v.lines.forEach(l => { html += '<div class="verse-line">'+l+'</div>'; });
-    html += '</div>';
-  });
-  html += '</div>';
-  return html;
-}
-
-function switchAnthem(code, type) {
-  const viewer = document.getElementById('anthem-' + code);
-  if (!viewer) return;
-  viewer.querySelectorAll('.anthem-verses').forEach(el => {
-    el.style.display = el.dataset.type === type ? 'block' : 'none';
-  });
-  viewer.querySelectorAll('.atbtn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.atype === type);
-  });
-}
-
-const EMBLEM_CACHE = {};
-async function loadEmblemSVG(url, containerId) {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  if (!url) { wrap.innerHTML = ''; return; }
-  const cleanUrl = url.toLowerCase().split('?')[0];
-  if (!cleanUrl.endsWith('.svg')) {
-    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="엠블럼" onerror="this.style.display='none'">`;
-    return;
-  }
-  try {
-    let svgText = EMBLEM_CACHE[url];
-    if (!svgText) {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('SVG fetch failed: ' + res.status);
-      svgText = await res.text();
-      EMBLEM_CACHE[url] = svgText;
-    }
-    const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
-    const svg = doc.documentElement;
-    if (svg.nodeName.toLowerCase() !== 'svg' || doc.querySelector('parsererror')) {
-      throw new Error('SVG parse failed');
-    }
-    if (!svg.hasAttribute('viewBox')) {
-      const wAttr = svg.getAttribute('width') || '';
-      const hAttr = svg.getAttribute('height') || '';
-      const w = wAttr.includes('%') ? 0 : parseFloat(wAttr);
-      const h = hAttr.includes('%') ? 0 : parseFloat(hAttr);
-      if (w > 0 && h > 0) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-      else throw new Error('no size info for viewBox');
-    }
-    svg.removeAttribute('width');
-    svg.removeAttribute('height');
-    svg.removeAttribute('style');
-    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
-    if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) {
-      svg.style.aspectRatio = vb[2] + ' / ' + vb[3];
-    }
-    wrap.innerHTML = '';
-    wrap.appendChild(document.importNode(svg, true));
-  } catch(e) {
-    console.warn('SVG 인라인 실패, <img> 폴백 처리:', e);
-    wrap.innerHTML = `<img class="emblem-img" src="${url}" alt="엠블럼" onerror="this.style.display='none'">`;
-  }
-}
 
 function switchMobileTab(tab, btn) {
   document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
