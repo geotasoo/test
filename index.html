@@ -24,8 +24,7 @@
     z-index: 100; overflow: hidden;
   }
   #sidebar-inner { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-  #sidebar-header { padding: 1.1rem 1.1rem 0.8rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; transition: background 0.4s ease; position: relative; }
-  #flag-band { height: 4px; width: 100%; background: var(--sb-line); transition: background 0.4s ease; flex-shrink: 0; }
+  #sidebar-header { padding: 1.1rem 1.1rem 0.8rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   #sidebar-header h1 { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: #fff; }
   #sidebar-header p { font-size: 10px; color: var(--sb-text-dim); margin-top: 2px; letter-spacing: 0.05em; }
   #search-wrap { padding: 0.6rem 1.1rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
@@ -54,8 +53,12 @@
   #welcome .globe { font-size: 52px; opacity: 0.4; }
   #country-page { display: none; flex-direction: column; flex: 1; }
   #top-bar {
-    padding: 1.25rem 2rem 1rem; background: #fff; border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem 1rem; background: #fff; border-bottom: none;
     display: flex; align-items: center; flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 10;
+  }
+  #flag-band {
+    height: 4px; width: 100%; background: var(--border);
+    transition: background 0.4s ease;
   }
   #top-bar h2 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 600; color: var(--ink); flex-shrink: 0; }
   #top-bar .en { font-size: 13px; color: var(--ink-faint); letter-spacing: 0.03em; flex-shrink: 0; }
@@ -247,6 +250,7 @@
         <button class="nav-btn" title="다음 나라" onclick="navCountry(1)">→</button>
       </div>
     </div>
+    <div id="flag-band"></div>
     <div class="mobile-tabs" id="mobile-tabs">
       <button class="mobile-tab-btn active" onclick="switchMobileTab('info', this)">🌍 정보</button>
       <button class="mobile-tab-btn" onclick="switchMobileTab('flag', this)">🏳️ 국기</button>
@@ -495,40 +499,17 @@ function hexLum(hex) {
 }
 
 function applyFlagBand(c) {
-  const header = document.getElementById('sidebar-header');
-  if (!header) return;
+  const band = document.getElementById('flag-band');
+  if (!band) return;
   const cols = (c.colors||[]).map(colorToHex).filter(Boolean);
-  if (cols.length === 0) {
-    header.style.background = '';
-    header.style.setProperty('--hdr-text', '#ffffff');
-    setHeaderText('#ffffff', 'var(--sb-text-dim)');
-    return;
-  }
-  let bg;
-  if (cols.length === 1) bg = cols[0];
-  else {
-    const stops = cols.map((col, i) => {
-      const a = Math.round(i/cols.length*100);
-      const b = Math.round((i+1)/cols.length*100);
-      return `${col} ${a}%, ${col} ${b}%`;
-    }).join(', ');
-    bg = `linear-gradient(90deg, ${stops})`;
-  }
-  header.style.background = bg;
-  // 대표색(첫 색) 밝기로 글씨색 결정
-  const avgLum = cols.reduce((s,h)=>s+hexLum(h),0)/cols.length;
-  const textColor = avgLum > 0.45 ? '#1a1a1a' : '#ffffff';
-  const subColor = avgLum > 0.45 ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.7)';
-  setHeaderText(textColor, subColor);
-}
-
-function setHeaderText(main, sub) {
-  const header = document.getElementById('sidebar-header');
-  if (!header) return;
-  header.querySelectorAll('h1').forEach(e => e.style.color = main);
-  header.querySelectorAll('p').forEach(e => e.style.color = sub);
-  const rb = document.getElementById('random-btn');
-  if (rb) rb.style.filter = main === '#1a1a1a' ? 'invert(0.7)' : 'none';
+  if (cols.length === 0) { band.style.background = 'var(--border)'; return; }
+  if (cols.length === 1) { band.style.background = cols[0]; return; }
+  const stops = cols.map((col, i) => {
+    const a = Math.round(i/cols.length*100);
+    const b = Math.round((i+1)/cols.length*100);
+    return `${col} ${a}%, ${col} ${b}%`;
+  }).join(', ');
+  band.style.background = `linear-gradient(90deg, ${stops})`;
 }
 
 const KR_POP = 51.7e6;      // 대한민국 인구 (약 5170만)
