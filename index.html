@@ -158,8 +158,9 @@
   .cmp-bar-track { background: var(--paper-dark); border-radius: 3px; overflow: hidden; height: 13px; border: 1px solid var(--border); margin-bottom: 3px; }
   .cmp-bar-fill { height: 100%; border-radius: 2px; }
   .cmp-bar-fill.korea { background: #c8d6e0; }
-  .cmp-bar-fill.country { background: var(--accent); }
+  .cmp-bar-fill.country { background: #d52b1e; }
   .cmp-mini { font-size: 10px; color: var(--ink-faint); }
+  .src-note { font-size: 9px; color: var(--ink-faint); margin-top: 6px; font-style: italic; }
   .culture-tags { display: flex; flex-wrap: wrap; gap: 5px 10px; }
   .culture-tag { font-size: 12px; color: var(--accent); line-height: 1.5; }
   @media (max-width: 860px) {
@@ -365,7 +366,7 @@ function csvToCountry(row) {
     anthemYoutube: row.anthem_youtube || '',
     population: row.population || '',
     area: row.area || '',
-    timezone: row.timezone || '',
+    popAreaSource: row.pop_area_source || '',
     cultureTags: row.culture_tags ? row.culture_tags.split(',').map(s=>s.trim()).filter(Boolean) : [],
     emblemDesc: row.emblem_desc || '', flagDesc: row.flag_desc || '',
     safetyUrl: row.safety_url || '',
@@ -550,7 +551,7 @@ function compareBar(labelKo, valStr, krVal, fmt, unitName) {
     <div class="cmp-label"><span>${labelKo}</span><b>${fmt(v)}</b></div>
     <div class="cmp-bar-track"><div class="cmp-bar-fill country" style="width:${cPct}%"></div></div>
     <div class="cmp-bar-track"><div class="cmp-bar-fill korea" style="width:${krPct}%"></div></div>
-    <div class="cmp-mini">■ ${unitName} &nbsp; ■ 남한 (${fmt(krVal)}) &nbsp;·&nbsp; ${cmpText}</div>
+    <div class="cmp-mini"><span style="color:#c8d6e0;">■</span> 남한 (${fmt(krVal)}) &nbsp;·&nbsp; ${cmpText}</div>
   </div>`;
 }
 
@@ -609,12 +610,10 @@ function renderPage(c) {
   if (popBar || areaBar) {
     let block = `<hr class="info-divider"><div class="info-section-title">규모 (남한과 비교)</div>`;
     block += popBar + areaBar;
+    if (c.popAreaSource) {
+      block += `<div class="src-note">출처: ${c.popAreaSource}</div>`;
+    }
     parts.push(block);
-  }
-
-  // 시차
-  if (c.timezone) {
-    parts.push(`<hr class="info-divider"><div class="info-section-title">시차</div><div class="info-line">${c.timezone}</div>`);
   }
 
   // 문화 키워드 해시태그 (링크 없음, 제목 없음)
