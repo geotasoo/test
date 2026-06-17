@@ -27,6 +27,8 @@
   #sidebar-header { padding: 1.1rem 1.1rem 0.8rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   #sidebar-header h1 { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: #fff; }
   #sidebar-header p { font-size: 10px; color: var(--sb-text-dim); margin-top: 2px; letter-spacing: 0.05em; }
+  #notice-wrap { padding: 0.6rem 1.1rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; font-size: 9px; line-height: 1.5; color: var(--hl); letter-spacing: 0.02em; }
+  #notice-wrap a { color: var(--hl); font-weight: 600; text-decoration: underline; white-space: nowrap; }
   #search-wrap { padding: 0.6rem 1.1rem; border-bottom: 1px solid var(--sb-line); flex-shrink: 0; }
   #search {
     width: 100%; background: var(--sb-hover); border: 1px solid var(--sb-line); border-radius: 3px;
@@ -52,10 +54,19 @@
   #welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 3rem; text-align: center; }
   #welcome .globe { font-size: 52px; opacity: 0.4; }
   #country-page { display: none; flex-direction: column; flex: 1; }
+  #sticky-head { position: sticky; top: 0; z-index: 10; background: #fff; }
   #top-bar {
-    padding: 1.25rem 2rem 1rem; background: #fff; border-bottom: none;
-    display: flex; align-items: center; flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 10;
+    padding: 1.25rem 2rem 0.6rem; background: #fff; border-bottom: none;
+    display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
   }
+  #tb-summary { padding: 0 2rem 0.9rem; background: #fff; display: flex; flex-direction: column; gap: 3px; }
+  #tb-summary:empty { display: none; }
+  .sum-row { font-size: 12px; line-height: 1.55; color: var(--ink-muted); display: flex; gap: 7px; }
+  .sum-row .sum-label { color: var(--ink-faint); font-size: 10px; font-weight: 500; flex-shrink: 0; width: 78px; padding-top: 1px; }
+  .sum-row .sum-val { color: var(--ink); flex: 1; min-width: 0; }
+  .sum-row .sum-val .dot2 { display: block; }
+  .sum-tags { display: flex; flex-wrap: wrap; gap: 4px 9px; }
+  .sum-tags .culture-tag { font-size: 12px; color: var(--accent); }
   #flag-band {
     height: 4px; width: 100%; background: var(--border);
     transition: background 0.4s ease;
@@ -89,7 +100,25 @@
   .col-header { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
   .col-icon { width: 22px; height: 22px; background: var(--accent-light); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
   .col-title { font-size: 11px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; font-weight: 500; }
-  .flag-img { width: 100%; height: auto; border: 1px solid var(--border); display: block; margin-bottom: 1.25rem; }
+  .flag-img { width: 100%; height: auto; border: 1px solid var(--border); display: block; }
+  .img-skel-wrap { width: 100%; margin-bottom: 1.25rem; }
+  .img-skel-anim {
+    background: linear-gradient(90deg, #eef1f4 25%, #dde2e7 50%, #eef1f4 75%);
+    background-size: 200% 100%; animation: skel-shine 1.5s infinite;
+    border-radius: 3px; border: 1px solid var(--border);
+  }
+  @keyframes skel-shine { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .img-retry-box {
+    display: none; flex-direction: column; align-items: center; gap: 8px;
+    padding: 2rem 1rem; background: var(--paper-dark);
+    border: 1px dashed var(--border); border-radius: 4px; text-align: center;
+  }
+  .img-retry-box span { font-size: 11px; color: var(--ink-faint); }
+  .img-retry-box button {
+    font-size: 11px; padding: 4px 12px; border: 1px solid var(--border);
+    border-radius: 3px; background: #fff; cursor: pointer; font-family: inherit; color: var(--ink-muted);
+  }
+  .img-retry-box button:hover { background: var(--paper-dark); }
   .emblem-wrap { width: 100%; margin-bottom: 1.25rem; display: flex; justify-content: center; }
   .emblem-img { width: 100%; height: auto; display: block; }
   .col-desc { font-size: 13px; line-height: 1.95; color: var(--ink); }
@@ -134,11 +163,12 @@
   }
   .safety-btn:hover { background: #dcfce7; }
   .tag-toggle-btn {
-    display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--sb-text-dim); cursor: pointer;
-    background: none; border: none; padding: 0; font-family: inherit; transition: color 0.15s;
+    display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--sb-text); cursor: pointer;
+    background: var(--sb-hover); border: 1px solid var(--accent); border-radius: 4px; padding: 7px 9px;
+    font-family: inherit; transition: all 0.15s; width: 100%;
   }
-  .tag-toggle-btn:hover { color: var(--sb-text); }
-  .tag-toggle-btn .arrow { transition: transform 0.2s; display: inline-block; }
+  .tag-toggle-btn:hover { background: var(--accent); color: #fff; }
+  .tag-toggle-btn .arrow { transition: transform 0.2s; display: inline-block; font-size: 14px; color: var(--hl); font-weight: 700; }
   .tag-toggle-btn.open .arrow { transform: rotate(180deg); }
   .tags-collapsible { overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s; max-height: 0; opacity: 0; }
   .tags-collapsible.open { max-height: 300px; opacity: 1; }
@@ -165,6 +195,11 @@
   .culture-tag { font-size: 12px; color: var(--accent); line-height: 1.5; }
   @media (max-width: 860px) {
     body { flex-direction: column; }
+    #sticky-head { position: relative; }
+    #top-bar { padding: 1rem 1.25rem 0.5rem; }
+    #tb-summary { padding: 0 1.25rem 0.8rem; }
+    .sum-row { flex-direction: column; gap: 1px; }
+    .sum-row .sum-label { width: auto; }
     #sidebar { width: 100%; height: auto; position: relative; min-height: auto; }
     #mobile-list-toggle { display: flex !important; }
     #sidebar-inner { display: none; }
@@ -213,6 +248,10 @@
       <button id="random-btn" title="랜덤 나라" onclick="selectRandom()" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px;line-height:1;opacity:0.7;transition:opacity 0.15s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">🎲</button>
     </div>
   </div>
+  <div id="notice-wrap">
+    AI가 하는 일이라 실수를 할 수 있습니다. 잘못된 정보를 알려주세요. 직접 수정하겠습니다.
+    <a href="MAILTO_OR_FORM_URL" target="_blank" rel="noopener">[응원 및 제보]</a>
+  </div>
   <div id="search-wrap">
     <input id="search" type="text" placeholder="나라 이름 검색..." />
   </div>
@@ -226,7 +265,7 @@
   </div>
   <div class="tag-filter-bar">
     <button class="tag-toggle-btn" style="margin-top:0;" onclick="this.classList.toggle('open');document.getElementById('tag-pills-wrap').classList.toggle('open')">
-      <span class="arrow">▾</span> <span style="font-size:10px;white-space:nowrap;">상징·색으로 찾기 <span style="color:var(--sb-text-dim);">(독수리·바다…)</span></span>
+      <span class="arrow">▾</span> <span style="font-size:11px;white-space:nowrap;font-weight:500;">상징과 색으로 찾기</span>
     </button>
     <div class="tags-collapsible" id="tag-pills-wrap">
       <div id="tag-pills" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;"></div>
@@ -242,6 +281,7 @@
   </div>
 
   <div id="country-page">
+    <div id="sticky-head">
     <div id="top-bar">
       <h2 id="tb-name"></h2>
       <span class="en" id="tb-en"></span>
@@ -251,12 +291,14 @@
         <button class="nav-btn" title="다음 나라" onclick="navCountry(1)">→</button>
       </div>
     </div>
+    <div id="tb-summary"></div>
     <div id="flag-band"></div>
+    </div>
     <div class="mobile-tabs" id="mobile-tabs">
       <button class="mobile-tab-btn active" onclick="switchMobileTab('info', this)">🌍 정보</button>
       <button class="mobile-tab-btn" onclick="switchMobileTab('flag', this)">🏳️ 국기</button>
       <button class="mobile-tab-btn" onclick="switchMobileTab('emblem', this)">🔰 국장</button>
-      <button class="mobile-tab-btn" onclick="switchMobileTab('football', this)">⚽ 축구협회 엠블럼</button>
+      <button class="mobile-tab-btn" onclick="switchMobileTab('football', this)">⚽ 축구협회·연맹</button>
     </div>
     <div id="four-col-wrap" style="display:flex;flex:1;align-items:stretch;min-height:100vh;">
       <div id="col-info" class="mobile-active"></div>
@@ -367,6 +409,7 @@ function csvToCountry(row) {
     population: row.population || '',
     area: row.area || '',
     popAreaSource: row.pop_area_source || '',
+    majorCities: row.major_cities || '',
     cultureTags: row.culture_tags ? row.culture_tags.split(',').map(s=>s.trim()).filter(Boolean) : [],
     emblemDesc: row.emblem_desc || '', flagDesc: row.flag_desc || '',
     safetyUrl: row.safety_url || '',
@@ -374,6 +417,31 @@ function csvToCountry(row) {
     emblemWiki: row.emblem_wiki || row.emblem_wiki_link || '',
     ready: !!(row.emblem_desc && row.flag_desc)
   };
+}
+
+function imgSkel(src, cls, alt) {
+  if (!src) return '';
+  var h = (cls === 'flag-img') ? 'padding-top:62%;height:0' : 'height:140px';
+  return '<div class="img-skel-wrap">'
+    + '<div class="img-skel-anim" style="' + h + '"></div>'
+    + '<img class="' + cls + '" src="' + src + '" alt="' + alt + '" style="display:none" data-src="' + src + '"'
+    + ' onload="var p=this.parentNode;p.querySelector(\'.img-skel-anim\').style.display=\'none\';this.style.display=\'\'"'
+    + ' onerror="var p=this.parentNode;p.querySelector(\'.img-skel-anim\').style.display=\'none\';p.querySelector(\'.img-retry-box\').style.display=\'flex\';this.style.display=\'none\'">'
+    + '<div class="img-retry-box" style="display:none"><span>이미지 로드 실패</span>'
+    + '<button onclick="retryImg(this)">↻ 다시 시도</button></div>'
+    + '</div>';
+}
+
+function retryImg(btn) {
+  var wrap = btn.parentNode.parentNode;
+  var img = wrap.querySelector('img');
+  var retry = wrap.querySelector('.img-retry-box');
+  var skel = wrap.querySelector('.img-skel-anim');
+  retry.style.display = 'none';
+  skel.style.cssText = (img.className === 'flag-img') ? 'padding-top:62%;height:0' : 'height:140px';
+  img.style.display = 'none';
+  img.src = '';
+  setTimeout(function() { img.src = img.dataset.src; }, 60);
 }
 
 async function loadFromSheet() {
@@ -443,6 +511,7 @@ function selectCountry(idx) {
   const mltCur = document.getElementById('mlt-current');
   if (mltCur) mltCur.textContent = c.name ? '· ' + c.name : '';
   closeMobileList();
+  window.scrollTo({ top: 0, behavior: 'auto' });
 }
 
 function navCountry(dir) {
@@ -590,13 +659,6 @@ function renderPage(c) {
     parts.push(`<a class="safety-btn" href="${c.safetyUrl}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>외교부 해외안전여행 정보</a>`);
   }
   parts.push(anthemBlock);
-  if (c.meaning) {
-    parts.push(`<hr class="info-divider"><div class="info-meaning"><span class="dot">${c.meaning}</span></div>`);
-  }
-  parts.push(`<hr class="info-divider"><div class="info-section-title">별명</div><div class="nickname-list">${nicknameHtml}</div>`);
-  if (c.capital) {
-    parts.push(`<hr class="info-divider"><div class="info-section-title">수도</div><div class="info-line">${c.capital}</div>`);
-  }
   if (c.language || greetHtml) {
     let block = `<hr class="info-divider"><div class="info-section-title">언어</div>`;
     if (c.language) block += `<div class="info-line" style="margin-bottom:5px">${c.language}</div>`;
@@ -616,14 +678,6 @@ function renderPage(c) {
     parts.push(block);
   }
 
-  // 문화 키워드 해시태그 (링크 없음, 제목 없음)
-  if ((c.cultureTags||[]).length) {
-    let block = `<hr class="info-divider"><div class="culture-tags">`;
-    block += c.cultureTags.map(t => `<span class="culture-tag">#${t}</span>`).join('');
-    block += `</div>`;
-    parts.push(block);
-  }
-
   document.getElementById('col-info').innerHTML = parts.join('');
   applyFlagBand(c);
 
@@ -634,24 +688,42 @@ function renderPage(c) {
     + (c.colors||[]).map(t=>`<span class="tag-pill color-tag" style="cursor:default">${t}</span>`).join('');
   document.getElementById('tb-tags').innerHTML = tagHtml;
 
+  // 상단 요약 4줄: 나라 이름 유래 / 별명 / 주요 도시 / 해시태그
+  const sumParts = [];
+  if (c.meaning) {
+    sumParts.push(`<div class="sum-row"><span class="sum-label">나라이름 유래</span><span class="sum-val">${c.meaning}</span></div>`);
+  }
+  if ((c.nicknames||[]).length) {
+    sumParts.push(`<div class="sum-row"><span class="sum-label">별명</span><span class="sum-val">${c.nicknames.join(' · ')}</span></div>`);
+  }
+  const cities = c.majorCities || c.capital;
+  if (cities) {
+    sumParts.push(`<div class="sum-row"><span class="sum-label">주요 도시</span><span class="sum-val">${cities}</span></div>`);
+  }
+  if ((c.cultureTags||[]).length) {
+    const tags = c.cultureTags.map(t => `<span class="culture-tag">#${t}</span>`).join('');
+    sumParts.push(`<div class="sum-row"><span class="sum-label">&nbsp;</span><span class="sum-val sum-tags">${tags}</span></div>`);
+  }
+  document.getElementById('tb-summary').innerHTML = sumParts.join('');
+
   document.getElementById('col-flag').innerHTML = `
     <div class="col-header"><div class="col-icon">🏳️</div><span class="col-title">국기</span></div>
-    <img class="flag-img" src="${c.flag}" alt="${c.name} 국기" onerror="this.style.opacity=0.15" >
+    ${imgSkel(c.flag, 'flag-img', c.name + ' 국기')}
     ${c.ready ? `<div class="col-desc">${c.flagDesc}</div>` : '<div class="coming-soon">해설 준비 중입니다</div>'}
     ${c.flagWiki ? `<div class="source-line"><a href="${c.flagWiki}" target="_blank" rel="noopener">위키백과 원문 보기 ↗</a></div>` : ''}
   `;
 
   document.getElementById('col-emblem').innerHTML = `
     <div class="col-header"><div class="col-icon">🔰</div><span class="col-title">국장</span></div>
-    <div class="emblem-wrap">${c.emblem ? `<img class="emblem-img" src="${c.emblem}" alt="${c.name} 국장" onerror="this.style.opacity=0.15">` : ''}</div>
+    <div class="emblem-wrap">${imgSkel(c.emblem, 'emblem-img', c.name + ' 국장')}</div>
     ${c.ready ? `<div class="col-desc">${c.emblemDesc.replace(/\n\n/g,'<br><br>')}</div>` : '<div class="coming-soon">해설 준비 중입니다</div>'}
     ${c.emblemWiki ? `<div class="source-line"><a href="${c.emblemWiki}" target="_blank" rel="noopener">위키백과 원문 보기 ↗</a></div>` : ''}
   `;
 
   document.getElementById('col-football').innerHTML = `
-    <div class="col-header"><div class="col-icon">⚽</div><span class="col-title">축구협회 엠블럼</span></div>
-    <div class="emblem-wrap">${c.football ? `<img class="emblem-img" src="${c.football}" alt="${c.name} 축구협회 엠블럼" onerror="this.style.opacity=0.15">` : ''}</div>
-    ${c.footballDesc ? `<div class="col-desc">${c.footballDesc.replace(/\n\n/g,'<br><br>')}</div>` : '<div class="coming-soon">축구협회 엠블럼 준비 중입니다</div>'}
+    <div class="col-header"><div class="col-icon">⚽</div><span class="col-title">축구협회 및 연맹 엠블럼</span></div>
+    <div class="emblem-wrap">${imgSkel(c.football, 'emblem-img', c.name + ' 축구협회 및 연맹 엠블럼')}</div>
+    ${c.footballDesc ? `<div class="col-desc">${c.footballDesc.replace(/\n\n/g,'<br><br>')}</div>` : '<div class="coming-soon">축구협회 및 연맹 엠블럼 준비 중입니다</div>'}
     ${c.footballWiki ? `<div class="source-line"><a href="${c.footballWiki}" target="_blank" rel="noopener">원문 보기 ↗</a></div>` : ''}
   `;
 }
@@ -782,6 +854,9 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(function(){});
+}
 loadFromSheet();
 </script>
 </body>
