@@ -628,7 +628,7 @@ function renderPage(c) {
     `<div class="nickname-item">${n}</div>`
   ).join('') || '<div class="nickname-item" style="color:var(--ink-faint);font-style:italic">별명 준비 중</div>';
 
-  const mapQuery = encodeURIComponent(c.name);
+  const mapQuery = encodeURIComponent(c.name + ' ' + c.en);
   const mapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=m&z=4&output=embed`;
 
   const greetHtml = [
