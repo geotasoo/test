@@ -172,7 +172,6 @@
   .tag-toggle-btn.open .arrow { transform: rotate(180deg); }
   .tags-collapsible { overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s; max-height: 0; opacity: 0; }
   .tags-collapsible.open { max-height: 300px; opacity: 1; }
-  /* 모바일 목록 토글 바 */
   #mobile-list-toggle {
     display: none; width: 100%; background: var(--sb-bg); color: var(--sb-text);
     border: none; border-bottom: 1px solid var(--sb-line); padding: 12px 1.1rem;
@@ -181,7 +180,6 @@
   }
   #mobile-list-toggle #mlt-current { color: var(--hl); font-weight: 500; }
   .mobile-tabs { display: none; }
-  /* 인구·면적 비교 도형 */
   .compare-row { margin-top: 8px; }
   .compare-row .cmp-label { display:flex; justify-content:space-between; font-size: 11px; color: var(--ink-muted); margin-bottom: 3px; }
   .compare-row .cmp-label b { color: var(--ink); font-weight: 500; }
@@ -251,6 +249,7 @@
   <div id="notice-wrap">
   AI가 처리하는 일이다 보니<br>간혹 실수가 발생할 수 있습니다.<br>잘못된 정보를 알려주세요.<br>직접 처리하겠습니다.<br>
     <a href="https://geotasoo.github.io/test/MAILTO_OR_FORM_URL" target="_blank" rel="noopener" style="font-weight:400;">[응원 및 제보]</a>
+    <div style="margin-top:6px;color:var(--sb-text-dim);">⌨ 방향키(← →)로 나라를 넘길 수 있어요.</div>
   </div>
   <div id="search-wrap">
     <input id="search" type="text" placeholder="나라 이름 검색..." />
@@ -262,6 +261,7 @@
     <button class="rtab" data-region="아프리카" data-label="아프리카">아프리카</button>
     <button class="rtab" data-region="아메리카" data-label="아메리카">아메리카</button>
     <button class="rtab" data-region="오세아니아" data-label="오세아니아">오세아니아</button>
+    <button class="rtab" data-region="FIFA 비회원·지역대표" data-label="지역대표">지역대표</button>
   </div>
   <div class="tag-filter-bar">
     <button class="tag-toggle-btn" style="margin-top:0;" onclick="this.classList.toggle('open');document.getElementById('tag-pills-wrap').classList.toggle('open')">
@@ -582,8 +582,8 @@ function applyFlagBand(c) {
   band.style.background = `linear-gradient(90deg, ${stops})`;
 }
 
-const KR_POP = 51.7e6;      // 대한민국 인구 (약 5170만)
-const KR_AREA = 100210;     // 대한민국 면적 (km², 남한)
+const KR_POP = 51.7e6;
+const KR_AREA = 100210;
 
 function parseNum(s) {
   if (!s) return null;
@@ -609,7 +609,6 @@ function compareBar(labelKo, valStr, krVal, fmt, unitName) {
   const v = parseNum(valStr);
   if (v == null) return '';
   const ratio = v / krVal;
-  // 막대: 둘 중 큰 쪽을 100%로
   const maxV = Math.max(v, krVal);
   const krPct = Math.max(2, Math.round(krVal/maxV*100));
   const cPct = Math.max(2, Math.round(v/maxV*100));
@@ -629,7 +628,7 @@ function renderPage(c) {
     `<div class="nickname-item">${n}</div>`
   ).join('') || '<div class="nickname-item" style="color:var(--ink-faint);font-style:italic">별명 준비 중</div>';
 
-  const mapQuery = encodeURIComponent(c.en);
+  const mapQuery = encodeURIComponent(c.name);
   const mapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=m&z=4&output=embed`;
 
   const greetHtml = [
@@ -640,7 +639,6 @@ function renderPage(c) {
    .map(g => `<div class="greet-row"><span class="g-label">${g[0]}</span><span class="g-val">${g[1]}</span></div>`)
    .join('');
 
-  // 국가(國歌) 블록 먼저 생성
   let anthemBlock = `<hr class="info-divider"><div class="info-section-title">국가 (國歌)</div>`;
   anthemBlock += `<div class="anthem-name" style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;"><div style="flex:1;min-width:0;"><div class="title">${anthemTitleHtml(c)}</div><div class="sub">${c.anthem.sub || ''}</div></div>`;
   const embedUrl = ytEmbedUrl(c.anthemYoutube);
@@ -653,7 +651,6 @@ function renderPage(c) {
   }
 
   const parts = [];
-  // 순서: 지도 → 안전여행 → 국가 → 뜻 → 별명 → 수도 → 언어
   parts.push(`<div class="map-wrap"><iframe src="${mapUrl}" allowfullscreen loading="lazy"></iframe></div>`);
   if (c.safetyUrl) {
     parts.push(`<a class="safety-btn" href="${c.safetyUrl}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>외교부 해외안전여행 정보</a>`);
@@ -666,7 +663,6 @@ function renderPage(c) {
     parts.push(block);
   }
 
-  // 인구 · 면적 (남한 비교 도형)
   const popBar = compareBar('인구', c.population, KR_POP, fmtPop, '이 나라');
   const areaBar = compareBar('면적', c.area, KR_AREA, fmtArea, '이 나라');
   if (popBar || areaBar) {
@@ -688,7 +684,6 @@ function renderPage(c) {
     + (c.colors||[]).map(t=>`<span class="tag-pill color-tag" style="cursor:default">${t}</span>`).join('');
   document.getElementById('tb-tags').innerHTML = tagHtml;
 
-  // 상단 요약 4줄: 나라 이름 유래 / 별명 / 주요 도시 / 해시태그
   const sumParts = [];
   if (c.meaning) {
     sumParts.push(`<div class="sum-row"><span class="sum-label">나라이름 유래</span><span class="sum-val">${c.meaning}</span></div>`);
