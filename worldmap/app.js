@@ -77,10 +77,13 @@
   function clampView() {
     s = clampScale(s);
     if (isEE()) {
-      // 지도 가장자리가 화면 가운데를 넘어가지 않게
+      // 지도가 화면보다 작으면 가운데에 고정, 크면 가장자리 밖으로 빈 곳이 생기지 않게
       const [[x0, y0], [x1, y1]] = EE_BOUNDS;
-      ex = Math.min(W / 2 - s * x0, Math.max(W / 2 - s * x1, ex));
-      ey = Math.min(H / 2 - s * y0, Math.max(H / 2 - s * y1, ey));
+      const top = eeFit ? eeFit.cy - eeFit.h / 2 : 0, bot = eeFit ? eeFit.cy + eeFit.h / 2 : H;
+      if (s * (x1 - x0) <= W) ex = W / 2 - s * (x0 + x1) / 2;
+      else ex = Math.min(-s * x0, Math.max(W - s * x1, ex));
+      if (s * (y1 - y0) <= bot - top) ey = (top + bot) / 2 - s * (y0 + y1) / 2;
+      else ey = Math.min(top - s * y0, Math.max(bot - s * y1, ey));
     } else {
       const hi = s * merc(LAT_TOP);          // 위쪽 끝이 화면 위로 넘치지 않게
       const lo = H + s * merc(LAT_BOT);      // 아래쪽 끝이 화면 아래로 넘치지 않게
