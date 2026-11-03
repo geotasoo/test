@@ -56,7 +56,7 @@
   let sMin = 1;                              // 현재 도법의 최소 축척
   let lon0 = HOME_LON, s = 1, cy = 0;       // 메르카토르: 가운데 경도, 축척, 적도의 화면 y
   let ex = 0, ey = 0;                        // 이퀄 어스: 지도 원점의 화면 위치 (축척은 s 공용)
-  let sMinM = 1, sMinE = 1, eeFit = null, area = { top: 0, bot: 0, scaleY: 0 };
+  let sMinM = 1, sMinE = 1, eeFit = null, area = { top: 0, bot: 0, left: 0, line: 0 };
   const projM = d3.geoMercator().precision(0);
   const projE = d3.geoEqualEarth().precision(0.5);
   const eeBase = d3.geoEqualEarth().scale(1).translate([0, 0]).precision(0.0002);
@@ -81,8 +81,9 @@
       // 지도가 화면보다 작으면 가운데에 고정, 크면 가장자리 밖으로 빈 곳이 생기지 않게
       const [[x0, y0], [x1, y1]] = EE_BOUNDS;
       const top = eeFit ? eeFit.cy - eeFit.h / 2 : 0, bot = eeFit ? eeFit.cy + eeFit.h / 2 : H;
-      if (s * (x1 - x0) <= W) ex = W / 2 - s * (x0 + x1) / 2;
-      else ex = Math.min(-s * x0, Math.max(W - s * x1, ex));
+      const L = area.left, cxFit = eeFit ? eeFit.cx : W / 2;     // PC에서는 왼쪽 팔레트를 피해서
+      if (s * (x1 - x0) <= W - L) ex = cxFit - s * (x0 + x1) / 2;
+      else ex = Math.min(L - s * x0, Math.max(W - s * x1, ex));
       if (s * (y1 - y0) <= bot - top) ey = (top + bot) / 2 - s * (y0 + y1) / 2;
       else ey = Math.min(top - s * y0, Math.max(bot - s * y1, ey));
     } else {
@@ -145,7 +146,7 @@
   }
   function homeEE(animate) {
     // 세로로 긴 화면(폰)에서는 지도가 너무 작아지지 않게 조금 확대해서 시작
-    const hs = Math.min(sMinE * 2.4, Math.max(sMinE, eeFit.h * 0.82 / (EE_BOUNDS[1][1] - EE_BOUNDS[0][1])));
+    const hs = !isPhone() ? sMinE : Math.min(sMinE * 2.4, Math.max(sMinE, eeFit.h * 0.82 / (EE_BOUNDS[1][1] - EE_BOUNDS[0][1])));
     const target = { lon: EE_CENTER, s: hs, ex: eeFit.cx - hs * (EE_BOUNDS[0][0] + EE_BOUNDS[1][0]) / 2, ey: eeFit.cy - hs * (EE_BOUNDS[0][1] + EE_BOUNDS[1][1]) / 2 };
     if (animate) return animateTo(target);
     s = target.s; ex = target.ex; ey = target.ey; rotateEE(target.lon); clampView(); requestDraw();
@@ -155,18 +156,28 @@
     return { lon: +lon0.toFixed(3), lat: +((Math.atan(Math.sinh((cy - H / 2) / s)) / RAD)).toFixed(3), z: +(s / sMinM).toFixed(4) };
   }
 
+  const isPhone = () => window.matchMedia('(max-width: 719px)').matches;
   function computeFits() {
     sMinM = Math.max(W / (2 * Math.PI), H / MERC_SPAN);
-    // 이퀄 어스는 지도 전체가 위쪽 칩과 아래쪽 도구 사이에 들어오게
     const st = stage.getBoundingClientRect();
-    const top = Math.max(0, $('#layers').getBoundingClientRect().bottom - st.top) + 6;
-    const dockEl = document.body.classList.contains('dock-hidden') ? $('#dockOpen') : $('.dock');
-    const bot = Math.max(0, st.bottom - dockEl.getBoundingClientRect().top) + 6;
+    const hidden = document.body.classList.contains('dock-hidden');
+    // 폰: 아래 시트 높이만큼 아래 여백 / PC: 왼쪽 팔레트 너비만큼 왼쪽 여백
+    let dockH = 0, left = 0;
+    if (isPhone()) {
+      const el = hidden ? $('#dockOpen') : $('#dock');
+      dockH = hidden ? 0 : Math.max(0, st.bottom - el.getBoundingClientRect().top);
+    } else if (!hidden) {
+      left = $('#dock').getBoundingClientRect().right - st.left;
+    }
+    stage.style.setProperty('--dock-h', dockH + 'px');
+    const top = Math.max(0, $('#controls').getBoundingClientRect().bottom - st.top) + 8;
+    const botPad = (isPhone() && hidden ? 60 : 30);     // 아래쪽 출처·축척 줄 (폰에서 접으면 팔레트 버튼 자리)
+    const bot = H - dockH - botPad;
     const bw = EE_BOUNDS[1][0] - EE_BOUNDS[0][0], bh = EE_BOUNDS[1][1] - EE_BOUNDS[0][1];
-    sMinE = Math.min((W - 16) / bw, (H - top - bot) / bh);
-    eeFit = { cx: W / 2, cy: top + (H - top - bot) / 2, h: H - top - bot };
-    const cr = $('.credit').getBoundingClientRect();
-    area = { top, bot: H - bot, scaleY: cr.top - st.top - 26 };
+    const fitW = W - left - 16 - (isPhone() ? 0 : 54);   // 오른쪽 확대 버튼 자리
+    sMinE = Math.min(fitW / bw, (bot - top) / bh);
+    eeFit = { cx: left + 8 + fitW / 2, cy: (top + bot) / 2, h: bot - top };
+    area = { top, bot, left, line: H - dockH - (isPhone() && hidden ? 60 : 10) };
     sMin = isEE() ? sMinE : sMinM;
   }
 
@@ -491,7 +502,7 @@
     ctx.fillStyle = color; ctx.fillText(t, x, y);
   }
   function drawGridLabels() {
-    const step = gridStep(), top = area.top + 10, bot = Math.min(area.bot, area.scaleY - 28) - 10;   // 아래쪽 축척·출처와 겹치지 않게
+    const step = gridStep(), top = area.top + 6, bot = area.bot - 8;   // 아래쪽 축척·출처와 겹치지 않게
     ctx.font = `600 11px ${FONT}`; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     const col = 'rgba(35,85,145,.95)';
     // 위도: 왼쪽·오른쪽 가장자리
@@ -505,7 +516,7 @@
         R = R[0] + 5 + wL > W - 4 ? [Math.min(W - 4, R[0]) - 4, R[1], 'right'] : [R[0] + 5, R[1], 'left'];
       } else {
         const y = proj([lon0, lat])[1];
-        L = [6, y, 'left']; R = [W - 6, y, 'right'];
+        L = [area.left + 6, y, 'left']; R = [W - 6, y, 'right'];
       }
       if (L[1] < top || L[1] > bot) continue;
       haloText(fmtLat(lat), L[0], L[1], L[2], col);
@@ -533,33 +544,31 @@
     const e = Math.pow(10, Math.floor(Math.log10(v))), m = v / e;
     return (m >= 5 ? 5 : m >= 2 ? 2 : 1) * e;
   }
+  // 축척 1 : N — 화면 가운데 지점에서 화면 1픽셀(1/96인치)이 실제로 몇 m인지로 계산
   function drawScale() {
-    const cx = W / 2, cyM = (area.top + area.bot) / 2;
-    let a = proj.invert([cx - 50, cyM]), b = proj.invert([cx + 50, cyM]), ref = proj.invert([cx, cyM]);
+    const cx = (area.left + W) / 2, cyM = (area.top + area.bot) / 2;
+    const a = proj.invert([cx - 50, cyM]), b = proj.invert([cx + 50, cyM]), ref = proj.invert([cx, cyM]);
     const bad = q => !q || !isFinite(q[0]) || !isFinite(q[1]) || Math.abs(q[1]) > 85;
-    if (isEE() && (bad(a) || bad(b) || Math.hypot(...proj(a).map((v, i) => v - [cx - 50, cyM][i])) > 1)) return;
-    if (bad(a) || bad(b)) return;
-    const kmPerPx = d3.geoDistance(a, b) * 6371 / 100;
-    const km = niceKm(kmPerPx * 130), len = km / kmPerPx;
-    const x = 14, y = area.scaleY;
-    const fmt = v => v >= 1000 ? v.toLocaleString('ko-KR') : String(v);
+    if (bad(a) || bad(b) || bad(ref)) return;
+    if (isEE() && Math.hypot(...proj(a).map((v, i) => v - [cx - 50, cyM][i])) > 1) return;
+    const mPerPx = d3.geoDistance(a, b) * 6371000 / 100;
+    const raw = mPerPx / (0.0254 / 96);
+    const e = Math.pow(10, Math.floor(Math.log10(raw)) - 1);
+    const denom = Math.round(raw / e) * e;                       // 앞 두 자리만 남김
+    const text = `1 : ${denom.toLocaleString('ko-KR')}`;
+    const lat = Math.round(ref[1]);
+    const capt = `화면 가운데(${lat === 0 ? '적도' : fmtLat(lat)}) 기준`;
+    const x = W - 12, y = area.line;
     ctx.save();
-    ctx.font = `600 11px ${FONT}`; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round';
-    // 바탕
-    ctx.fillStyle = 'rgba(255,255,255,.82)';
-    const capt = `화면 가운데(${Math.round(ref[1]) === 0 ? '적도' : fmtLat(Math.round(ref[1]))}) 기준`;
-    const wK = ctx.measureText(`${fmt(km)} km`).width;
-    ctx.font = `500 10px ${FONT}`; const capW = ctx.measureText(capt).width; ctx.font = `600 11px ${FONT}`;
-    roundRect(x - 8, y - 24, Math.max(len + wK / 2 + 8, capW) + 18, 42, 8); ctx.fill();
-    // 막대: 4칸 흑백
-    const n = 4, segW = len / n;
-    for (let i = 0; i < n; i++) { ctx.fillStyle = i % 2 ? '#fff' : '#1d2733'; ctx.fillRect(x + i * segW, y - 4, segW, 5); }
-    ctx.lineWidth = 1; ctx.strokeStyle = '#1d2733'; ctx.strokeRect(x + .5, y - 4.5, len, 5);
-    ctx.fillStyle = '#1d2733'; ctx.textAlign = 'center';
-    ctx.fillText('0', x, y - 9); ctx.fillText(fmt(km / 2), x + len / 2, y - 9);
-    ctx.textAlign = 'left'; ctx.fillText(`${fmt(km)} km`, x + len - ctx.measureText(fmt(km)).width / 2, y - 9);
-    ctx.font = `500 10px ${FONT}`; ctx.fillStyle = '#5b6776';
-    ctx.fillText(capt, x, y + 12);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round';
+    ctx.font = `700 13px ${FONT}`;
+    const wT = ctx.measureText(text).width;
+    ctx.font = `500 10px ${FONT}`;
+    const wC = ctx.measureText(capt).width;
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    roundRect(x - Math.max(wT, wC) - 10, y - 30, Math.max(wT, wC) + 20, 36, 8); ctx.fill();
+    ctx.fillStyle = '#1d2733'; ctx.font = `700 13px ${FONT}`; ctx.fillText(text, x, y - 14);
+    ctx.fillStyle = '#5b6776'; ctx.font = `500 10px ${FONT}`; ctx.fillText(capt, x, y - 1);
     ctx.restore();
   }
   function roundRect(x, y, w, h, r) {
@@ -774,25 +783,23 @@
   $('#eraser').addEventListener('click', () => { S.tool = S.tool === 'erase' ? 'paint' : 'erase'; syncSelection(); });
 
   // ───────── 레이어·설정 ─────────
-  document.querySelectorAll('[data-layer]').forEach(b => {
-    b.addEventListener('click', () => {
-      const k = b.dataset.layer; S.show[k] = !S.show[k];
-      b.classList.toggle('on', S.show[k]); requestDraw(); saveSoon();
-    });
+  document.querySelectorAll('input[data-layer]').forEach(cb => {
+    cb.addEventListener('change', () => { S.show[cb.dataset.layer] = cb.checked; syncLayers(); requestDraw(); saveSoon(); });
   });
-  function syncLayers() { document.querySelectorAll('[data-layer]').forEach(b => b.classList.toggle('on', !!S.show[b.dataset.layer])); }
-
-  const settingsBtn = $('#settingsBtn'), settings = $('#settings');
-  settingsBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    settings.hidden = !settings.hidden;
-    settingsBtn.setAttribute('aria-expanded', String(!settings.hidden));
-  });
+  function syncLayers() {
+    document.querySelectorAll('input[data-layer]').forEach(cb => { cb.checked = !!S.show[cb.dataset.layer]; });
+    $('#lineWidth').closest('.row').classList.toggle('off', !S.show.borders);
+  }
+  const layersBtn = $('#layersBtn'), layersPanel = $('#layersPanel');
+  function openLayers(open) {
+    layersPanel.hidden = !open; layersBtn.setAttribute('aria-expanded', String(open));
+  }
+  layersBtn.addEventListener('click', e => { e.stopPropagation(); openLayers(layersPanel.hidden); });
   document.addEventListener('pointerdown', e => {
-    if (!settings.hidden && !settings.contains(e.target) && !settingsBtn.contains(e.target)) {
-      settings.hidden = true; settingsBtn.setAttribute('aria-expanded', 'false');
-    }
+    if (!layersPanel.hidden && !layersPanel.contains(e.target) && !layersBtn.contains(e.target)) openLayers(false);
   });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') openLayers(false); });
+
   function renderMiniSwatches() {
     document.querySelectorAll('.mini-swatches').forEach(el => {
       const key = el.dataset.target, list = key === 'land' ? LAND_COLORS : OCEAN_COLORS;
@@ -811,6 +818,7 @@
   // ───────── 팔레트 접기 ─────────
   function syncDock() {
     document.body.classList.toggle('dock-hidden', !!S.dockHidden);
+    if (!S.dockHidden) openLayers(false);
     $('#dockOpen .dot').style.background = S.tool === 'erase' ? '#fff' : S.current;
     resize(); requestDraw();
   }
