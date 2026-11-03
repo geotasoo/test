@@ -11,7 +11,7 @@
   <div class="brand">
     <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5s-1.3 6.7-3.9 9.5c-2.6-2.8-3.9-6-3.9-9.5s1.3-6.7 3.9-9.5z"/></svg>
     <h1>세계지도 색칠하기</h1>
-    <span class="badge">시안 2</span>
+    <span class="badge">시안 3</span>
   </div>
   <div class="actions">
     <button class="btn" id="undo" title="되돌리기 (Ctrl+Z)" disabled>
@@ -36,10 +36,13 @@
       <button data-proj="ee">이퀄 어스</button>
     </div>
     <button class="chip on" data-layer="borders"><i></i>국경선</button>
+    <button class="chip" data-layer="kp"><i></i>남북 경계</button>
     <button class="chip" data-layer="names"><i></i>나라 이름</button>
+    <button class="chip" data-layer="tiny" title="지도에서 점처럼 작은 나라를 동그라미로 표시"><i></i>작은 나라</button>
     <button class="chip" data-layer="grid"><i></i>경위선</button>
     <button class="chip on" data-layer="equator"><i></i>적도</button>
     <button class="chip on" data-layer="lakes"><i></i>호수</button>
+    <button class="chip on" data-layer="scale"><i></i>축척</button>
     <button class="chip gear" id="settingsBtn" title="지도 설정" aria-expanded="false">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
     </button>
@@ -62,8 +65,13 @@
   <div id="tip" role="status"></div>
   <div id="toast" role="status"><span></span><button hidden>되돌리기</button></div>
 
+  <button class="dock-open" id="dockOpen" title="팔레트 열기"><span class="dot"></span>팔레트
+    <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>
   <div class="dock">
-    <div class="tabs" id="paletteTabs"></div>
+    <div class="dock-head">
+      <div class="tabs" id="paletteTabs"></div>
+      <button class="dock-hide" id="dockHide" title="팔레트 숨기기"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+    </div>
     <div class="tools">
       <div class="swatches" id="swatches"></div>
       <label class="custom" title="원하는 색 고르기">

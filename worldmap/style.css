@@ -59,7 +59,7 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   pointer-events: none; z-index: 3;
 }
 .chip {
-  pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px;
+  pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 11px;
   background: rgba(255,255,255,.94); border: 1px solid var(--line); border-radius: 99px; font-size: 13px; color: var(--ink-2);
   box-shadow: 0 1px 3px rgba(20,40,70,.08); backdrop-filter: blur(6px);
 }
@@ -101,7 +101,21 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   background: var(--surface); border-radius: 18px; box-shadow: var(--shadow); padding: 10px 12px 8px;
   padding-bottom: calc(8px + env(safe-area-inset-bottom));
 }
-.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-bottom: 8px; }
+.dock-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+.dock-hide { flex: none; width: 30px; height: 28px; border: 0; background: none; border-radius: 8px; color: var(--ink-2); display: grid; place-items: center; }
+.dock-hide:hover { background: #f0f3f7; color: var(--ink); }
+.dock-open {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 3; display: none;
+  align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 10px; border: 0; border-radius: 99px;
+  background: var(--surface); box-shadow: var(--shadow); font-size: 14px; font-weight: 600; color: var(--ink);
+  margin-bottom: env(safe-area-inset-bottom);
+}
+.dock-open .dot { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); }
+.dock-open svg { width: 16px; height: 16px; color: var(--ink-2); }
+body.dock-hidden { --dock-h: 42px; }
+body.dock-hidden .dock { display: none; }
+body.dock-hidden .dock-open { display: inline-flex; }
 .tabs::-webkit-scrollbar { display: none; }
 .tabs button { flex: none; border: 0; background: none; padding: 5px 10px; border-radius: 99px; font-size: 13px; color: var(--ink-2); }
 .tabs button.sel { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
@@ -146,7 +160,7 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   border: 0; background: rgba(255,255,255,.16); color: #8ab4ff; font-weight: 600; font-size: 13px; padding: 5px 10px; border-radius: 7px; }
 #toast:not(:has(button:not([hidden]))) { padding-right: 14px; }
 .credit b { font-weight: 600; color: #5b6776; }
-.credit { position: absolute; left: 12px; bottom: calc(var(--dock-h) + 26px); font-size: 10px; color: #8794a3; z-index: 2; pointer-events: none; }
+.credit { position: absolute; left: 12px; bottom: calc(var(--dock-h) + 26px); white-space: nowrap; font-size: 10px; color: #8794a3; z-index: 2; pointer-events: none; }
 
 /* ---------- 좁은 화면 (폰) ---------- */
 @media (max-width: 640px) {
@@ -165,4 +179,5 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   .zoom { bottom: calc(var(--dock-h) + 14px); }
   .zoom button { width: 38px; height: 38px; }
   .credit { bottom: calc(var(--dock-h) + 8px); }
+  body.dock-hidden { --dock-h: 40px; }
 }

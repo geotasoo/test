@@ -1,4 +1,4 @@
-/* 세계지도 색칠하기 — 시안 2
+/* 세계지도 색칠하기 — 시안 3
  * 도법 두 가지:
  *  - 메르카토르: 지도 한 장을 회전시켜 그려서 이음매가 없고, 좌우로 끝없이 돌릴 수 있어요.
  *  - 이퀄 어스: 넓이가 실제 비율대로 보이는 도법. 가운데 경선을 150°E로 고정한 태평양 중심 지도예요.
@@ -38,7 +38,8 @@
     land: '#FFFFFF',
     ocean: '#DDEEFB',
     line: 0.6,
-    show: { borders: true, names: false, grid: false, equator: true, lakes: true },
+    show: { borders: true, kp: false, names: false, tiny: false, grid: false, equator: true, lakes: true, scale: true },
+    dockHidden: false,
     view: null,             // 메르카토르 { lon, lat, z } 저장용
     proj: 'merc',           // 'merc' | 'ee'
     eeLon: EE_CENTER,       // 이퀄 어스 가운데 경선
@@ -55,7 +56,7 @@
   let sMin = 1;                              // 현재 도법의 최소 축척
   let lon0 = HOME_LON, s = 1, cy = 0;       // 메르카토르: 가운데 경도, 축척, 적도의 화면 y
   let ex = 0, ey = 0;                        // 이퀄 어스: 지도 원점의 화면 위치 (축척은 s 공용)
-  let sMinM = 1, sMinE = 1, eeFit = null;
+  let sMinM = 1, sMinE = 1, eeFit = null, area = { top: 0, bot: 0, scaleY: 0 };
   const projM = d3.geoMercator().precision(0);
   const projE = d3.geoEqualEarth().precision(0.5);
   const eeBase = d3.geoEqualEarth().scale(1).translate([0, 0]).precision(0.0002);
@@ -159,10 +160,13 @@
     // 이퀄 어스는 지도 전체가 위쪽 칩과 아래쪽 도구 사이에 들어오게
     const st = stage.getBoundingClientRect();
     const top = Math.max(0, $('#layers').getBoundingClientRect().bottom - st.top) + 6;
-    const bot = Math.max(0, st.bottom - $('.dock').getBoundingClientRect().top) + 6;
+    const dockEl = document.body.classList.contains('dock-hidden') ? $('#dockOpen') : $('.dock');
+    const bot = Math.max(0, st.bottom - dockEl.getBoundingClientRect().top) + 6;
     const bw = EE_BOUNDS[1][0] - EE_BOUNDS[0][0], bh = EE_BOUNDS[1][1] - EE_BOUNDS[0][1];
     sMinE = Math.min((W - 16) / bw, (H - top - bot) / bh);
     eeFit = { cx: W / 2, cy: top + (H - top - bot) / 2, h: H - top - bot };
+    const cr = $('.credit').getBoundingClientRect();
+    area = { top, bot: H - bot, scaleY: cr.top - st.top - 26 };
     sMin = isEE() ? sMinE : sMinM;
   }
 
@@ -218,8 +222,11 @@
   }
 
   // ───────── 데이터 ─────────
-  let countries = [], lakes = [], borderMesh, coastMesh, byId = new Map(), tiny = [];
-  const graticule = d3.geoGraticule().step([30, 30]).extentMajor([[-180, -80], [180, 80.001]]).stepMajor([30, 30])();
+  let countries = [], lakes = [], borderMesh, kpMesh, coastMesh, byId = new Map(), tiny = [];
+  const GRID_STEPS = [30, 10, 5];
+  const graticules = Object.fromEntries(GRID_STEPS.map(st => [st, d3.geoGraticule().step([st, st]).extentMajor([[-180, -80], [180, 80.001]]).stepMajor([st, st])()]));
+  const graticule = graticules[30];
+  const gridStep = () => { const z = s / sMin; return z < 2.6 ? 30 : z < 7 ? 10 : 5; };
   const equator = { type: 'LineString', coordinates: d3.range(-180, 181, 2).map(x => [x, 0]) };
 
   function dropAntimeridian(mesh) {
@@ -239,6 +246,8 @@
   }
 
   let lo = null;   // 이퀄 어스를 돌리는 동안 쓰는 가벼운 지도
+  // 남북한 경계선은 따로 떼어서 켜고 끌 수 있게
+  const isKP = (a, b) => (a.id === 'KOR' && b.id === 'PRK') || (a.id === 'PRK' && b.id === 'KOR');
   async function loadData() {
     const [topo, topoLo] = await Promise.all([
       fetch('data/world.json').then(r => r.json()),
@@ -248,13 +257,15 @@
       lo = {
         countries: topojson.feature(topoLo, topoLo.objects.countries).features,
         lakes: { type: 'FeatureCollection', features: topojson.feature(topoLo, topoLo.objects.lakes).features },
-        border: topojson.mesh(topoLo, topoLo.objects.countries, (a, b) => a !== b),
+        border: topojson.mesh(topoLo, topoLo.objects.countries, (a, b) => a !== b && !isKP(a, b)),
+        kp: topojson.mesh(topoLo, topoLo.objects.countries, isKP),
         coast: dropAntimeridian(topojson.mesh(topoLo, topoLo.objects.countries, (a, b) => a === b)),
       };
     }
     countries = topojson.feature(topo, topo.objects.countries).features;
     lakes = topojson.feature(topo, topo.objects.lakes).features;
-    borderMesh = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b);
+    borderMesh = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b && !isKP(a, b));
+    kpMesh = topojson.mesh(topo, topo.objects.countries, isKP);
     // 원본 데이터는 러시아·피지·남극을 180° 경선에서 잘라 두었어요.
     // 그 자른 자리(가짜 해안선)를 지워야 지도에 세로줄이 생기지 않아요.
     coastMesh = dropAntimeridian(topojson.mesh(topo, topo.objects.countries, (a, b) => a === b));
@@ -315,7 +326,8 @@
     const tasks = [
       () => sharedShape('lakes', () => ({ type: 'FeatureCollection', features: lakes })),
       () => sharedShape('coast', () => coastMesh), () => sharedShape('border', () => borderMesh),
-      () => sharedShape('grid', () => graticule), () => sharedShape('equator', () => equator),
+      () => sharedShape('kp', () => kpMesh),
+      () => sharedShape('grid' + gridStep(), () => graticules[gridStep()]), () => sharedShape('equator', () => equator),
       () => sharedShape('sphere', () => SPHERE),
     ];
     const step = () => {
@@ -358,7 +370,8 @@
     const lw = S.line, px = 1 / s;   // 화면 1픽셀 = 기준 좌표 px
     const lakeShape = shared('lakes', () => ({ type: 'FeatureCollection', features: lakes }));
     const coastShape = shared('coast', () => coastMesh), borderShape = shared('border', () => borderMesh);
-    const gridShape = shared('grid', () => graticule), equatorShape = shared('equator', () => equator);
+    const step = gridStep();
+    const gridShape = S.show.grid ? shared('grid' + step, () => graticules[step]) : null, equatorShape = shared('equator', () => equator);
     setWorldTransform();
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     if (isEE()) {   // 지도 바깥 테두리(타원) 안을 바다색으로
@@ -387,6 +400,7 @@
     ctx.lineWidth = lw * px; ctx.strokeStyle = '#4b5663';
     ctx.stroke(coastShape);
     if (S.show.borders) ctx.stroke(borderShape);
+    if (S.show.kp) ctx.stroke(shared('kp', () => kpMesh));
     if (isEE()) { ctx.lineWidth = 1.2 * px; ctx.strokeStyle = '#7d8a99'; ctx.stroke(shared('sphere', () => SPHERE)); }
     // 6) 마우스를 올린 나라 강조
     if (hoverId && byId.has(hoverId) && !isEE()) {
@@ -409,7 +423,7 @@
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.save(); ctx.shadowColor = 'rgba(20,40,70,.10)'; ctx.shadowBlur = 18;
     ctx.beginPath(); g(SPHERE); ctx.fillStyle = S.ocean; ctx.fill(); ctx.restore();
-    const src = lo || { countries, lakes: { type: 'FeatureCollection', features: lakes }, border: borderMesh, coast: coastMesh };
+    const src = lo || { countries, lakes: { type: 'FeatureCollection', features: lakes }, border: borderMesh, kp: kpMesh, coast: coastMesh };
     const groups = new Map();
     for (const f of src.countries) {
       const c = S.colors.get(f.id) || S.land;
@@ -418,9 +432,9 @@
     }
     for (const [c, fs] of groups) { ctx.beginPath(); for (const f of fs) g(f); ctx.fillStyle = c; ctx.fill(); }
     if (S.show.lakes) { ctx.beginPath(); g(src.lakes); ctx.fillStyle = S.ocean; ctx.fill(); ctx.lineWidth = lw * 0.8; ctx.strokeStyle = '#7d8a99'; ctx.stroke(); }
-    if (S.show.grid) { ctx.beginPath(); g(graticule); ctx.setLineDash([4, 4]); ctx.lineWidth = 0.8; ctx.strokeStyle = 'rgba(60,120,190,.55)'; ctx.stroke(); ctx.setLineDash([]); }
+    if (S.show.grid) { ctx.beginPath(); g(graticules[gridStep()]); ctx.setLineDash([4, 4]); ctx.lineWidth = 0.8; ctx.strokeStyle = 'rgba(60,120,190,.55)'; ctx.stroke(); ctx.setLineDash([]); }
     if (S.show.equator) { ctx.beginPath(); g(equator); ctx.lineWidth = 1.1; ctx.strokeStyle = 'rgba(220,60,60,.75)'; ctx.stroke(); }
-    ctx.beginPath(); g(src.coast); if (S.show.borders) g(src.border);
+    ctx.beginPath(); g(src.coast); if (S.show.borders) g(src.border); if (S.show.kp) g(src.kp || kpMesh);
     ctx.lineWidth = lw; ctx.strokeStyle = '#4b5663'; ctx.stroke();
     ctx.beginPath(); g(SPHERE); ctx.lineWidth = 1.2; ctx.strokeStyle = '#7d8a99'; ctx.stroke();
   }
@@ -440,7 +454,7 @@
 
     // 5) 아주 작은 나라 동그라미 (화면에서 7px보다 작게 보일 때만)
     const z = s / sMin;
-    for (const f of tiny) {
+    for (const f of S.show.tiny ? tiny : []) {
       const p = proj(f.label); if (!p || p[0] < -10 || p[0] > W + 10 || p[1] < -10 || p[1] > H + 10) continue;
       const k = isEE() ? 1 : 1 / Math.cos(f.label[1] * RAD);   // 메르카토르는 고위도일수록 커 보임
       if (Math.sqrt(f.area) * s * k > 6) continue;
@@ -452,6 +466,8 @@
 
     // 7) 나라 이름
     if (S.show.names) drawLabels(z);
+    if (S.show.grid) drawGridLabels();
+    if (S.show.scale) drawScale();
 
     // 8) 도법을 바꾼 직후: 이전 화면을 서서히 지움
     if (fade) {
@@ -466,6 +482,90 @@
   }
 
   const FONT = getComputedStyle(document.documentElement).fontFamily;
+
+  // ───────── 경위선 라벨 ─────────
+  const fmtLat = v => v === 0 ? '0°' : `${Math.abs(v)}°${v > 0 ? 'N' : 'S'}`;
+  const fmtLon = v => { v = normLon(v); if (Math.abs(v) === 180) return '180°'; return v === 0 ? '0°' : `${Math.abs(v)}°${v > 0 ? 'E' : 'W'}`; };
+  function haloText(t, x, y, align, color) {
+    ctx.textAlign = align; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.strokeText(t, x, y);
+    ctx.fillStyle = color; ctx.fillText(t, x, y);
+  }
+  function drawGridLabels() {
+    const step = gridStep(), top = area.top + 10, bot = Math.min(area.bot, area.scaleY - 28) - 10;   // 아래쪽 축척·출처와 겹치지 않게
+    ctx.font = `600 11px ${FONT}`; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    const col = 'rgba(35,85,145,.95)';
+    // 위도: 왼쪽·오른쪽 가장자리
+    for (let lat = -Math.floor(80 / step) * step; lat <= 80; lat += step) {
+      let L, R;
+      if (isEE()) {
+        L = proj([S.eeLon - 179.999, lat]); R = proj([S.eeLon + 179.999, lat]);
+        if (!L || !R) continue;
+        const wL = ctx.measureText(fmtLat(lat)).width;
+        L = L[0] - 5 - wL < 4 ? [Math.max(4, L[0]) + 4, L[1], 'left'] : [L[0] - 5, L[1], 'right'];
+        R = R[0] + 5 + wL > W - 4 ? [Math.min(W - 4, R[0]) - 4, R[1], 'right'] : [R[0] + 5, R[1], 'left'];
+      } else {
+        const y = proj([lon0, lat])[1];
+        L = [6, y, 'left']; R = [W - 6, y, 'right'];
+      }
+      if (L[1] < top || L[1] > bot) continue;
+      haloText(fmtLat(lat), L[0], L[1], L[2], col);
+      if (!isEE() || Math.abs(R[0] - L[0]) > 80) haloText(fmtLat(lat), R[0], R[1], R[2], col);
+    }
+    // 경도: 적도를 따라 (적도가 화면 밖이면 화면 가장자리에)
+    const eq = proj([isEE() ? S.eeLon : lon0, 0]);
+    const y = Math.max(top + 4, Math.min(bot - 4, eq[1] + 11));
+    let lastX = -1e9;
+    const lons = [];
+    for (let lon = -180; lon < 180; lon += step) lons.push(lon);
+    const pts = lons.map(lon => {
+      if (isEE() && Math.abs(normLon(lon - S.eeLon)) > 179) return null;
+      const p = proj([lon, 0]); return p && p[0] > 14 && p[0] < W - 14 ? [lon, p[0]] : null;
+    }).filter(Boolean).sort((a, b) => a[1] - b[1]);
+    for (const [lon, x] of pts) {
+      const t = fmtLon(lon), w = ctx.measureText(t).width;
+      if (x - w / 2 < lastX + 6) continue;
+      haloText(t, x, y, 'center', col); lastX = x + w / 2;
+    }
+  }
+
+  // ───────── 축척 막대 ─────────
+  function niceKm(v) {
+    const e = Math.pow(10, Math.floor(Math.log10(v))), m = v / e;
+    return (m >= 5 ? 5 : m >= 2 ? 2 : 1) * e;
+  }
+  function drawScale() {
+    const cx = W / 2, cyM = (area.top + area.bot) / 2;
+    let a = proj.invert([cx - 50, cyM]), b = proj.invert([cx + 50, cyM]), ref = proj.invert([cx, cyM]);
+    const bad = q => !q || !isFinite(q[0]) || !isFinite(q[1]) || Math.abs(q[1]) > 85;
+    if (isEE() && (bad(a) || bad(b) || Math.hypot(...proj(a).map((v, i) => v - [cx - 50, cyM][i])) > 1)) return;
+    if (bad(a) || bad(b)) return;
+    const kmPerPx = d3.geoDistance(a, b) * 6371 / 100;
+    const km = niceKm(kmPerPx * 130), len = km / kmPerPx;
+    const x = 14, y = area.scaleY;
+    const fmt = v => v >= 1000 ? v.toLocaleString('ko-KR') : String(v);
+    ctx.save();
+    ctx.font = `600 11px ${FONT}`; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round';
+    // 바탕
+    ctx.fillStyle = 'rgba(255,255,255,.82)';
+    const capt = `화면 가운데(${Math.round(ref[1]) === 0 ? '적도' : fmtLat(Math.round(ref[1]))}) 기준`;
+    const wK = ctx.measureText(`${fmt(km)} km`).width;
+    ctx.font = `500 10px ${FONT}`; const capW = ctx.measureText(capt).width; ctx.font = `600 11px ${FONT}`;
+    roundRect(x - 8, y - 24, Math.max(len + wK / 2 + 8, capW) + 18, 42, 8); ctx.fill();
+    // 막대: 4칸 흑백
+    const n = 4, segW = len / n;
+    for (let i = 0; i < n; i++) { ctx.fillStyle = i % 2 ? '#fff' : '#1d2733'; ctx.fillRect(x + i * segW, y - 4, segW, 5); }
+    ctx.lineWidth = 1; ctx.strokeStyle = '#1d2733'; ctx.strokeRect(x + .5, y - 4.5, len, 5);
+    ctx.fillStyle = '#1d2733'; ctx.textAlign = 'center';
+    ctx.fillText('0', x, y - 9); ctx.fillText(fmt(km / 2), x + len / 2, y - 9);
+    ctx.textAlign = 'left'; ctx.fillText(`${fmt(km)} km`, x + len - ctx.measureText(fmt(km)).width / 2, y - 9);
+    ctx.font = `500 10px ${FONT}`; ctx.fillStyle = '#5b6776';
+    ctx.fillText(capt, x, y + 12);
+    ctx.restore();
+  }
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
   function drawLabels(z) {
     const limit = 2.6 + Math.log2(z) * 1.6;   // 확대할수록 작은 나라 이름까지
     const boxes = [];
@@ -512,6 +612,7 @@
   }
   // 바다를 눌렀어도 가까운 작은 나라가 있으면 그 나라로
   function near(px, py, tolerance) {
+    if (!S.show.tiny) return null;
     let hit = null, nd = tolerance;
     for (const f of tiny) {
       const p = proj(f.label); if (!p) continue;
@@ -666,6 +767,7 @@
     $('.custom').classList.toggle('sel', S.tool === 'paint' && !found);
     $('.custom').style.setProperty('--c', S.current);
     $('#eraser').classList.toggle('sel', S.tool === 'erase');
+    const dot = $('#dockOpen .dot'); if (dot) dot.style.background = S.tool === 'erase' ? '#fff' : S.current;
     canvas.style.cursor = S.tool === 'erase' ? 'cell' : '';
   }
   $('#customColor').addEventListener('input', e => selectColor(e.target.value.toUpperCase()));
@@ -706,6 +808,15 @@
   const lineInput = $('#lineWidth'), lineOut = $('#lineWidthOut');
   lineInput.addEventListener('input', () => { S.line = +lineInput.value; lineOut.textContent = S.line.toFixed(1); requestDraw(); saveSoon(); });
 
+  // ───────── 팔레트 접기 ─────────
+  function syncDock() {
+    document.body.classList.toggle('dock-hidden', !!S.dockHidden);
+    $('#dockOpen .dot').style.background = S.tool === 'erase' ? '#fff' : S.current;
+    resize(); requestDraw();
+  }
+  $('#dockHide').addEventListener('click', () => { S.dockHidden = true; syncDock(); saveSoon(); });
+  $('#dockOpen').addEventListener('click', () => { S.dockHidden = false; syncDock(); saveSoon(); });
+
   // ───────── 상단 버튼·확대 ─────────
   $('#undo').addEventListener('click', undo);
   $('#redo').addEventListener('click', redo);
@@ -745,7 +856,7 @@
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify({
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
-        line: S.line, show: S.show, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
+        line: S.line, show: S.show, dockHidden: S.dockHidden, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
   }
@@ -756,12 +867,14 @@
       S.colors = new Map(d.colors || []);
       Object.assign(S, { current: d.current || S.current, palette: d.palette || 0, land: d.land || S.land, ocean: d.ocean || S.ocean, line: d.line || S.line, view: d.view || null, proj: d.proj === 'ee' ? 'ee' : 'merc', eeLon: isFinite(d.eeLon) ? d.eeLon : EE_CENTER });
       Object.assign(S.show, d.show || {});
+      S.dockHidden = !!d.dockHidden;
     } catch (_) { }
   }
 
   // ───────── 시작 ─────────
   load();
   renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI();
+  document.body.classList.toggle('dock-hidden', !!S.dockHidden);
   lineInput.value = S.line; lineOut.textContent = S.line.toFixed(1);
   window.addEventListener('resize', () => { resize(); requestDraw(); });
   resize();
