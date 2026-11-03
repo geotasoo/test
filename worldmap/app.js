@@ -1,5 +1,7 @@
-/* 세계지도 색칠하기 — 시안 1
- * 지도 한 장을 회전시켜 그리는 방식이라 이음매가 없고, 좌우로 끝없이 돌릴 수 있어요.
+/* 세계지도 색칠하기 — 시안 2
+ * 도법 두 가지:
+ *  - 메르카토르: 지도 한 장을 회전시켜 그려서 이음매가 없고, 좌우로 끝없이 돌릴 수 있어요.
+ *  - 이퀄 어스: 넓이가 실제 비율대로 보이는 도법. 가운데 경선을 150°E로 고정한 태평양 중심 지도예요.
  */
 (() => {
   'use strict';
@@ -10,6 +12,11 @@
   const LAT_TOP = 84, LAT_BOT = -72;
   const MAX_ZOOM = 30;
   const RAD = Math.PI / 180;
+  const EE_CENTER = 150;         // 이퀄 어스 지도의 가운데 경선
+  const PROJ_INFO = {
+    merc: { name: '메르카토르 도법', note: '방향과 모양이 정확해 항해에 쓰여요. 극으로 갈수록 넓이가 크게 보여요.' },
+    ee: { name: '이퀄 어스 도법', note: '나라의 넓이를 실제 비율대로 보여줘요. 2026년 UN 총회가 사용을 권고했어요.' },
+  };
 
   const PALETTES = [
     { name: '기본', colors: ['#F94144', '#F8961E', '#F9C74F', '#90BE6D', '#43AA8B', '#4D96FF', '#7B61FF', '#E56BCF', '#9C6644', '#5C677D'] },
@@ -32,7 +39,8 @@
     ocean: '#DDEEFB',
     line: 0.6,
     show: { borders: true, names: false, grid: false, equator: true, lakes: true },
-    view: null,             // { lon, lat, z } 저장용
+    view: null,             // 메르카토르 { lon, lat, z } 저장용
+    proj: 'merc',           // 'merc' | 'ee'
   };
   const undoStack = [], redoStack = [];
 
@@ -42,72 +50,149 @@
   const tip = $('#tip'), toast = $('#toast');
 
   // ───────── 지도 투영 ─────────
-  let W = 0, H = 0, dpr = 1, sMin = 1;
-  let lon0 = HOME_LON, s = 1, cy = 0;     // 가운데 경도, 축척, 적도의 화면 y
-  const proj = d3.geoMercator().precision(0);
+  let W = 0, H = 0, dpr = 1;
+  let sMin = 1;                              // 현재 도법의 최소 축척
+  let lon0 = HOME_LON, s = 1, cy = 0;       // 메르카토르: 가운데 경도, 축척, 적도의 화면 y
+  let ex = 0, ey = 0;                        // 이퀄 어스: 지도 원점의 화면 위치 (축척은 s 공용)
+  let sMinM = 1, sMinE = 1, eeFit = null;
+  const projM = d3.geoMercator().precision(0);
+  const projE = d3.geoEqualEarth().rotate([-EE_CENTER, 0]).precision(0.5);
+  const eeBase = d3.geoEqualEarth().rotate([-EE_CENTER, 0]).scale(1).translate([0, 0]).precision(0.0002);
+  const EE_BOUNDS = d3.geoPath(eeBase).bounds({ type: 'Sphere' });
+  let proj = projM;
+  const isEE = () => S.proj === 'ee';
   const merc = lat => Math.log(Math.tan(Math.PI / 4 + lat * RAD / 2));
   const MERC_SPAN = merc(LAT_TOP) - merc(LAT_BOT);
 
   function applyProj() {
-    proj.rotate([-lon0, 0]).scale(s).translate([W / 2, cy]);
+    if (isEE()) { proj = projE.scale(s).translate([ex, ey]); }
+    else { proj = projM.rotate([-lon0, 0]).scale(s).translate([W / 2, cy]); }
   }
   function clampScale(v) { return Math.max(sMin, Math.min(sMin * MAX_ZOOM, v)); }
   function clampView() {
     s = clampScale(s);
-    const hi = s * merc(LAT_TOP);          // 위쪽 끝이 화면 위로 넘치지 않게
-    const lo = H + s * merc(LAT_BOT);      // 아래쪽 끝이 화면 아래로 넘치지 않게
-    cy = lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, cy));
-    lon0 = ((lon0 % 360) + 540) % 360 - 180;
+    if (isEE()) {
+      // 지도 가장자리가 화면 가운데를 넘어가지 않게
+      const [[x0, y0], [x1, y1]] = EE_BOUNDS;
+      ex = Math.min(W / 2 - s * x0, Math.max(W / 2 - s * x1, ex));
+      ey = Math.min(H / 2 - s * y0, Math.max(H / 2 - s * y1, ey));
+    } else {
+      const hi = s * merc(LAT_TOP);          // 위쪽 끝이 화면 위로 넘치지 않게
+      const lo = H + s * merc(LAT_BOT);      // 아래쪽 끝이 화면 아래로 넘치지 않게
+      cy = lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, cy));
+      lon0 = ((lon0 % 360) + 540) % 360 - 180;
+    }
     applyProj();
   }
   function zoomAt(px, py, factor) {
     const ns = clampScale(s * factor);
-    const lonP = lon0 + (px - W / 2) / s / RAD;
-    const m = (cy - py) / s;
-    s = ns;
-    lon0 = lonP - (px - W / 2) / s / RAD;
-    cy = py + m * s;
+    if (isEE()) {
+      ex = px - (px - ex) * ns / s; ey = py - (py - ey) * ns / s; s = ns;
+    } else {
+      const lonP = lon0 + (px - W / 2) / s / RAD;
+      const m = (cy - py) / s;
+      s = ns;
+      lon0 = lonP - (px - W / 2) / s / RAD;
+      cy = py + m * s;
+    }
     clampView(); requestDraw(); saveSoon();
   }
   function panBy(dx, dy) {
-    lon0 -= dx / s / RAD;
-    cy += dy;
+    if (isEE()) { ex += dx; ey += dy; }
+    else { lon0 -= dx / s / RAD; cy += dy; }
     clampView(); requestDraw();
   }
-  function setView(lon, lat, z, animate) {
-    const target = { lon, s: clampScale(sMin * z), lat };
-    const finish = () => { lon0 = target.lon; s = target.s; cy = H / 2 + s * merc(lat); clampView(); requestDraw(); saveSoon(); };
-    if (!animate) return finish();
-    const from = { lon: lon0, s, cy }, t0 = performance.now(), dur = 450;
-    let dl = ((target.lon - from.lon + 540) % 360) - 180;
-    const toCy = H / 2 + target.s * merc(lat);
+  function animateTo(target, dur = 450) {
+    // target: 메르카토르 { lon, s, cy } / 이퀄 어스 { s, ex, ey }
+    const ee = isEE(), from = ee ? { s, ex, ey } : { lon: lon0, s, cy }, t0 = performance.now();
+    const dl = ee ? 0 : ((target.lon - from.lon + 540) % 360) - 180;
     const step = now => {
       const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3);
-      lon0 = from.lon + dl * e;
       s = from.s * Math.pow(target.s / from.s, e);
-      cy = from.cy + (toCy - from.cy) * e;
+      if (ee) { ex = from.ex + (target.ex - from.ex) * e; ey = from.ey + (target.ey - from.ey) * e; }
+      else { lon0 = from.lon + dl * e; cy = from.cy + (target.cy - from.cy) * e; }
       clampView(); requestDraw();
-      if (t < 1) requestAnimationFrame(step); else finish();
+      if (t < 1) requestAnimationFrame(step); else saveSoon();
     };
     requestAnimationFrame(step);
   }
+  function setView(lon, lat, z, animate) {
+    // 메르카토르 전용
+    const ts = Math.max(sMinM, Math.min(sMinM * MAX_ZOOM, sMinM * z));
+    const target = { lon, s: ts, cy: H / 2 + ts * merc(lat) };
+    if (animate) return animateTo(target);
+    lon0 = target.lon; s = target.s; cy = target.cy; clampView(); requestDraw(); saveSoon();
+  }
+  function homeEE(animate) {
+    // 세로로 긴 화면(폰)에서는 지도가 너무 작아지지 않게 조금 확대해서 시작
+    const hs = Math.min(sMinE * 2.4, Math.max(sMinE, eeFit.h * 0.82 / (EE_BOUNDS[1][1] - EE_BOUNDS[0][1])));
+    const target = { s: hs, ex: eeFit.cx - hs * (EE_BOUNDS[0][0] + EE_BOUNDS[1][0]) / 2, ey: eeFit.cy - hs * (EE_BOUNDS[0][1] + EE_BOUNDS[1][1]) / 2 };
+    if (animate) return animateTo(target);
+    s = target.s; ex = target.ex; ey = target.ey; clampView(); requestDraw();
+  }
+  function goHome() { isEE() ? homeEE(true) : setView(HOME_LON, 18, 1, true); }
   function currentView() {
-    return { lon: +lon0.toFixed(3), lat: +((Math.atan(Math.sinh((cy - H / 2) / s)) / RAD)).toFixed(3), z: +(s / sMin).toFixed(4) };
+    return { lon: +lon0.toFixed(3), lat: +((Math.atan(Math.sinh((cy - H / 2) / s)) / RAD)).toFixed(3), z: +(s / sMinM).toFixed(4) };
+  }
+
+  function computeFits() {
+    sMinM = Math.max(W / (2 * Math.PI), H / MERC_SPAN);
+    // 이퀄 어스는 지도 전체가 위쪽 칩과 아래쪽 도구 사이에 들어오게
+    const st = stage.getBoundingClientRect();
+    const top = Math.max(0, $('#layers').getBoundingClientRect().bottom - st.top) + 6;
+    const bot = Math.max(0, st.bottom - $('.dock').getBoundingClientRect().top) + 6;
+    const bw = EE_BOUNDS[1][0] - EE_BOUNDS[0][0], bh = EE_BOUNDS[1][1] - EE_BOUNDS[0][1];
+    sMinE = Math.min((W - 16) / bw, (H - top - bot) / bh);
+    eeFit = { cx: W / 2, cy: top + (H - top - bot) / 2, h: H - top - bot };
+    sMin = isEE() ? sMinE : sMinM;
   }
 
   function resize() {
-    const keep = W ? currentView() : null;
+    const keepM = W && !isEE() ? currentView() : null;
+    const keepE = W && isEE() ? { z: s / sMinE, cx: (W / 2 - ex) / s, cy: (H / 2 - ey) / s } : null;
     const r = stage.getBoundingClientRect();
     W = r.width; H = r.height; dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-    sMin = Math.max(W / (2 * Math.PI), H / MERC_SPAN);
-    if (keep) setView(keep.lon, keep.lat, keep.z, false);
+    computeFits();
+    if (isEE()) {
+      if (keepE) { s = sMinE * keepE.z; ex = W / 2 - keepE.cx * s; ey = H / 2 - keepE.cy * s; clampView(); requestDraw(); }
+      else homeEE(false);
+    } else if (keepM) setView(keepM.lon, keepM.lat, keepM.z, false);
     else if (S.view) setView(S.view.lon, S.view.lat, S.view.z, false);
     else setView(HOME_LON, 18, 1, false);
   }
 
+  // ───────── 도법 바꾸기 ─────────
+  let fade = null;   // { img, t0 } 이전 화면을 잠깐 겹쳐 부드럽게 바꿈
+  function setProjection(mode, quiet) {
+    if (mode === S.proj) return;
+    if (!quiet && W) {
+      const snap = document.createElement('canvas');
+      snap.width = canvas.width; snap.height = canvas.height;
+      snap.getContext('2d').drawImage(canvas, 0, 0);
+      fade = { img: snap, t0: performance.now() };
+    }
+    if (!isEE()) S.view = currentView();      // 메르카토르 위치 기억
+    S.proj = mode;
+    sMin = isEE() ? sMinE : sMinM;
+    hoverId = null; hideTip();
+    if (isEE()) homeEE(false);
+    else if (S.view) setView(S.view.lon, S.view.lat, S.view.z, false);
+    else setView(HOME_LON, 18, 1, false);
+    syncProjUI();
+    if (!quiet) showToast(`${PROJ_INFO[mode].name} — ${PROJ_INFO[mode].note}`, false, 4200);
+    requestDraw(); saveSoon();
+  }
+  function syncProjUI() {
+    document.querySelectorAll('#projSeg button').forEach(b => {
+      const on = b.dataset.proj === S.proj;
+      b.classList.toggle('sel', on); b.setAttribute('aria-pressed', String(on));
+    });
+    $('#projName').textContent = PROJ_INFO[S.proj].name;
+  }
+
   // ───────── 데이터 ─────────
-  let countries = [], lakes = [], borderMesh, coastMesh, lakeShape, coastShape, borderShape, gridShape, equatorShape, byId = new Map(), tiny = [];
+  let countries = [], lakes = [], borderMesh, coastMesh, byId = new Map(), tiny = [];
   const graticule = d3.geoGraticule().step([30, 30]).extentMajor([[-180, -80], [180, 80.001]]).stepMajor([30, 30])();
   const equator = { type: 'LineString', coordinates: d3.range(-180, 181, 2).map(x => [x, 0]) };
 
@@ -145,9 +230,6 @@
       if (f.area < 2e-5 && f.properties.t === 'S' && f.id !== 'MAC') tiny.push(f);
     }
     for (const l of lakes) { l.bb = d3.geoBounds(l); l.wrap = l.bb[0][0] > l.bb[1][0]; }
-    lakeShape = makeShape({ type: 'FeatureCollection', features: lakes });
-    coastShape = makeShape(coastMesh); borderShape = makeShape(borderMesh);
-    gridShape = makeShape(graticule); equatorShape = makeShape(equator);
     // 라벨: 중요한 나라부터
     countries.sort((a, b) => a.properties.ml - b.properties.ml);
   }
@@ -174,9 +256,21 @@
     }
     return p2;
   }
-  const shapeOf = o => o.shape || (o.shape = makeShape(o));
+  function makeShapeEE(geo) {
+    const p2 = new Path2D();
+    d3.geoPath(eeBase, p2)(geo);
+    return p2;
+  }
+  const shapeOf = o => isEE() ? (o.shapeE || (o.shapeE = makeShapeEE(o))) : (o.shape || (o.shape = makeShape(o)));
+  const SH = { merc: {}, ee: {} };
+  function shared(name, geo) {
+    const box = SH[S.proj];
+    return box[name] || (box[name] = (isEE() ? makeShapeEE : makeShape)(geo()));
+  }
+  const SPHERE = { type: 'Sphere' };
 
   function setWorldTransform() {
+    if (isEE()) { ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ex, dpr * ey); return; }
     // 화면 왼쪽 끝의 기준 x가 [-π, π) 안에 오도록 지도 벌을 고름
     const l0 = lon0 * RAD, xLeft = l0 - (W / 2) / s;
     const n = Math.floor((xLeft + Math.PI) / TAU);
@@ -187,11 +281,19 @@
   function draw() {
     drawQueued = false;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = S.ocean; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = isEE() ? '#EEF1F5' : S.ocean; ctx.fillRect(0, 0, W, H);
     if (!countries.length) return;
     const lw = S.line, px = 1 / s;   // 화면 1픽셀 = 기준 좌표 px
+    const lakeShape = shared('lakes', () => ({ type: 'FeatureCollection', features: lakes }));
+    const coastShape = shared('coast', () => coastMesh), borderShape = shared('border', () => borderMesh);
+    const gridShape = shared('grid', () => graticule), equatorShape = shared('equator', () => equator);
     setWorldTransform();
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    if (isEE()) {   // 지도 바깥 테두리(타원) 안을 바다색으로
+      const sp = shared('sphere', () => SPHERE);
+      ctx.save(); ctx.shadowColor = 'rgba(20,40,70,.10)'; ctx.shadowBlur = 18;
+      ctx.fillStyle = S.ocean; ctx.fill(sp); ctx.restore();
+    }
 
     // 1) 나라 채우기
     for (const f of countries) {
@@ -213,14 +315,16 @@
     ctx.lineWidth = lw * px; ctx.strokeStyle = '#4b5663';
     ctx.stroke(coastShape);
     if (S.show.borders) ctx.stroke(borderShape);
+    if (isEE()) { ctx.lineWidth = 1.2 * px; ctx.strokeStyle = '#7d8a99'; ctx.stroke(shared('sphere', () => SPHERE)); }
     // 6) 마우스를 올린 나라 강조
     if (hoverId && byId.has(hoverId)) {
       const f = byId.get(hoverId);
-      if (!f.outlineShape) {
+      const key = isEE() ? 'outlineE' : 'outlineM';
+      if (!f[key]) {
         const g = f.geometry, rings = g.type === 'Polygon' ? g.coordinates : g.coordinates.flat();
-        f.outlineShape = makeShape(dropAntimeridian({ coordinates: rings }));
+        f[key] = (isEE() ? makeShapeEE : makeShape)(dropAntimeridian({ coordinates: rings }));
       }
-      ctx.lineWidth = Math.max(1.6, lw * 2.2) * px; ctx.strokeStyle = '#1d2733'; ctx.stroke(f.outlineShape);
+      ctx.lineWidth = Math.max(1.6, lw * 2.2) * px; ctx.strokeStyle = '#1d2733'; ctx.stroke(f[key]);
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -228,7 +332,8 @@
     const z = s / sMin;
     for (const f of tiny) {
       const p = proj(f.label); if (!p || p[0] < -10 || p[0] > W + 10 || p[1] < -10 || p[1] > H + 10) continue;
-      if (Math.sqrt(f.area) * s / Math.cos(f.label[1] * RAD) > 6) continue;
+      const k = isEE() ? 1 : 1 / Math.cos(f.label[1] * RAD);   // 메르카토르는 고위도일수록 커 보임
+      if (Math.sqrt(f.area) * s * k > 6) continue;
       const r = Math.max(2.6, Math.min(4.5, 2.2 + z * 0.15));
       ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 2 * Math.PI);
       ctx.fillStyle = S.colors.get(f.id) || S.land; ctx.fill();
@@ -237,6 +342,17 @@
 
     // 7) 나라 이름
     if (S.show.names) drawLabels(z);
+
+    // 8) 도법을 바꾼 직후: 이전 화면을 서서히 지움
+    if (fade) {
+      const t = (performance.now() - fade.t0) / 380;
+      if (t >= 1) fade = null;
+      else {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1 - t * t; ctx.drawImage(fade.img, 0, 0); ctx.globalAlpha = 1;
+        requestDraw();
+      }
+    }
   }
 
   const FONT = getComputedStyle(document.documentElement).fontFamily;
@@ -267,8 +383,13 @@
     (f.wrap ? (lon >= f.bb[0][0] || lon <= f.bb[1][0]) : (lon >= f.bb[0][0] && lon <= f.bb[1][0]));
 
   function hitTest(px, py, tolerance) {
-    const ll = proj.invert([px, py]);
-    if (!ll) return null;
+    let ll = proj.invert([px, py]);
+    if (!ll || !isFinite(ll[0]) || !isFinite(ll[1])) return null;
+    if (isEE()) {   // 지도 바깥(타원 밖)을 누른 경우
+      const back = proj(ll);
+      if (!back || Math.hypot(back[0] - px, back[1] - py) > 1 || Math.abs(ll[1]) > 90) return near(px, py, tolerance);
+    }
+    ll = [((ll[0] + 540) % 360) - 180, ll[1]];
     const [lon, lat] = ll;
     if (S.show.lakes && lakes.some(l => inBox(l, lon, lat) && d3.geoContains(l, ll))) return null;
     // 작은 나라 우선 (큰 나라 안에 있는 바티칸·산마리노 등)
@@ -277,14 +398,17 @@
       if (inBox(f, lon, lat) && d3.geoContains(f, ll)) { if (!best || f.area < best.area) best = f; }
     }
     if (best) return best;
-    // 바다를 눌렀어도 가까운 작은 나라가 있으면 그 나라로
-    let near = null, nd = tolerance;
+    return near(px, py, tolerance);
+  }
+  // 바다를 눌렀어도 가까운 작은 나라가 있으면 그 나라로
+  function near(px, py, tolerance) {
+    let hit = null, nd = tolerance;
     for (const f of tiny) {
       const p = proj(f.label); if (!p) continue;
       const d = Math.hypot(p[0] - px, p[1] - py);
-      if (d < nd) { nd = d; near = f; }
+      if (d < nd) { nd = d; hit = f; }
     }
-    return near;
+    return hit;
   }
 
   // ───────── 색칠 · 되돌리기 ─────────
@@ -390,12 +514,12 @@
 
   // ───────── 알림 ─────────
   let toastTimer;
-  function showToast(text, withUndo) {
+  function showToast(text, withUndo, ms) {
     toast.querySelector('span').textContent = text;
     toast.querySelector('button').hidden = !withUndo;
     toast.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('show'), withUndo ? 2600 : 1600);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), ms || (withUndo ? 2600 : 1600));
   }
   toast.querySelector('button').addEventListener('click', () => { undo(); });
 
@@ -483,7 +607,8 @@
   });
   $('#zoomIn').addEventListener('click', () => zoomAt(W / 2, H / 2, 1.6));
   $('#zoomOut').addEventListener('click', () => zoomAt(W / 2, H / 2, 1 / 1.6));
-  $('#home').addEventListener('click', () => setView(HOME_LON, 18, 1, true));
+  $('#home').addEventListener('click', goHome);
+  document.querySelectorAll('#projSeg button').forEach(b => b.addEventListener('click', () => setProjection(b.dataset.proj)));
 
   // ───────── 키보드 ─────────
   document.addEventListener('keydown', e => {
@@ -491,6 +616,7 @@
     const mod = e.ctrlKey || e.metaKey;
     if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+    else if (!mod && e.key.toLowerCase() === 'p') { setProjection(isEE() ? 'merc' : 'ee'); }
     else if (!mod && e.key.toLowerCase() === 'e') { S.tool = S.tool === 'erase' ? 'paint' : 'erase'; syncSelection(); }
     else if (!mod && /^[1-9]$/.test(e.key)) {
       const c = PALETTES[S.palette].colors[+e.key - 1]; if (c) selectColor(c);
@@ -509,7 +635,7 @@
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify({
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
-        line: S.line, show: S.show, view: W ? currentView() : S.view,
+        line: S.line, show: S.show, view: W && !isEE() ? currentView() : S.view, proj: S.proj,
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
   }
@@ -518,14 +644,14 @@
       const d = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
       if (!d) return;
       S.colors = new Map(d.colors || []);
-      Object.assign(S, { current: d.current || S.current, palette: d.palette || 0, land: d.land || S.land, ocean: d.ocean || S.ocean, line: d.line || S.line, view: d.view || null });
+      Object.assign(S, { current: d.current || S.current, palette: d.palette || 0, land: d.land || S.land, ocean: d.ocean || S.ocean, line: d.line || S.line, view: d.view || null, proj: d.proj === 'ee' ? 'ee' : 'merc' });
       Object.assign(S.show, d.show || {});
     } catch (_) { }
   }
 
   // ───────── 시작 ─────────
   load();
-  renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers();
+  renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI();
   lineInput.value = S.line; lineOut.textContent = S.line.toFixed(1);
   window.addEventListener('resize', () => { resize(); requestDraw(); });
   resize();
@@ -536,5 +662,5 @@
   }).catch(() => { $('#loading').textContent = '지도를 불러오지 못했어요. 새로고침해 주세요.'; });
 
   // 테스트용
-  window.__map = { S, hitTest, paint: id => paint(byId.get(id)), proj: () => proj, view: currentView };
+  window.__map = { S, hitTest, paint: id => paint(byId.get(id)), proj: () => proj, view: currentView, setProjection };
 })();

@@ -41,6 +41,18 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 #map.dragging { cursor: grabbing; }
 #loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-2); font-size: 15px; }
 
+/* ---------- 도법 선택 ---------- */
+.seg {
+  pointer-events: auto; flex: none; display: inline-flex; height: 34px; padding: 3px; gap: 2px;
+  background: rgba(29,39,51,.88); border-radius: 99px; box-shadow: 0 1px 3px rgba(20,40,70,.12); backdrop-filter: blur(6px);
+}
+.seg button {
+  border: 0; background: none; color: rgba(255,255,255,.72); font-size: 13px; font-weight: 600;
+  padding: 0 12px; border-radius: 99px; white-space: nowrap; transition: background .15s, color .15s;
+}
+.seg button:hover:not(.sel) { color: #fff; }
+.seg button.sel { background: #fff; color: var(--ink); }
+
 /* ---------- 레이어 칩 ---------- */
 .layers {
   position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 6px; flex-wrap: wrap;
@@ -126,11 +138,14 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 #toast {
   position: absolute; left: 50%; bottom: calc(var(--dock-h) + 24px); transform: translate(-50%, 8px); z-index: 6;
   background: rgba(29,39,51,.94); color: #fff; padding: 8px 8px 8px 14px; border-radius: 10px; font-size: 14px;
-  display: flex; align-items: center; gap: 10px; opacity: 0; pointer-events: none; transition: .18s; white-space: nowrap;
+  display: flex; align-items: center; gap: 10px; opacity: 0; pointer-events: none; transition: .18s;
+  width: max-content; max-width: min(560px, calc(100vw - 32px)); line-height: 1.4; word-break: keep-all;
 }
 #toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
-#toast button { border: 0; background: rgba(255,255,255,.16); color: #8ab4ff; font-weight: 600; font-size: 13px; padding: 5px 10px; border-radius: 7px; }
+#toast button { flex: none; white-space: nowrap;
+  border: 0; background: rgba(255,255,255,.16); color: #8ab4ff; font-weight: 600; font-size: 13px; padding: 5px 10px; border-radius: 7px; }
 #toast:not(:has(button:not([hidden]))) { padding-right: 14px; }
+.credit b { font-weight: 600; color: #5b6776; }
 .credit { position: absolute; left: 12px; bottom: calc(var(--dock-h) + 26px); font-size: 10px; color: #8794a3; z-index: 2; pointer-events: none; }
 
 /* ---------- 좁은 화면 (폰) ---------- */
@@ -143,6 +158,8 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   .layers { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; right: 0; padding-right: 12px; }
   .layers::-webkit-scrollbar { display: none; }
   .chip { flex: none; height: 32px; padding: 0 10px; }
+  .seg { height: 32px; }
+  .seg button { padding: 0 10px; }
   .dock { width: 100%; bottom: 0; border-radius: 18px 18px 0 0; }
   .status .hint { display: none; }
   .zoom { bottom: calc(var(--dock-h) + 14px); }

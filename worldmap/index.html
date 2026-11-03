@@ -11,7 +11,7 @@
   <div class="brand">
     <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5s-1.3 6.7-3.9 9.5c-2.6-2.8-3.9-6-3.9-9.5s1.3-6.7 3.9-9.5z"/></svg>
     <h1>세계지도 색칠하기</h1>
-    <span class="badge">시안 1</span>
+    <span class="badge">시안 2</span>
   </div>
   <div class="actions">
     <button class="btn" id="undo" title="되돌리기 (Ctrl+Z)" disabled>
@@ -31,6 +31,10 @@
   <div id="loading">지도를 불러오는 중…</div>
 
   <div class="layers" id="layers">
+    <div class="seg" id="projSeg" role="group" aria-label="도법 선택" title="도법 바꾸기 (P)">
+      <button data-proj="merc">메르카토르</button>
+      <button data-proj="ee">이퀄 어스</button>
+    </div>
     <button class="chip on" data-layer="borders"><i></i>국경선</button>
     <button class="chip" data-layer="names"><i></i>나라 이름</button>
     <button class="chip" data-layer="grid"><i></i>경위선</button>
@@ -75,7 +79,7 @@
     <div class="status"><span id="count">칠한 나라 0개</span><span class="hint">나라를 눌러 칠하고, 한 번 더 누르면 지워져요</span></div>
   </div>
 
-  <div class="credit">지도 데이터: Natural Earth · @geotasoo</div>
+  <div class="credit"><b id="projName"></b> · 지도 데이터: Natural Earth · @geotasoo</div>
 </main>
 
 <script src="lib/d3.min.js"></script>
