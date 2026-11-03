@@ -12,7 +12,7 @@
   const LAT_TOP = 84, LAT_BOT = -72;
   const MAX_ZOOM = 30;
   const RAD = Math.PI / 180;
-  const EE_CENTER = 150;         // 이퀄 어스 지도의 가운데 경선
+  const EE_CENTER = 150;         // 이퀄 어스 지도의 처음 가운데 경선 (좌우로 끌면 바뀜)
   const PROJ_INFO = {
     merc: { name: '메르카토르 도법', note: '방향과 모양이 정확해 항해에 쓰여요. 극으로 갈수록 넓이가 크게 보여요.' },
     ee: { name: '이퀄 어스 도법', note: '나라의 넓이를 실제 비율대로 보여줘요. 2026년 UN 총회가 사용을 권고했어요.' },
@@ -41,6 +41,7 @@
     show: { borders: true, names: false, grid: false, equator: true, lakes: true },
     view: null,             // 메르카토르 { lon, lat, z } 저장용
     proj: 'merc',           // 'merc' | 'ee'
+    eeLon: EE_CENTER,       // 이퀄 어스 가운데 경선
   };
   const undoStack = [], redoStack = [];
 
@@ -56,16 +57,20 @@
   let ex = 0, ey = 0;                        // 이퀄 어스: 지도 원점의 화면 위치 (축척은 s 공용)
   let sMinM = 1, sMinE = 1, eeFit = null;
   const projM = d3.geoMercator().precision(0);
-  const projE = d3.geoEqualEarth().rotate([-EE_CENTER, 0]).precision(0.5);
-  const eeBase = d3.geoEqualEarth().rotate([-EE_CENTER, 0]).scale(1).translate([0, 0]).precision(0.0002);
-  const EE_BOUNDS = d3.geoPath(eeBase).bounds({ type: 'Sphere' });
+  const projE = d3.geoEqualEarth().precision(0.5);
+  const eeBase = d3.geoEqualEarth().scale(1).translate([0, 0]).precision(0.0002);
+  const EE_BOUNDS = d3.geoPath(eeBase).bounds({ type: 'Sphere' });   // 돌려도 테두리 모양은 같음
+  // 이퀄 어스에서 x는 같은 위도에서는 경도에 비례해요. 위도별 '1라디안당 x' 값
+  const eeFlat = d3.geoEqualEarth().scale(1).translate([0, 0]);
+  const eeG = lat => eeFlat([1, Math.max(-89, Math.min(89, lat))])[0] / RAD;
+  const normLon = l => ((l % 360) + 540) % 360 - 180;
   let proj = projM;
   const isEE = () => S.proj === 'ee';
   const merc = lat => Math.log(Math.tan(Math.PI / 4 + lat * RAD / 2));
   const MERC_SPAN = merc(LAT_TOP) - merc(LAT_BOT);
 
   function applyProj() {
-    if (isEE()) { proj = projE.scale(s).translate([ex, ey]); }
+    if (isEE()) { proj = projE.rotate([-S.eeLon, 0]).scale(s).translate([ex, ey]); }
     else { proj = projM.rotate([-lon0, 0]).scale(s).translate([W / 2, cy]); }
   }
   function clampScale(v) { return Math.max(sMin, Math.min(sMin * MAX_ZOOM, v)); }
@@ -97,19 +102,30 @@
     }
     clampView(); requestDraw(); saveSoon();
   }
-  function panBy(dx, dy) {
-    if (isEE()) { ex += dx; ey += dy; }
+  function panBy(dx, dy, px, py) {
+    if (isEE()) {
+      // 좌우로 끌면 지구를 돌리고(가운데 경선 변경), 위아래로 끌면 지도를 옮겨요.
+      let lat = 0;
+      if (px != null) { const ll = proj.invert([px, py]); if (ll && isFinite(ll[1])) lat = ll[1]; }
+      rotateEE(S.eeLon - dx / (s * eeG(lat)) / RAD);
+      ey += dy;
+    }
     else { lon0 -= dx / s / RAD; cy += dy; }
     clampView(); requestDraw();
   }
+  function rotateEE(lon) {
+    lon = normLon(lon);
+    if (lon === S.eeLon) return;
+    S.eeLon = lon; eeStale();
+  }
   function animateTo(target, dur = 450) {
     // target: 메르카토르 { lon, s, cy } / 이퀄 어스 { s, ex, ey }
-    const ee = isEE(), from = ee ? { s, ex, ey } : { lon: lon0, s, cy }, t0 = performance.now();
-    const dl = ee ? 0 : ((target.lon - from.lon + 540) % 360) - 180;
+    const ee = isEE(), from = ee ? { s, ex, ey, lon: S.eeLon } : { lon: lon0, s, cy }, t0 = performance.now();
+    const dl = target.lon == null ? 0 : ((target.lon - from.lon + 540) % 360) - 180;
     const step = now => {
       const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3);
       s = from.s * Math.pow(target.s / from.s, e);
-      if (ee) { ex = from.ex + (target.ex - from.ex) * e; ey = from.ey + (target.ey - from.ey) * e; }
+      if (ee) { ex = from.ex + (target.ex - from.ex) * e; ey = from.ey + (target.ey - from.ey) * e; if (dl) rotateEE(from.lon + dl * e); }
       else { lon0 = from.lon + dl * e; cy = from.cy + (target.cy - from.cy) * e; }
       clampView(); requestDraw();
       if (t < 1) requestAnimationFrame(step); else saveSoon();
@@ -126,9 +142,9 @@
   function homeEE(animate) {
     // 세로로 긴 화면(폰)에서는 지도가 너무 작아지지 않게 조금 확대해서 시작
     const hs = Math.min(sMinE * 2.4, Math.max(sMinE, eeFit.h * 0.82 / (EE_BOUNDS[1][1] - EE_BOUNDS[0][1])));
-    const target = { s: hs, ex: eeFit.cx - hs * (EE_BOUNDS[0][0] + EE_BOUNDS[1][0]) / 2, ey: eeFit.cy - hs * (EE_BOUNDS[0][1] + EE_BOUNDS[1][1]) / 2 };
+    const target = { lon: EE_CENTER, s: hs, ex: eeFit.cx - hs * (EE_BOUNDS[0][0] + EE_BOUNDS[1][0]) / 2, ey: eeFit.cy - hs * (EE_BOUNDS[0][1] + EE_BOUNDS[1][1]) / 2 };
     if (animate) return animateTo(target);
-    s = target.s; ex = target.ex; ey = target.ey; clampView(); requestDraw();
+    s = target.s; ex = target.ex; ey = target.ey; rotateEE(target.lon); clampView(); requestDraw();
   }
   function goHome() { isEE() ? homeEE(true) : setView(HOME_LON, 18, 1, true); }
   function currentView() {
@@ -156,7 +172,7 @@
     computeFits();
     if (isEE()) {
       if (keepE) { s = sMinE * keepE.z; ex = W / 2 - keepE.cx * s; ey = H / 2 - keepE.cy * s; clampView(); requestDraw(); }
-      else homeEE(false);
+      else { const keep = S.eeLon; homeEE(false); rotateEE(keep); }
     } else if (keepM) setView(keepM.lon, keepM.lat, keepM.z, false);
     else if (S.view) setView(S.view.lon, S.view.lat, S.view.z, false);
     else setView(HOME_LON, 18, 1, false);
@@ -176,7 +192,7 @@
     S.proj = mode;
     sMin = isEE() ? sMinE : sMinM;
     hoverId = null; hideTip();
-    if (isEE()) homeEE(false);
+    if (isEE()) { const keep = S.eeLon; homeEE(false); rotateEE(keep); }
     else if (S.view) setView(S.view.lon, S.view.lat, S.view.z, false);
     else setView(HOME_LON, 18, 1, false);
     syncProjUI();
@@ -188,7 +204,14 @@
       const on = b.dataset.proj === S.proj;
       b.classList.toggle('sel', on); b.setAttribute('aria-pressed', String(on));
     });
-    $('#projName').textContent = PROJ_INFO[S.proj].name;
+    updateProjName();
+  }
+
+  let lastName = '';
+  function updateProjName() {
+    let t = PROJ_INFO[S.proj].name;
+    if (isEE()) { const l = Math.round(S.eeLon); t += ` (중심 ${Math.abs(l)}°${l > 0 ? 'E' : l < 0 ? 'W' : ''})`; }
+    if (t !== lastName) { lastName = t; $('#projName').textContent = t; }
   }
 
   // ───────── 데이터 ─────────
@@ -212,8 +235,20 @@
     return { type: 'MultiLineString', coordinates: lines };
   }
 
+  let lo = null;   // 이퀄 어스를 돌리는 동안 쓰는 가벼운 지도
   async function loadData() {
-    const topo = await fetch('data/world.json').then(r => r.json());
+    const [topo, topoLo] = await Promise.all([
+      fetch('data/world.json').then(r => r.json()),
+      fetch('data/world-lo.json').then(r => r.json()).catch(() => null),
+    ]);
+    if (topoLo) {
+      lo = {
+        countries: topojson.feature(topoLo, topoLo.objects.countries).features,
+        lakes: { type: 'FeatureCollection', features: topojson.feature(topoLo, topoLo.objects.lakes).features },
+        border: topojson.mesh(topoLo, topoLo.objects.countries, (a, b) => a !== b),
+        coast: dropAntimeridian(topojson.mesh(topoLo, topoLo.objects.countries, (a, b) => a === b)),
+      };
+    }
     countries = topojson.feature(topo, topo.objects.countries).features;
     lakes = topojson.feature(topo, topo.objects.lakes).features;
     borderMesh = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b);
@@ -258,15 +293,47 @@
   }
   function makeShapeEE(geo) {
     const p2 = new Path2D();
-    d3.geoPath(eeBase, p2)(geo);
+    d3.geoPath(eeBase.rotate([-ee.lon, 0]), p2)(geo);
     return p2;
   }
-  const shapeOf = o => isEE() ? (o.shapeE || (o.shapeE = makeShapeEE(o))) : (o.shape || (o.shape = makeShape(o)));
-  const SH = { merc: {}, ee: {} };
-  function shared(name, geo) {
-    const box = SH[S.proj];
-    return box[name] || (box[name] = (isEE() ? makeShapeEE : makeShape)(geo()));
+  // 이퀄 어스 도형 보관함: 가운데 경선이 바뀌면 새로 만들어야 해요.
+  const ee = { lon: null, shapes: new Map(), shared: {}, ready: false, timer: 0, job: 0 };
+  function eeStale() {
+    clearTimeout(ee.timer);
+    ee.ready = false;
+    ee.timer = setTimeout(buildEE, 160);
   }
+  function buildEE() {
+    if (!isEE() || !countries.length) return;
+    if (pointers.size) { ee.timer = setTimeout(buildEE, 120); return; }   // 끄는 중이면 기다림
+    const job = ++ee.job, lon = S.eeLon;
+    ee.lon = lon; ee.shapes = new Map(); ee.shared = {}; ee.ready = false;
+    const list = [...countries];
+    const tasks = [
+      () => sharedShape('lakes', () => ({ type: 'FeatureCollection', features: lakes })),
+      () => sharedShape('coast', () => coastMesh), () => sharedShape('border', () => borderMesh),
+      () => sharedShape('grid', () => graticule), () => sharedShape('equator', () => equator),
+      () => sharedShape('sphere', () => SPHERE),
+    ];
+    const step = () => {
+      if (job !== ee.job || S.eeLon !== lon || !isEE()) return;    // 그사이 또 돌렸으면 취소
+      const t0 = performance.now();
+      while (performance.now() - t0 < 12) {
+        if (list.length) { const f = list.pop(); ee.shapes.set(f, makeShapeEE(f)); }
+        else if (tasks.length) tasks.shift()();
+        else { ee.ready = true; requestDraw(); return; }
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  const shapeOf = o => isEE() ? ee.shapes.get(o) : (o.shape || (o.shape = makeShape(o)));
+  const SH = { merc: {} };
+  function sharedShape(name, geo) {
+    if (isEE()) return ee.shared[name] || (ee.shared[name] = makeShapeEE(geo()));
+    return SH.merc[name] || (SH.merc[name] = makeShape(geo()));
+  }
+  const shared = sharedShape;
   const SPHERE = { type: 'Sphere' };
 
   function setWorldTransform() {
@@ -283,6 +350,8 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = isEE() ? '#EEF1F5' : S.ocean; ctx.fillRect(0, 0, W, H);
     if (!countries.length) return;
+    if (isEE()) updateProjName();
+    if (isEE() && !(ee.ready && ee.lon === S.eeLon)) { drawLiveEE(); return drawOverlays(); }
     const lw = S.line, px = 1 / s;   // 화면 1픽셀 = 기준 좌표 px
     const lakeShape = shared('lakes', () => ({ type: 'FeatureCollection', features: lakes }));
     const coastShape = shared('coast', () => coastMesh), borderShape = shared('border', () => borderMesh);
@@ -317,7 +386,7 @@
     if (S.show.borders) ctx.stroke(borderShape);
     if (isEE()) { ctx.lineWidth = 1.2 * px; ctx.strokeStyle = '#7d8a99'; ctx.stroke(shared('sphere', () => SPHERE)); }
     // 6) 마우스를 올린 나라 강조
-    if (hoverId && byId.has(hoverId)) {
+    if (hoverId && byId.has(hoverId) && !isEE()) {
       const f = byId.get(hoverId);
       const key = isEE() ? 'outlineE' : 'outlineM';
       if (!f[key]) {
@@ -327,6 +396,44 @@
       ctx.lineWidth = Math.max(1.6, lw * 2.2) * px; ctx.strokeStyle = '#1d2733'; ctx.stroke(f[key]);
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawOverlays();
+  }
+
+  // 이퀄 어스를 돌리는 동안: 가벼운 지도를 바로 계산해서 그림
+  function drawLiveEE() {
+    const g = d3.geoPath(proj, ctx), lw = S.line;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.save(); ctx.shadowColor = 'rgba(20,40,70,.10)'; ctx.shadowBlur = 18;
+    ctx.beginPath(); g(SPHERE); ctx.fillStyle = S.ocean; ctx.fill(); ctx.restore();
+    const src = lo || { countries, lakes: { type: 'FeatureCollection', features: lakes }, border: borderMesh, coast: coastMesh };
+    const groups = new Map();
+    for (const f of src.countries) {
+      const c = S.colors.get(f.id) || S.land;
+      if (!groups.has(c)) groups.set(c, []);
+      groups.get(c).push(f);
+    }
+    for (const [c, fs] of groups) { ctx.beginPath(); for (const f of fs) g(f); ctx.fillStyle = c; ctx.fill(); }
+    if (S.show.lakes) { ctx.beginPath(); g(src.lakes); ctx.fillStyle = S.ocean; ctx.fill(); ctx.lineWidth = lw * 0.8; ctx.strokeStyle = '#7d8a99'; ctx.stroke(); }
+    if (S.show.grid) { ctx.beginPath(); g(graticule); ctx.setLineDash([4, 4]); ctx.lineWidth = 0.8; ctx.strokeStyle = 'rgba(60,120,190,.55)'; ctx.stroke(); ctx.setLineDash([]); }
+    if (S.show.equator) { ctx.beginPath(); g(equator); ctx.lineWidth = 1.1; ctx.strokeStyle = 'rgba(220,60,60,.75)'; ctx.stroke(); }
+    ctx.beginPath(); g(src.coast); if (S.show.borders) g(src.border);
+    ctx.lineWidth = lw; ctx.strokeStyle = '#4b5663'; ctx.stroke();
+    ctx.beginPath(); g(SPHERE); ctx.lineWidth = 1.2; ctx.strokeStyle = '#7d8a99'; ctx.stroke();
+  }
+
+  // 도법과 상관없이 화면 좌표로 그리는 것들
+  function drawOverlays() {
+    const lw = S.line;
+    if (hoverId && byId.has(hoverId) && isEE() && !pointers.size) {
+      const f = byId.get(hoverId);
+      if (!f.outlineGeo) {
+        const gm = f.geometry, rings = gm.type === 'Polygon' ? gm.coordinates : gm.coordinates.flat();
+        f.outlineGeo = dropAntimeridian({ coordinates: rings });
+      }
+      ctx.beginPath(); d3.geoPath(proj, ctx)(f.outlineGeo);
+      ctx.lineWidth = Math.max(1.6, lw * 2.2); ctx.strokeStyle = '#1d2733'; ctx.stroke();
+    }
 
     // 5) 아주 작은 나라 동그라미 (화면에서 7px보다 작게 보일 때만)
     const z = s / sMin;
@@ -469,11 +576,11 @@
     p.x = x; p.y = y;
     if (pointers.size === 1) {
       if (tap && !tap.moved && Math.hypot(x - tap.x, y - tap.y) > 6) { tap.moved = true; canvas.classList.add('dragging'); }
-      if (!tap || tap.moved) panBy(dx, dy);
+      if (!tap || tap.moved) panBy(dx, dy, x, y);
     } else if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, d = Math.hypot(a.x - b.x, a.y - b.y);
-      if (pinch) { panBy(mx - pinch.mx, my - pinch.my); zoomAt(mx, my, d / pinch.d); }
+      if (pinch) { panBy(mx - pinch.mx, my - pinch.my, mx, my); zoomAt(mx, my, d / pinch.d); }
       pinch = { mx, my, d };
     }
   });
@@ -624,7 +731,7 @@
     else if (e.key === '+' || e.key === '=') zoomAt(W / 2, H / 2, 1.4);
     else if (e.key === '-') zoomAt(W / 2, H / 2, 1 / 1.4);
     else if (e.key.startsWith('Arrow')) {
-      const d = 60; panBy(e.key === 'ArrowLeft' ? d : e.key === 'ArrowRight' ? -d : 0, e.key === 'ArrowUp' ? d : e.key === 'ArrowDown' ? -d : 0);
+      const d = 60; panBy(e.key === 'ArrowLeft' ? d : e.key === 'ArrowRight' ? -d : 0, e.key === 'ArrowUp' ? d : e.key === 'ArrowDown' ? -d : 0, W / 2, H / 2);
     }
   });
 
@@ -635,7 +742,7 @@
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify({
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
-        line: S.line, show: S.show, view: W && !isEE() ? currentView() : S.view, proj: S.proj,
+        line: S.line, show: S.show, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
   }
@@ -644,7 +751,7 @@
       const d = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
       if (!d) return;
       S.colors = new Map(d.colors || []);
-      Object.assign(S, { current: d.current || S.current, palette: d.palette || 0, land: d.land || S.land, ocean: d.ocean || S.ocean, line: d.line || S.line, view: d.view || null, proj: d.proj === 'ee' ? 'ee' : 'merc' });
+      Object.assign(S, { current: d.current || S.current, palette: d.palette || 0, land: d.land || S.land, ocean: d.ocean || S.ocean, line: d.line || S.line, view: d.view || null, proj: d.proj === 'ee' ? 'ee' : 'merc', eeLon: isFinite(d.eeLon) ? d.eeLon : EE_CENTER });
       Object.assign(S.show, d.show || {});
     } catch (_) { }
   }
@@ -657,6 +764,7 @@
   resize();
   loadData().then(() => {
     $('#loading').remove();
+    if (isEE()) eeStale();
     afterChange();
     if (S.colors.size) showToast(`지난번 작업을 불러왔어요 (${S.colors.size}개 나라)`);
   }).catch(() => { $('#loading').textContent = '지도를 불러오지 못했어요. 새로고침해 주세요.'; });
