@@ -320,7 +320,7 @@ body.dock-hidden .dock-open { display: inline-flex; }
 .mode-banner svg { width: 16px; height: 16px; }
 .mode-banner button { height: 28px; padding: 0 12px; border: 0; border-radius: 99px; background: #fff; color: #c62828; font-weight: 700; font-size: 12.5px; }
 body.point-mode #map { cursor: crosshair; }
-body.point-mode .dock { opacity: .45; pointer-events: none; }
+body.point-mode .dock, body.point-mode .dock-open { display: none !important; }   /* 점찍기 중에는 색칠 팔레트를 숨겨 지도를 가리지 않게 */
 
 /* 오른쪽 패널이 열리면 확대 버튼을 왼쪽으로 */
 @media (min-width: 720px) {
@@ -345,4 +345,39 @@ body.point-mode .dock { opacity: .45; pointer-events: none; }
   body.point-mode .side-head h2::after { content: ' 중'; color: #c62828; }
   .pstyle { gap: 8px; padding: 8px 10px 10px; }
   .pcolors button, .pcolors label { width: 26px; height: 26px; }
+}
+
+/* ---------- 점찍기 (도시 + 직접 찍기 통합) ---------- */
+.side section[data-panel="points"] .pstyle { margin: 10px 12px 2px; }
+.prow .sw.small { margin-left: 6px; font-size: 12px; gap: 6px; color: var(--ink-2); }
+.ptabs { display: flex; margin: 10px 12px 0; padding: 3px; background: #f0f3f7; border-radius: 10px; gap: 3px; }
+.ptabs button { flex: 1; height: 32px; border: 0; background: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.ptabs button.sel { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(20,40,70,.12); }
+.ptabs b { color: var(--accent); margin-left: 2px; }
+.side-body[hidden] { display: none; }
+.hint.tip { margin: 8px 16px 4px; }
+.hint.tip b { color: var(--ink-2); }
+.fillbar { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 10px 12px 0; }
+.fillbar span { font-size: 12px; color: var(--ink-3); margin-right: 4px; }
+.fillbar button { height: 28px; padding: 0 9px; border: 1px solid var(--line); background: #fff; border-radius: 99px; font-size: 12px; color: var(--ink-2); }
+.fillbar button:hover { border-color: var(--accent); color: var(--accent); }
+.fillbar button.sel { background: var(--accent-soft); border-color: transparent; color: var(--accent); font-weight: 700; }
+.plist-foot { display: flex; justify-content: flex-end; padding: 8px 12px 0; }
+.prow-item { gap: 6px; padding: 4px 6px; touch-action: pan-y; }
+.prow-item .grip { width: 18px; height: 28px; display: grid; place-items: center; color: var(--ink-3); cursor: grab; touch-action: none; flex: none; font-size: 13px; letter-spacing: -2px; user-select: none; }
+.prow-item.dragging { background: #fff; box-shadow: var(--shadow); position: relative; z-index: 2; }
+.prow-item .sym { width: 22px; height: 22px; flex: none; }
+.prow-item .meta { font-size: 11px; color: var(--ink-3); white-space: nowrap; max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
+.prow-item .reset { width: 26px; height: 26px; border: 0; background: none; border-radius: 6px; color: var(--accent); display: grid; place-items: center; flex: none; }
+.prow-item .reset:hover { background: var(--accent-soft); }
+.prow-item .reset svg { width: 14px; height: 14px; }
+.cgroup .clist .chk small { margin-left: auto; }
+
+@media (max-width: 719px) {
+  .side section[data-panel="points"] .pstyle { margin-top: 6px; gap: 6px; }
+  .side section[data-panel="points"] .pcolors { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 3px; margin: -3px; }
+  .side section[data-panel="points"] .pcolors > * { flex: none; }
+  .ptabs { margin-top: 6px; }
+  .ptabs button { height: 30px; }
+  body.point-mode .side { height: 52%; }
 }

@@ -1,4 +1,4 @@
-/* 세계지도 색칠하기 — 시안 5
+/* 세계지도 색칠하기 — 시안 6
  * 도법 두 가지:
  *  - 메르카토르: 지도 한 장을 회전시켜 그려서 이음매가 없고, 좌우로 끝없이 돌릴 수 있어요.
  *  - 이퀄 어스: 넓이가 실제 비율대로 보이는 도법. 가운데 경선을 150°E로 고정한 태평양 중심 지도예요.
@@ -41,9 +41,9 @@
     show: { borders: true, kp: false, names: false, tiny: false, grid: false, equator: true, lakes: true, scale: true },
     dockHidden: false,
     lakes: { sel: WM_PLACES.LAKES.filter(l => l.on).map(l => l.ko), all: false },   // 켜 둔 주요 호수
-    cities: [],             // 켜 둔 도시 이름
-    points: [],             // 찍은 점 { id, lon, lat, color, shape, size, outline, label }
-    pstyle: { color: '#E63946', shape: 'circle', size: 7, outline: true, mode: 'alpha', custom: '' },
+    points: [],             // 찍은 점 { id, lon, lat, city(목록 도시면 이름), label, off(라벨을 옮겼으면 [dx, dy]) }
+    pstyle: { color: '#E63946', shape: 'circle', size: 6, outline: true },   // 모든 점 공통 모양
+    fill: null,             // 'alpha' | 'hangul' 이면 순서대로 라벨 자동
     view: null,             // 메르카토르 { lon, lat, z } 저장용
     proj: 'merc',           // 'merc' | 'ee'
     eeLon: EE_CENTER,       // 이퀄 어스 가운데 경선
@@ -173,7 +173,7 @@
       if (sideOpen) dockH = Math.max(0, st.bottom - $('#side').getBoundingClientRect().top);
       else if (!hidden) dockH = Math.max(0, st.bottom - $('#dock').getBoundingClientRect().top);
     } else {
-      if (!hidden) left = $('#dock').getBoundingClientRect().right - st.left;
+      if (!hidden && !document.body.classList.contains('point-mode')) left = $('#dock').getBoundingClientRect().right - st.left;
       if (sideOpen) right = $('#side').offsetWidth;
     }
     stage.style.setProperty('--dock-h', dockH + 'px');
@@ -504,13 +504,12 @@
       if (p && p[0] > -10 && p[0] < W + 10 && p[1] > -10 && p[1] < H + 10) {
         ctx.beginPath(); ctx.arc(p[0], p[1], dokdoR(), 0, 2 * Math.PI);
         ctx.fillStyle = S.colors.get('KOR') || S.land; ctx.fill();
-        ctx.lineWidth = 0.9; ctx.strokeStyle = '#4b5663'; ctx.stroke();
+        ctx.lineWidth = Math.min(0.9, dokdoR() * 0.5); ctx.strokeStyle = '#4b5663'; ctx.stroke();
       }
     }
 
     // 7) 나라 이름
     if (S.show.names) drawLabels(z);
-    drawCities();
     drawPoints();
     if (S.show.grid) drawGridLabels();
     if (S.show.scale) drawScale();
@@ -637,7 +636,8 @@
     (f.wrap ? (lon >= f.bb[0][0] || lon <= f.bb[1][0]) : (lon >= f.bb[0][0] && lon <= f.bb[1][0]));
 
   let hitDokdo = false;
-  const dokdoR = () => Math.max(2.4, Math.min(4, 2 + (s / sMin) * 0.12));
+  // 독도: 울릉도(지름 약 10km)의 1/4 크기 → 반지름 약 1.25km. 축소하면 사라지지 않게 가장 작은 점으로
+  const dokdoR = () => Math.max(1.2, 1.25 * s / (6371 * (isEE() ? 1 : Math.cos(DOKDO[1] * RAD))));
   function hitTest(px, py, tolerance) {
     let ll = proj.invert([px, py]);
     if (!ll || !isFinite(ll[0]) || !isFinite(ll[1])) return null;
@@ -689,13 +689,13 @@
     const a = undoStack.pop(); if (!a) return;
     if (a.undo) a.undo();
     else for (const [id, before] of a.changes) before ? S.colors.set(id, before) : S.colors.delete(id);
-    redoStack.push(a); afterChange(); if (sideName === 'points') renderPstyle(); showToast(`되돌렸어요: ${a.label}`);
+    redoStack.push(a); afterChange(); if (sideName === 'points') renderCities(); showToast(`되돌렸어요: ${a.label}`);
   }
   function redo() {
     const a = redoStack.pop(); if (!a) return;
     if (a.redo) a.redo();
     else for (const [id, , after] of a.changes) after ? S.colors.set(id, after) : S.colors.delete(id);
-    undoStack.push(a); afterChange(); if (sideName === 'points') renderPstyle(); showToast(`다시 했어요: ${a.label}`);
+    undoStack.push(a); afterChange(); if (sideName === 'points') renderCities(); showToast(`다시 했어요: ${a.label}`);
   }
   function afterChange() {
     $('#undo').disabled = !undoStack.length;
@@ -728,7 +728,11 @@
     if (pointers.size === 1) {
       tap = { id: e.pointerId, x, y, t: performance.now(), moved: false, type: e.pointerType };
       // 점찍기 중에 찍어 둔 점을 누르면: 끌어서 옮기기
-      if (pointMode) { const pt = pointAt(x, y, e.pointerType === 'mouse' ? 4 : 8); if (pt) tap.point = { pt, from: [pt.lon, pt.lat] }; }
+      if (pointMode) {
+        const lp = labelAt(x, y);
+        if (lp) tap.label = { pt: lp, base: lp.off ? [...lp.off] : defaultOff(), from: lp.off ? [...lp.off] : null };
+        else { const pt = pointAt(x, y, e.pointerType === 'mouse' ? 4 : 8); if (pt) tap.point = { pt, from: [pt.lon, pt.lat] }; }
+      }
     }
     else { tap = null; pinch = null; }
     hideTip();
@@ -741,7 +745,9 @@
     p.x = x; p.y = y;
     if (pointers.size === 1) {
       if (tap && !tap.moved && Math.hypot(x - tap.x, y - tap.y) > 6) { tap.moved = true; canvas.classList.add('dragging'); }
-      if (tap && tap.point && tap.moved) {
+      if (tap && tap.label && tap.moved) {          // 라벨 끌기 → 가이드선
+        tap.label.pt.off = [tap.label.base[0] + x - tap.x, tap.label.base[1] + y - tap.y]; requestDraw();
+      } else if (tap && tap.point && tap.moved) {
         const ll = toLonLat(x, y);
         if (ll) { tap.point.pt.lon = ll[0]; tap.point.pt.lat = ll[1]; requestDraw(); }
       } else if (!tap || tap.moved) panBy(dx, dy, x, y);
@@ -756,13 +762,19 @@
     if (!pointers.has(e.pointerId)) return;
     pointers.delete(e.pointerId);
     canvas.classList.remove('dragging');
-    if (tap && tap.point && tap.moved) {          // 점 옮기기 끝
+    if (tap && tap.label && tap.moved) {          // 라벨 옮기기 끝 (원래 자리 가까이 놓으면 가이드선 없앰)
+      const { pt, from } = tap.label, d0 = defaultOff();
+      let to = pt.off; if (to && Math.hypot(to[0] - d0[0], to[1] - d0[1]) < 12) to = null;
+      pt.off = from;
+      pointsAction(to ? '라벨 옮김' : '라벨 원래 자리', () => { const p = S.points.find(q => q.id === pt.id); if (p) p.off = to; });
+    } else if (tap && tap.point && tap.moved) {          // 점 옮기기 끝 (목록 도시를 옮기면 직접 찍은 점이 돼요)
       const { pt, from } = tap.point, to = [pt.lon, pt.lat];
-      commitAction({ label: `점 ${pt.label || ''} 옮김`.replace('  ', ' '),
-        undo: () => { pt.lon = from[0]; pt.lat = from[1]; }, redo: () => { pt.lon = to[0]; pt.lat = to[1]; } });
+      pt.lon = from[0]; pt.lat = from[1];
+      pointsAction(`${pt.label || '점'} 옮김`, () => { const p = S.points.find(q => q.id === pt.id); if (p) { p.lon = to[0]; p.lat = to[1]; if (p.city) p.city = null; } });
     } else if (tap && tap.id === e.pointerId && !tap.moved && performance.now() - tap.t < 700 && e.type === 'pointerup') {
       if (pointMode) {
-        if (tap.point) selectPoint(tap.point.pt.id);
+        const hitP = tap.point ? tap.point.pt : tap.label ? tap.label.pt : null;
+        if (hitP) selectPoint(hitP.id, true);
         else addPoint(tap.x, tap.y);
       } else {
         const f = hitTest(tap.x, tap.y, tap.type === 'mouse' ? 10 : 22);
@@ -785,7 +797,7 @@
   function hover(x, y) {
     const now = performance.now(); if (now - lastTip < 16) return; lastTip = now;
     if (pointMode) {
-      const pt = pointAt(x, y, 4);
+      const pt = labelAt(x, y) || pointAt(x, y, 4);
       canvas.style.cursor = pt ? 'grab' : '';
       if (hoverId) { hoverId = null; requestDraw(); }
       return hideTip();
@@ -916,7 +928,7 @@
     if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
     else if (pointMode && (e.key === 'Delete' || e.key === 'Backspace') && selPoint) { e.preventDefault(); deletePoint(selPoint); }
-    else if (e.key === 'Escape' && pointMode && selPoint) { selectPoint(null); }
+    else if (e.key === 'Escape' && pointMode && selPoint) { selPoint = null; renderPoints(); requestDraw(); }
     else if (!mod && e.key.toLowerCase() === 'p') { setProjection(isEE() ? 'merc' : 'ee'); }
     else if (!mod && e.key.toLowerCase() === 'e') { S.tool = S.tool === 'erase' ? 'paint' : 'erase'; syncSelection(); }
     else if (!mod && /^[1-9]$/.test(e.key)) {
@@ -929,22 +941,7 @@
     }
   });
 
-  // ───────── 도시·점 그리기 ─────────
-  function drawCities() {
-    if (!S.cities.length) return;
-    ctx.save(); ctx.lineJoin = 'round'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-    ctx.font = `600 12px ${FONT}`;
-    for (const name of S.cities) {
-      const c = cityByName.get(name); if (!c) continue;
-      const p = proj([c.lon, c.lat]); if (!p || p[0] < -40 || p[0] > W + 40 || p[1] < -20 || p[1] > H + 20) continue;
-      ctx.beginPath(); ctx.arc(p[0], p[1], 3.2, 0, 2 * Math.PI);
-      ctx.fillStyle = '#1d2733'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.strokeText(c.name, p[0] + 6, p[1]);
-      ctx.fillStyle = '#1d2733'; ctx.fillText(c.name, p[0] + 6, p[1]);
-    }
-    ctx.restore();
-  }
-
+  // ───────── 점 그리기 (도시·직접 찍은 점 모두 같은 모양) ─────────
   // 모양 그리기 (지도 위 점, 목록 미리보기 공용)
   function drawSymbol(g, shape, x, y, r, fill, outline) {
     g.beginPath();
@@ -965,47 +962,73 @@
     g.fillStyle = fill; g.fill();
     if (outline) { g.lineWidth = 1.3; g.strokeStyle = '#1d2733'; g.lineJoin = 'round'; g.stroke(); }
   }
+  const labelFont = () => Math.round(11 + S.pstyle.size * 0.45);
+  const defaultOff = () => [S.pstyle.size * 1.35 + 4, 0];
+  let labelBoxes = [];   // 지도 위 라벨 자리 (끌어 옮기기용)
   function drawPoints() {
+    labelBoxes = [];
     if (!S.points.length) return;
+    const st = S.pstyle, r = st.size, fs = labelFont();
     ctx.save(); ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.lineJoin = 'round';
+    ctx.font = `700 ${fs}px ${FONT}`;
     for (const pt of S.points) {
-      const p = proj([pt.lon, pt.lat]); if (!p || p[0] < -60 || p[0] > W + 60 || p[1] < -30 || p[1] > H + 30) continue;
-      const r = pt.size;
+      const p = proj([pt.lon, pt.lat]); if (!p || p[0] < -200 || p[0] > W + 200 || p[1] < -200 || p[1] > H + 200) continue;
       if (pt.id === selPoint && pointMode) {
         ctx.beginPath(); ctx.arc(p[0], p[1], r * 1.5 + 5, 0, 2 * Math.PI);
         ctx.setLineDash([3, 3]); ctx.lineWidth = 1.5; ctx.strokeStyle = '#1f6feb'; ctx.stroke(); ctx.setLineDash([]);
       }
-      drawSymbol(ctx, pt.shape, p[0], p[1], r, pt.color, pt.outline);
       if (pt.label) {
-        const fs = Math.round(11 + r * 0.45);
-        ctx.font = `700 ${fs}px ${FONT}`;
-        const lx = p[0] + r * 1.35 + 4;
-        ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.strokeText(pt.label, lx, p[1]);
-        ctx.fillStyle = '#1d2733'; ctx.fillText(pt.label, lx, p[1]);
+        const off = pt.off || defaultOff(), ax = p[0] + off[0], ay = p[1] + off[1];
+        const w = ctx.measureText(pt.label).width;
+        const box = [ax - 3, ay - fs / 2 - 3, ax + w + 3, ay + fs / 2 + 3];
+        // 가이드선: 라벨을 점에서 떼어 놓았으면 점과 라벨을 이어요
+        if (pt.off) {
+          const nx = Math.max(box[0], Math.min(box[2], p[0])), ny = Math.max(box[1], Math.min(box[3], p[1]));
+          const d = Math.hypot(nx - p[0], ny - p[1]);
+          if (d > r + 6) {
+            const ux = (nx - p[0]) / d, uy = (ny - p[1]) / d;
+            ctx.beginPath(); ctx.moveTo(p[0] + ux * (r + 1.5), p[1] + uy * (r + 1.5)); ctx.lineTo(nx, ny);
+            ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
+            ctx.lineWidth = 1; ctx.strokeStyle = '#1d2733'; ctx.stroke();
+          }
+        }
+        labelBoxes.push({ pt, box });
+        pt._lab = [ax, ay];
       }
+    }
+    // 점은 가이드선 위에, 라벨은 맨 위에
+    for (const pt of S.points) {
+      const p = proj([pt.lon, pt.lat]); if (!p) continue;
+      drawSymbol(ctx, st.shape, p[0], p[1], r, st.color, st.outline || st.color.toUpperCase() === '#FFFFFF');
+    }
+    for (const { pt } of labelBoxes) {
+      const [ax, ay] = pt._lab;
+      ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.strokeText(pt.label, ax, ay);
+      ctx.fillStyle = '#1d2733'; ctx.fillText(pt.label, ax, ay);
     }
     ctx.restore();
   }
+  function labelAt(x, y) {
+    for (let i = labelBoxes.length - 1; i >= 0; i--) {
+      const { pt, box } = labelBoxes[i];
+      if (x >= box[0] - 2 && x <= box[2] + 2 && y >= box[1] - 2 && y <= box[3] + 2) return pt;
+    }
+    return null;
+  }
 
   // ───────── 점찍기 ─────────
-  let pointMode = false, selPoint = null;
+  let pointMode = false, selPoint = null, ptab = 'cities';
   const SHAPES = [['circle', '동그라미'], ['square', '네모'], ['triangle', '세모'], ['diamond', '마름모'], ['star', '별'], ['cross', '십자']];
   const PCOLORS = ['#E63946', '#F4A261', '#F9C74F', '#2A9D8F', '#277DA1', '#7B61FF', '#E56BCF', '#8D6E63', '#1D2733', '#FFFFFF'];
   const HANGUL = ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카', '타', '파', '하'];
-  const MODES = [['alpha', 'A B C'], ['hangul', '(가)(나)'], ['num', '1 2 3'], ['custom', '직접 입력'], ['none', '없음']];
   const seqLabel = (mode, i) => {
     if (mode === 'alpha') { let t = '', n = i + 1; while (n > 0) { const m = (n - 1) % 26; t = String.fromCharCode(65 + m) + t; n = Math.floor((n - 1) / 26); } return t; }
     if (mode === 'hangul') return `(${HANGUL[i % 14]}${i >= 14 ? Math.floor(i / 14) + 1 : ''})`;
-    if (mode === 'num') return String(i + 1);
     return '';
   };
-  function nextLabel() {
-    const st = S.pstyle;
-    if (st.mode === 'custom') return st.custom.trim();
-    if (st.mode === 'none') return '';
-    const used = new Set(S.points.map(p => p.label));
-    for (let i = 0; i < 1000; i++) { const t = seqLabel(st.mode, i); if (!used.has(t)) return t; }
-    return '';
+  // A B C 또는 (가)(나)로 채운 상태면, 점을 더하거나 빼거나 순서를 바꿀 때 다시 차례대로 붙여요
+  function relabel() {
+    if (S.fill === 'alpha' || S.fill === 'hangul') S.points.forEach((p, i) => { p.label = seqLabel(S.fill, i); });
   }
   function toLonLat(x, y) {
     const ll = proj.invert([x, y]);
@@ -1017,53 +1040,52 @@
   function pointAt(x, y, pad) {
     for (let i = S.points.length - 1; i >= 0; i--) {
       const pt = S.points[i], p = proj([pt.lon, pt.lat]);
-      if (p && Math.hypot(p[0] - x, p[1] - y) <= pt.size * 1.3 + pad) return pt;
+      if (p && Math.hypot(p[0] - x, p[1] - y) <= S.pstyle.size * 1.3 + pad) return pt;
     }
     return null;
   }
+  // 점 목록을 바꾸는 작업은 전과 후를 통째로 기억해서 되돌려요
+  const snapPoints = () => ({ points: S.points.map(p => ({ ...p, off: p.off ? [...p.off] : null })), fill: S.fill || null });
+  const restorePoints = sn => { S.points = sn.points.map(p => ({ ...p, off: p.off ? [...p.off] : null })); S.fill = sn.fill; if (!S.points.some(p => p.id === selPoint)) selPoint = null; };
+  let lastTag = null;
+  function pointsAction(label, mutate, tag) {
+    const top = undoStack[undoStack.length - 1], now = performance.now();
+    if (tag && lastTag && lastTag.tag === tag && lastTag.action === top && now - lastTag.t < 1500) {
+      mutate(); lastTag.action.after = snapPoints(); lastTag.t = now; afterChange(); return;
+    }
+    const before = snapPoints(); mutate(); const after = snapPoints();
+    const action = { label, before, after, undo() { restorePoints(this.before); }, redo() { restorePoints(this.after); } };
+    lastTag = tag ? { tag, action, t: now } : null;
+    commitAction(action);
+  }
   let pid = Date.now() % 1e6;
+  const newId = () => 'p' + (++pid);
   function addPoint(x, y) {
     const ll = toLonLat(x, y);
     if (!ll) return showToast('지도 바깥에는 점을 찍을 수 없어요');
-    if (selPoint) { selectPoint(null); }
-    const st = S.pstyle;
-    const pt = { id: 'p' + (++pid), lon: ll[0], lat: ll[1], color: st.color, shape: st.shape, size: st.size, outline: st.outline, label: nextLabel() };
-    S.points.push(pt);
-    commitAction({ label: `점 ${pt.label}`.trim() + ' 찍음', undo: () => { S.points = S.points.filter(p => p !== pt); if (selPoint === pt.id) selPoint = null; }, redo: () => { S.points.push(pt); } });
-    showToast(`${pt.label ? '점 ' + pt.label : '점'} 찍음`, true);
+    let pt;
+    pointsAction('점 찍음', () => { pt = { id: newId(), lon: ll[0], lat: ll[1], city: null, label: '', off: null }; S.points.push(pt); relabel(); });
+    selPoint = pt.id; setPtab('list');
+    showToast(`점 찍음${pt.label ? ' (' + pt.label + ')' : ''} · 목록에서 라벨을 넣을 수 있어요`, true);
   }
   function deletePoint(id) {
-    const i = S.points.findIndex(p => p.id === id); if (i < 0) return;
-    const pt = S.points[i];
-    S.points.splice(i, 1); if (selPoint === id) selPoint = null;
-    commitAction({ label: `${pt.label ? '점 ' + pt.label : '점'} 삭제`, undo: () => { S.points.splice(i, 0, pt); }, redo: () => { S.points = S.points.filter(p => p !== pt); } });
-    renderPstyle(); showToast(`${pt.label ? '점 ' + pt.label : '점'} 삭제`, true);
-  }
-  function selectPoint(id) {
-    selPoint = id; renderPstyle(); renderPoints(); requestDraw();
-  }
-  let lastEdit = null;
-  function editPoint(id, patch) {
     const pt = S.points.find(p => p.id === id); if (!pt) return;
-    const keys = Object.keys(patch), before = Object.fromEntries(keys.map(k => [k, pt[k]]));
-    Object.assign(pt, patch);
-    const now = performance.now();
-    // 슬라이더를 끄는 동안 생기는 여러 번의 변경은 되돌리기 한 번으로 묶음
-    if (lastEdit && lastEdit.id === id && now - lastEdit.t < 1200 && undoStack[undoStack.length - 1] === lastEdit.action
-        && keys.every(k => k in lastEdit.before)) {
-      Object.assign(lastEdit.after, patch); lastEdit.t = now; afterChange(); return;
-    }
-    const after = { ...patch };
-    const action = { label: `${pt.label ? '점 ' + pt.label : '점'} 수정`, undo: () => Object.assign(pt, before), redo: () => Object.assign(pt, after) };
-    lastEdit = { id, t: now, before, after, action };
-    commitAction(action);
+    const name = pt.label || pt.city || '점';
+    pointsAction(`${name} 삭제`, () => { S.points = S.points.filter(p => p.id !== id); relabel(); });
+    if (selPoint === id) selPoint = null;
+    showToast(`${name} 삭제`, true);
   }
-  // 스타일 바꾸기: 고른 점이 있으면 그 점을, 없으면 새로 찍을 점을
-  function setStyle(patch) {
-    if (selPoint) editPoint(selPoint, patch);
-    else { Object.assign(S.pstyle, patch); saveSoon(); }
-    renderPstyle(); requestDraw();
+  function toggleCity(c, on) {
+    if (on) pointsAction(`${c.name} 추가`, () => { S.points.push({ id: newId(), lon: c.lon, lat: c.lat, city: c.name, label: c.name, off: null }); relabel(); });
+    else pointsAction(`${c.name} 뺌`, () => { S.points = S.points.filter(p => p.city !== c.name); relabel(); });
   }
+  function selectPoint(id, scroll) {
+    selPoint = id;
+    if (id) setPtab('list');
+    renderPoints(); requestDraw();
+    if (id && scroll) { const row = $(`#pointList [data-id="${id}"]`); if (row) row.scrollIntoView({ block: 'nearest' }); }
+  }
+  function setStyle(patch) { Object.assign(S.pstyle, patch); saveSoon(); renderPstyle(); renderPoints(); requestDraw(); }
 
   // ───────── 오른쪽 패널 ─────────
   const side = $('#side');
@@ -1083,16 +1105,21 @@
     canvas.style.cursor = '';
     if (typeof openLayers === 'function') openLayers(false);
     if (name === 'lakes') renderLakes();
-    if (name === 'cities') renderCities();
-    if (name === 'points') { renderPstyle(); renderPoints(); }
+    if (name === 'points') { setPtab('cities'); renderPstyle(); renderCities(); renderPoints(); }
     hoverId = null; hideTip();
     resize(); requestDraw();
   }
   function updateCounts() {
     $('#lakesCount').textContent = !S.show.lakes ? '' : S.lakes.all ? '전체' : (S.lakes.sel.length || '');
-    $('#citiesCount').textContent = S.cities.length || '';
     $('#pointsCount').textContent = S.points.length || '';
   }
+  function setPtab(t) {
+    ptab = t;
+    document.querySelectorAll('[data-ptab]').forEach(b => b.classList.toggle('sel', b.dataset.ptab === t));
+    document.querySelectorAll('[data-pbody]').forEach(b => { b.hidden = b.dataset.pbody !== t; });
+    if (t === 'cities') renderCities(); else renderPoints();
+  }
+  document.querySelectorAll('[data-ptab]').forEach(b => b.addEventListener('click', () => setPtab(b.dataset.ptab)));
 
   // 호수
   function renderLakes() {
@@ -1122,58 +1149,41 @@
   $('#lakesNone').addEventListener('click', () => { S.lakes = { sel: [], all: false }; lakesChanged(); });
   $('#lakesDefault').addEventListener('click', () => { S.lakes = { sel: WM_PLACES.LAKES.filter(l => l.on).map(l => l.ko), all: false }; lakesChanged(); });
 
-  // 도시
-  const closedGroups = new Set();
+  // 도시 고르기 (고른 도시는 '찍은 점'에 들어가요)
+  const closedGroups = new Set(WM_PLACES.CONTINENTS);   // 처음엔 대륙을 접어 둠
   function renderCities() {
+    if (sideName !== 'points') return;
     const q = $('#citySearch').value.trim();
     const box = $('#cityGroups'); box.innerHTML = '';
+    const chosen = new Set(S.points.filter(p => p.city).map(p => p.city));
     let shown = 0;
     for (const cont of WM_PLACES.CONTINENTS) {
       const all = WM_PLACES.CITIES.filter(c => c.c === cont);
       const items = all.filter(c => !q || c.name.includes(q)).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
       if (!items.length) continue;
       shown += items.length;
-      const on = all.filter(c => S.cities.includes(c.name)).length;
+      const on = all.filter(c => chosen.has(c.name)).length;
       const g = document.createElement('div'); g.className = 'cgroup' + (closedGroups.has(cont) && !q ? ' closed' : '');
-      g.innerHTML = `<button><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>${cont}<em>${on ? '✓' + on : ''}</em><span class="all" role="button">${on === all.length ? '모두 해제' : '모두 선택'}</span></button><div class="clist"></div>`;
-      const head = g.querySelector('button');
-      head.onclick = e => {
-        if (e.target.classList.contains('all')) {
-          const names = all.map(c => c.name);
-          S.cities = on === all.length ? S.cities.filter(n => !names.includes(n)) : [...new Set([...S.cities, ...names])];
-          return citiesChanged();
-        }
-        closedGroups.has(cont) ? closedGroups.delete(cont) : closedGroups.add(cont); renderCities();
-      };
+      g.innerHTML = `<button><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>${cont} <small style="font-weight:500;color:var(--ink-3)">${all.length}</small><em>${on ? '✓' + on : ''}</em></button><div class="clist"></div>`;
+      g.querySelector('button').onclick = () => { closedGroups.has(cont) ? closedGroups.delete(cont) : closedGroups.add(cont); renderCities(); };
       const cl = g.querySelector('.clist');
       for (const c of items) {
         const lab = document.createElement('label'); lab.className = 'chk';
         lab.innerHTML = `<input type="checkbox"><span>${c.name}</span>`;
-        const cb = lab.querySelector('input'); cb.checked = S.cities.includes(c.name);
-        cb.onchange = () => { S.cities = cb.checked ? [...S.cities, c.name] : S.cities.filter(n => n !== c.name); citiesChanged(); };
+        const cb = lab.querySelector('input'); cb.checked = chosen.has(c.name);
+        cb.onchange = () => toggleCity(c, cb.checked);
         cl.appendChild(lab);
       }
       box.appendChild(g);
     }
-    if (!shown) box.innerHTML = `<div class="empty">‘${q}’ 도시가 목록에 없어요.<br>점찍기로 원하는 곳에 직접 찍을 수 있어요.</div>`;
-    const sum = $('#citiesSummary');
-    sum.className = 'note' + (S.cities.length ? '' : ' muted');
-    sum.textContent = S.cities.length ? `✓ ${S.cities.length}개: ${S.cities.join(', ')}` : '선택한 도시가 없어요';
+    if (!shown) box.innerHTML = `<div class="empty">‘${q.replace(/</g, '&lt;')}’ 도시가 목록에 없어요.<br>지도를 눌러 직접 찍을 수 있어요.</div>`;
   }
-  function citiesChanged() { renderCities(); updateCounts(); requestDraw(); saveSoon(); }
   $('#citySearch').addEventListener('input', renderCities);
-  $('#citiesNone').addEventListener('click', () => { S.cities = []; citiesChanged(); });
 
-  // 점찍기 패널
-  const shapeIcon = sh => { const c = document.createElement('canvas'); c.width = c.height = 32; drawSymbol(c.getContext('2d'), sh, 16, 16, 8, '#1d2733', false); return c.toDataURL(); };
+  // 점 모양 (모든 점 공통)
+  const shapeIcon = (sh, col) => { const c = document.createElement('canvas'); c.width = c.height = 32; drawSymbol(c.getContext('2d'), sh, 16, 16, 8, col, false); return c.toDataURL(); };
   function renderPstyle() {
-    const pt = selPoint && S.points.find(p => p.id === selPoint);
-    const st = pt || S.pstyle;
-    const box = $('.pstyle'); box.classList.toggle('editing', !!pt);
-    const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-    $('#pstyleTitle').innerHTML = pt ? `<span>고른 점 <b>${esc(pt.label || '(라벨 없음)')}</b> 고치는 중</span><button id="pDeselect">선택 해제</button>` : '<span>새로 찍을 점</span>';
-    if (pt) $('#pDeselect').onclick = () => selectPoint(null);
-    // 색
+    const st = S.pstyle;
     const pc = $('#pColors'); pc.innerHTML = '';
     let found = false;
     for (const c of PCOLORS) {
@@ -1185,70 +1195,106 @@
     cl.innerHTML = `<input type="color" value="${st.color}">`;
     cl.querySelector('input').oninput = e => setStyle({ color: e.target.value.toUpperCase() });
     pc.appendChild(cl);
-    // 모양
     const ps = $('#pShapes'); ps.innerHTML = '';
     for (const [sh, name] of SHAPES) {
       const b = document.createElement('button'); b.title = name; b.className = sh === st.shape ? 'sel' : '';
-      b.innerHTML = `<img src="${shapeIcon(sh)}" width="16" height="16" alt="${name}" style="${sh === st.shape ? 'filter:invert(1)' : ''}">`;
+      b.innerHTML = `<img src="${shapeIcon(sh, sh === st.shape ? '#ffffff' : '#1d2733')}" width="16" height="16" alt="${name}">`;
       b.onclick = () => setStyle({ shape: sh }); ps.appendChild(b);
     }
     $('#pSize').value = st.size; $('#pSizeOut').textContent = st.size;
     $('#pOutline').checked = !!st.outline;
-    // 라벨
-    const pm = $('#pModes'), ci = $('#pCustom');
-    pm.innerHTML = '';
-    if (pt) {
-      pm.hidden = true; ci.value = pt.label; ci.placeholder = '이 점의 라벨';
-      $('#pNext').textContent = '';
-    } else {
-      pm.hidden = false;
-      for (const [m, name] of MODES) {
-        const b = document.createElement('button'); b.textContent = name; b.className = m === S.pstyle.mode ? 'sel' : '';
-        b.onclick = () => { S.pstyle.mode = m; saveSoon(); renderPstyle(); if (m === 'custom') ci.focus(); };
-        pm.appendChild(b);
-      }
-      ci.hidden = S.pstyle.mode !== 'custom'; ci.value = S.pstyle.custom; ci.placeholder = '라벨 직접 입력 (예: 서울, ㉠)';
-      const nx = nextLabel();
-      $('#pNext').innerHTML = S.pstyle.mode === 'none' ? '라벨 없이 찍어요' : nx ? `다음 점 라벨: <b>${nx.replace(/</g, '&lt;')}</b>` : '라벨을 입력하세요';
-    }
-    if (pt) ci.hidden = false;
   }
   $('#pSize').addEventListener('input', e => { $('#pSizeOut').textContent = e.target.value; setStyle({ size: +e.target.value }); });
   $('#pOutline').addEventListener('change', e => setStyle({ outline: e.target.checked }));
-  $('#pCustom').addEventListener('input', e => {
-    if (selPoint) { editPoint(selPoint, { label: e.target.value }); renderPoints(); requestDraw(); }
-    else { S.pstyle.custom = e.target.value; saveSoon(); $('#pNext').innerHTML = e.target.value.trim() ? `다음 점 라벨: <b>${e.target.value.trim().replace(/</g, '&lt;')}</b>` : '라벨을 입력하세요'; }
-  });
+
+  // 찍은 점 목록
   const fmtLL = (lon, lat) => `${Math.abs(lat).toFixed(1)}°${lat >= 0 ? 'N' : 'S'} ${Math.abs(lon).toFixed(1)}°${lon >= 0 ? 'E' : 'W'}`;
+  let symURL = '', symKey = '';
   function renderPoints() {
     updateCounts();
+    $('#plistCount').textContent = S.points.length || '';
     if (sideName !== 'points') return;
+    if (ptab === 'cities') return renderCities();
+    document.querySelectorAll('[data-fill]').forEach(b => b.classList.toggle('sel', b.dataset.fill === S.fill));
     const list = $('#pointList');
-    if (list.contains(document.activeElement)) return;   // 목록에서 라벨을 고치는 중이면 다시 그리지 않음
+    if (list.contains(document.activeElement) || dragRow) return;   // 라벨을 고치거나 끄는 중이면 다시 그리지 않음
     list.innerHTML = '';
-    $('#plistCount').textContent = S.points.length ? `${S.points.length}개` : '';
     $('#pointsClear').hidden = !S.points.length;
-    if (!S.points.length) { list.innerHTML = '<div class="empty">지도를 누르면 점이 찍혀요.<br>찍은 점을 끌면 옮길 수 있어요.</div>'; return; }
+    if (!S.points.length) { list.innerHTML = '<div class="empty">아직 찍은 점이 없어요.<br>‘도시 고르기’에서 고르거나 지도를 눌러 찍어요.</div>'; return; }
+    const st = S.pstyle, key = st.shape + st.color + st.outline;
+    if (key !== symKey) {
+      const c = document.createElement('canvas'); c.width = c.height = 44; const g = c.getContext('2d'); g.scale(2, 2);
+      drawSymbol(g, st.shape, 11, 11, 6, st.color, st.outline || st.color.toUpperCase() === '#FFFFFF'); symURL = c.toDataURL(); symKey = key;
+    }
     for (const pt of S.points) {
-      const row = document.createElement('div'); row.className = 'prow-item' + (pt.id === selPoint ? ' sel' : '');
-      const cv = document.createElement('canvas'); cv.width = cv.height = 52;
-      const g = cv.getContext('2d'); g.scale(2, 2); drawSymbol(g, pt.shape, 13, 13, Math.min(pt.size, 8), pt.color, pt.outline || pt.color.toUpperCase() === '#FFFFFF');
-      const inp = document.createElement('input'); inp.value = pt.label; inp.placeholder = '라벨 없음';
-      inp.onfocus = () => { if (selPoint !== pt.id) { selPoint = pt.id; renderPstyle(); requestDraw(); row.parentNode.querySelectorAll('.prow-item').forEach(r => r.classList.toggle('sel', r === row)); } };
-      inp.oninput = () => { editPoint(pt.id, { label: inp.value }); $('#pCustom').value = inp.value; requestDraw(); };
-      const sm = document.createElement('small'); sm.textContent = fmtLL(pt.lon, pt.lat);
+      const row = document.createElement('div'); row.className = 'prow-item' + (pt.id === selPoint ? ' sel' : ''); row.dataset.id = pt.id;
+      row.innerHTML = `<span class="grip" title="끌어서 순서 바꾸기">⋮⋮</span><img class="sym" src="${symURL}" alt="">`;
+      const inp = document.createElement('input'); inp.value = pt.label; inp.placeholder = '라벨 입력';
+      inp.onfocus = () => { selPoint = pt.id; requestDraw(); list.querySelectorAll('.prow-item').forEach(r => r.classList.toggle('sel', r === row)); };
+      inp.oninput = () => {
+        pointsAction(`라벨 수정`, () => { const p = S.points.find(q => q.id === pt.id); if (p) p.label = inp.value; S.fill = null; }, 'label:' + pt.id);
+        document.querySelectorAll('[data-fill]').forEach(b => b.classList.remove('sel'));
+      };
+      inp.onkeydown = e => { if (e.key === 'Enter') { const nx = row.nextElementSibling && row.nextElementSibling.querySelector('input'); nx ? nx.focus() : inp.blur(); } };
+      const meta = document.createElement('span'); meta.className = 'meta';
+      meta.textContent = pt.city || fmtLL(pt.lon, pt.lat); meta.title = pt.city ? `${pt.city} (목록 도시)` : '직접 찍은 점';
+      row.append(inp, meta);
+      if (pt.off) {
+        const rs = document.createElement('button'); rs.className = 'reset'; rs.title = '라벨을 원래 자리로 (가이드선 없애기)';
+        rs.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
+        rs.onclick = e => { e.stopPropagation(); pointsAction('라벨 위치 되돌림', () => { const p = S.points.find(q => q.id === pt.id); if (p) p.off = null; }); };
+        row.append(rs);
+      }
       const del = document.createElement('button'); del.className = 'del'; del.title = '삭제';
       del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
       del.onclick = e => { e.stopPropagation(); deletePoint(pt.id); };
-      row.onclick = e => { if (e.target !== inp) selectPoint(pt.id === selPoint ? null : pt.id); };
-      row.append(cv, inp, sm, del); list.appendChild(row);
+      row.append(del);
+      row.onclick = e => { if (e.target === inp) return; selPoint = pt.id === selPoint ? null : pt.id; renderPoints(); requestDraw(); };
+      row.querySelector('.grip').addEventListener('pointerdown', e => startRowDrag(e, row));
+      list.appendChild(row);
     }
   }
+  // 줄 끌어서 순서 바꾸기 (마우스·손가락 모두)
+  let dragRow = null;
+  function startRowDrag(e, row) {
+    e.preventDefault(); e.stopPropagation();
+    const list = $('#pointList'), pid0 = e.pointerId;
+    dragRow = row; row.classList.add('dragging');
+    const move = ev => {
+      if (ev.pointerId !== pid0) return;
+      ev.preventDefault();
+      const y = ev.clientY;
+      const rows = [...list.querySelectorAll('.prow-item')].filter(r => r !== row);
+      let before = null;
+      for (const r of rows) { const b = r.getBoundingClientRect(); if (y < b.top + b.height / 2) { before = r; break; } }
+      if (before !== row.nextElementSibling) list.insertBefore(row, before);
+    };
+    // 줄을 옮기면 끄는 손잡이도 같이 옮겨지므로, 창 전체에서 움직임을 받아요
+    const up = ev => {
+      if (ev.pointerId !== pid0) return;
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+      row.classList.remove('dragging'); dragRow = null;
+      const order = [...list.querySelectorAll('.prow-item')].map(r => r.dataset.id);
+      if (order.join() !== S.points.map(p => p.id).join()) {
+        pointsAction('순서 바꿈', () => { S.points = order.map(id => S.points.find(p => p.id === id)); relabel(); });
+      } else renderPoints();
+    };
+    window.addEventListener('pointermove', move, { passive: false }); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+  }
+  document.querySelectorAll('[data-fill]').forEach(b => b.addEventListener('click', () => {
+    const mode = b.dataset.fill;
+    if (!S.points.length) return showToast('먼저 점을 찍거나 도시를 골라요');
+    const names = { alpha: 'A B C', hangul: '(가)(나)(다)', city: '도시 이름', clear: '지우기' };
+    pointsAction(`라벨 ${names[mode]}`, () => {
+      if (mode === 'alpha' || mode === 'hangul') { S.fill = mode; relabel(); }
+      else if (mode === 'city') { S.fill = null; S.points.forEach(p => { if (p.city) p.label = p.city; }); }
+      else { S.fill = null; S.points.forEach(p => { p.label = ''; }); }
+    });
+  }));
   $('#pointsClear').addEventListener('click', () => {
-    const before = S.points.slice(); if (!before.length) return;
-    S.points = []; selPoint = null;
-    commitAction({ label: '점 모두 삭제', undo: () => { S.points = before.slice(); }, redo: () => { S.points = []; } });
-    renderPstyle(); showToast(`점 ${before.length}개를 지웠어요`, true);
+    const n = S.points.length; if (!n) return;
+    pointsAction('점 모두 삭제', () => { S.points = []; });
+    selPoint = null; showToast(`점 ${n}개를 지웠어요`, true);
   });
 
   function initPanels() {
@@ -1265,7 +1311,7 @@
       localStorage.setItem(STORE_KEY, JSON.stringify({
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
         line: S.line, show: S.show, dockHidden: S.dockHidden, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
-        lakes: S.lakes, cities: S.cities, points: S.points, pstyle: S.pstyle,
+        lakes: S.lakes, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
   }
@@ -1278,9 +1324,12 @@
       Object.assign(S.show, d.show || {});
       S.dockHidden = !!d.dockHidden;
       if (d.lakes && Array.isArray(d.lakes.sel)) S.lakes = { sel: d.lakes.sel.filter(k => WM_PLACES.LAKES.some(l => l.ko === k)), all: !!d.lakes.all };
-      if (Array.isArray(d.cities)) S.cities = d.cities.filter(n => WM_PLACES.CITIES.some(c => c.name === n));
-      if (Array.isArray(d.points)) S.points = d.points.filter(p => isFinite(p.lon) && isFinite(p.lat));
-      if (d.pstyle) Object.assign(S.pstyle, d.pstyle);
+      if (Array.isArray(d.points)) S.points = d.points.filter(p => isFinite(p.lon) && isFinite(p.lat))
+        .map(p => ({ id: p.id, lon: p.lon, lat: p.lat, city: p.city || null, label: p.label || '', off: Array.isArray(p.off) ? p.off : null }));
+      // 시안 5까지 따로 고르던 도시는 점으로 옮김
+      if (Array.isArray(d.cities)) for (const n of d.cities) { const c = WM_PLACES.CITIES.find(x => x.name === n); if (c && !S.points.some(p => p.city === n)) S.points.push({ id: 'c' + n, lon: c.lon, lat: c.lat, city: n, label: n, off: null }); }
+      if (d.pstyle) for (const k of ['color', 'shape', 'size', 'outline']) if (k in d.pstyle) S.pstyle[k] = d.pstyle[k];
+      S.fill = d.fill === 'alpha' || d.fill === 'hangul' ? d.fill : null;
     } catch (_) { }
   }
 
