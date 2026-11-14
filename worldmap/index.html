@@ -11,7 +11,7 @@
   <div class="brand">
     <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5s-1.3 6.7-3.9 9.5c-2.6-2.8-3.9-6-3.9-9.5s1.3-6.7 3.9-9.5z"/></svg>
     <h1>세계지도 색칠하기</h1>
-    <span class="badge">시안 4</span>
+    <span class="badge">시안 5</span>
   </div>
   <div class="actions">
     <button class="btn" id="undo" title="되돌리기 (Ctrl+Z)" disabled>
@@ -41,6 +41,17 @@
       <span>지도 요소</span><b id="layersCount"></b>
       <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
     </button>
+    <div class="tool-pills">
+      <button class="pill tp" data-side="lakes" title="호수 고르기">
+        <svg viewBox="0 0 24 24"><path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/></svg><span>호수</span><b class="cnt" id="lakesCount"></b>
+      </button>
+      <button class="pill tp" data-side="cities" title="도시 고르기">
+        <svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V10l5-3v14M10 21V4l9 4v13M13 10h3M13 14h3M13 18h3"/></svg><span>도시</span><b class="cnt" id="citiesCount"></b>
+      </button>
+      <button class="pill tp" data-side="points" title="점찍기">
+        <svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span>점찍기</span><b class="cnt" id="pointsCount"></b>
+      </button>
+    </div>
   </div>
 
   <div class="panel layers-panel" id="layersPanel" hidden>
@@ -59,7 +70,7 @@
       <h3>표시</h3>
       <div class="row"><label class="sw"><input type="checkbox" data-layer="names"><span></span>나라 이름</label></div>
       <div class="row"><label class="sw" title="지도에서 점처럼 작은 나라를 동그라미로 표시"><input type="checkbox" data-layer="tiny"><span></span>작은 나라 동그라미</label></div>
-      <div class="row"><label class="sw"><input type="checkbox" data-layer="lakes"><span></span>호수</label></div>
+      <div class="row"><label class="sw"><input type="checkbox" data-layer="lakes"><span></span>호수</label><button class="link" data-side="lakes">고르기 ›</button></div>
     </div>
     <div class="group">
       <h3>경위선</h3>
@@ -107,6 +118,70 @@
     <div class="status"><span id="count">칠한 나라 0개</span></div>
   </aside>
 
+  <!-- 오른쪽 패널 (폰은 아래 시트): 호수 · 도시 · 점찍기 -->
+  <aside class="side" id="side" hidden>
+    <section data-panel="lakes">
+      <header class="side-head">
+        <h2>호수</h2>
+        <button class="sbtn" id="lakesNone">전체 해제</button>
+        <button class="sbtn" id="lakesDefault">기본값</button>
+        <button class="close" data-close title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </header>
+      <div class="side-body">
+        <div class="note" id="lakesSummary"></div>
+        <h3 class="sub">주요 호수</h3>
+        <div class="checklist" id="lakeList"></div>
+        <h3 class="sub">전체 호수</h3>
+        <p class="hint">세계 호수 약 400개를 한 번에 표시해요. 참고용이라 하나씩 고를 수는 없어요.</p>
+        <label class="chk"><input type="checkbox" id="lakesAll"><span>전체 호수 표시</span></label>
+      </div>
+    </section>
+
+    <section data-panel="cities">
+      <header class="side-head">
+        <h2>도시</h2>
+        <button class="sbtn" id="citiesNone">전체 해제</button>
+        <button class="close" data-close title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </header>
+      <div class="side-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="citySearch" type="search" placeholder="도시 검색"></div>
+      <div class="side-body">
+        <div class="note" id="citiesSummary"></div>
+        <div id="cityGroups"></div>
+      </div>
+    </section>
+
+    <section data-panel="points">
+      <header class="side-head">
+        <h2>점찍기</h2>
+        <button class="sbtn primary" data-close>완료</button>
+      </header>
+      <div class="side-body">
+        <div class="pstyle">
+          <div class="pstyle-title" id="pstyleTitle">새로 찍을 점</div>
+          <div class="prow"><span class="plabel">색</span><div class="pcolors" id="pColors"></div></div>
+          <div class="prow"><span class="plabel">모양</span><div class="pshapes" id="pShapes"></div></div>
+          <div class="prow"><span class="plabel">크기</span><input type="range" id="pSize" min="3" max="14" step="1"><output id="pSizeOut"></output></div>
+          <div class="prow"><span class="plabel">테두리</span><label class="sw small"><input type="checkbox" id="pOutline"><span></span></label></div>
+          <div class="prow top"><span class="plabel">라벨</span>
+            <div class="plabels">
+              <div class="pmodes" id="pModes"></div>
+              <input type="text" id="pCustom" maxlength="20" placeholder="라벨 직접 입력">
+              <div class="pnext" id="pNext"></div>
+            </div>
+          </div>
+        </div>
+        <div class="plist-head"><h3 class="sub">찍은 점 <span id="plistCount"></span></h3><button class="sbtn" id="pointsClear">전체 삭제</button></div>
+        <div class="plist" id="pointList"></div>
+      </div>
+    </section>
+  </aside>
+
+  <div class="mode-banner" id="pointBanner" hidden>
+    <svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+    <span>점찍기 중 · 지도를 누르면 점이 찍혀요</span>
+    <button data-close>완료</button>
+  </div>
+
   <div id="tip" role="status"></div>
   <div id="toast" role="status"><span></span><button hidden>되돌리기</button></div>
 
@@ -116,6 +191,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
+<script src="data/places.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
