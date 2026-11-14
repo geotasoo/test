@@ -1,4 +1,4 @@
-/* 세계지도 색칠하기 — 시안 7
+/* 세계지도 색칠하기 — 시안 8
  * 도법 두 가지:
  *  - 메르카토르: 지도 한 장을 회전시켜 그려서 이음매가 없고, 좌우로 끝없이 돌릴 수 있어요.
  *  - 이퀄 어스: 넓이가 실제 비율대로 보이는 도법. 가운데 경선을 150°E로 고정한 태평양 중심 지도예요.
@@ -42,7 +42,7 @@
     dockHidden: false,
     lakes: { sel: WM_PLACES.LAKES.filter(l => l.on).map(l => l.ko), all: false },   // 켜 둔 주요 호수
     points: [],             // 찍은 점 { id, lon, lat, city(목록 도시면 이름), label, off(라벨을 옮겼으면 [dx, dy]) }
-    pstyle: { color: '#E63946', shape: 'circle', size: 6, outline: true },   // 모든 점 공통 모양
+    pstyle: { color: '#E63946', shape: 'circle', size: 6, outline: true, font: 14 },   // 모든 점 공통 모양 (font: 라벨 글자 크기)
     fill: null,             // 'alpha' | 'hangul' 이면 순서대로 라벨 자동
     view: null,             // 메르카토르 { lon, lat, z } 저장용
     proj: 'merc',           // 'merc' | 'ee'
@@ -962,7 +962,7 @@
     g.fillStyle = fill; g.fill();
     if (outline) { g.lineWidth = 1.3; g.strokeStyle = '#1d2733'; g.lineJoin = 'round'; g.stroke(); }
   }
-  const labelFont = () => Math.round(11 + S.pstyle.size * 0.45);
+  const labelFont = () => S.pstyle.font || 14;   // 글자 크기 (점 크기와 따로)
   const defaultOff = () => [S.pstyle.size * 1.35 + 4, 0];
   let labelBoxes = [];   // 지도 위 라벨 자리 (끌어 옮기기용)
   function drawPoints() {
@@ -983,7 +983,12 @@
         const box = [ax - 3, ay - fs / 2 - 3, ax + w + 3, ay + fs / 2 + 3];
         // 가이드선: 라벨을 점에서 떼어 놓았으면 점과 라벨을 이어요
         if (pt.off) {
-          const nx = Math.max(box[0], Math.min(box[2], p[0])), ny = Math.max(box[1], Math.min(box[3], p[1]));
+          // 점을 향한 변의 가운데에 연결 (점이 오른쪽이면 오른쪽 변 가운데, 위쪽이면 윗변 가운데 …)
+          const mx = (box[0] + box[2]) / 2, my = (box[1] + box[3]) / 2;
+          let nx, ny;
+          if (p[0] > box[2]) { nx = box[2]; ny = my; }
+          else if (p[0] < box[0]) { nx = box[0]; ny = my; }
+          else { nx = mx; ny = p[1] < box[1] ? box[1] : box[3]; }
           const d = Math.hypot(nx - p[0], ny - p[1]);
           if (d > r + 6) {
             const ux = (nx - p[0]) / d, uy = (ny - p[1]) / d;
@@ -1214,11 +1219,13 @@
       b.onclick = () => setStyle({ shape: sh }); ps.appendChild(b);
     }
     $('#pSize').value = st.size; $('#pSizeOut').textContent = st.size;
+    $('#pFont').value = st.font; $('#pFontOut').textContent = st.font;
     $('#styDot').style.background = st.color;
     $('#pOutline').checked = !!st.outline;
   }
   $('#pSize').addEventListener('input', e => { $('#pSizeOut').textContent = e.target.value; setStyle({ size: +e.target.value }); });
   $('#pOutline').addEventListener('change', e => setStyle({ outline: e.target.checked }));
+  $('#pFont').addEventListener('input', e => { $('#pFontOut').textContent = e.target.value; setStyle({ font: +e.target.value }); });
 
   // 찍은 점 목록
   const fmtLL = (lon, lat) => `${Math.abs(lat).toFixed(1)}°${lat >= 0 ? 'N' : 'S'} ${Math.abs(lon).toFixed(1)}°${lon >= 0 ? 'E' : 'W'}`;
@@ -1319,7 +1326,11 @@
   // ───────── 자동 저장 ─────────
   let saveTimer;
   function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 400); }
+  // 창을 닫거나 새로고침할 때 아직 저장 안 된 변경이 있으면 바로 저장
+  window.addEventListener('pagehide', () => { if (saveTimer) { clearTimeout(saveTimer); save(); } });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && saveTimer) { clearTimeout(saveTimer); save(); } });
   function save() {
+    saveTimer = 0;
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify({
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
@@ -1341,7 +1352,7 @@
         .map(p => ({ id: p.id, lon: p.lon, lat: p.lat, city: p.city || null, label: p.label || '', off: Array.isArray(p.off) ? p.off : null }));
       // 시안 5까지 따로 고르던 도시는 점으로 옮김
       if (Array.isArray(d.cities)) for (const n of d.cities) { const c = WM_PLACES.CITIES.find(x => x.name === n); if (c && !S.points.some(p => p.city === n)) S.points.push({ id: 'c' + n, lon: c.lon, lat: c.lat, city: n, label: n, off: null }); }
-      if (d.pstyle) for (const k of ['color', 'shape', 'size', 'outline']) if (k in d.pstyle) S.pstyle[k] = d.pstyle[k];
+      if (d.pstyle) for (const k of ['color', 'shape', 'size', 'outline', 'font']) if (k in d.pstyle) S.pstyle[k] = d.pstyle[k];
       S.fill = d.fill === 'alpha' || d.fill === 'hangul' ? d.fill : null;
     } catch (_) { }
   }
