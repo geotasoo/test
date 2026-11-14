@@ -381,3 +381,30 @@ body.point-mode .dock, body.point-mode .dock-open { display: none !important; } 
   .ptabs button { height: 30px; }
   body.point-mode .side { height: 52%; }
 }
+
+/* ---------- 폰: 점찍기 시트를 탭 3개 + 접기로 ---------- */
+.phone-only, .sheet-handle { display: none; }
+.sty-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 4px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.25); }
+@media (max-width: 719px) {
+  .phone-only { display: inline-block; }
+  .sheet-handle { display: block; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 18px; border: 0; background: none; padding: 0; }
+  .sheet-handle::before { content: ""; position: absolute; left: 50%; top: 6px; width: 40px; height: 5px; margin-left: -20px; border-radius: 99px; background: #cfd6de; }
+  .side-head { position: relative; padding-top: 16px; }
+  .side section[data-panel="points"] .pstyle { display: none; }
+  .side section[data-panel="points"].ptab-style .pstyle { display: grid; margin: 10px 12px; }
+  .side section[data-panel="points"].ptab-style .pcolors { flex-wrap: wrap; overflow: visible; }
+  .prow .sw.small { margin-left: auto; }
+  .ptabs { margin-top: 8px; }
+  .ptabs button { font-size: 12.5px; }
+  body.point-mode .side { height: 50%; }
+  body.point-mode.sheet-min .side { height: auto; }
+  body.sheet-min .side .side-body, body.sheet-min .side .pstyle { display: none !important; }
+  body.sheet-min .side { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .hint.tip { font-size: 11.5px; }
+}
+@media (max-width: 719px) {
+  .side section[data-panel="points"] .side-head { order: 0; }
+  .side section[data-panel="points"] .ptabs { order: 1; }
+  .side section[data-panel="points"] .pstyle { order: 2; }
+  .side section[data-panel="points"] .side-body { order: 3; }
+}

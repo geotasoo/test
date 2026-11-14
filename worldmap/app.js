@@ -1,4 +1,4 @@
-/* 세계지도 색칠하기 — 시안 6
+/* 세계지도 색칠하기 — 시안 7
  * 도법 두 가지:
  *  - 메르카토르: 지도 한 장을 회전시켜 그려서 이음매가 없고, 좌우로 끝없이 돌릴 수 있어요.
  *  - 이퀄 어스: 넓이가 실제 비율대로 보이는 도법. 가운데 경선을 150°E로 고정한 태평양 중심 지도예요.
@@ -1105,6 +1105,7 @@
     canvas.style.cursor = '';
     if (typeof openLayers === 'function') openLayers(false);
     if (name === 'lakes') renderLakes();
+    document.body.classList.remove('sheet-min');
     if (name === 'points') { setPtab('cities'); renderPstyle(); renderCities(); renderPoints(); }
     hoverId = null; hideTip();
     resize(); requestDraw();
@@ -1114,12 +1115,23 @@
     $('#pointsCount').textContent = S.points.length || '';
   }
   function setPtab(t) {
+    if (t === 'style' && !isPhone()) t = 'cities';     // '점 모양' 탭은 폰에만 (PC는 위에 늘 보임)
     ptab = t;
+    side.querySelector('[data-panel="points"]').classList.toggle('ptab-style', t === 'style');
     document.querySelectorAll('[data-ptab]').forEach(b => b.classList.toggle('sel', b.dataset.ptab === t));
     document.querySelectorAll('[data-pbody]').forEach(b => { b.hidden = b.dataset.pbody !== t; });
-    if (t === 'cities') renderCities(); else renderPoints();
+    if (t === 'cities') renderCities(); else if (t === 'list') renderPoints();
   }
-  document.querySelectorAll('[data-ptab]').forEach(b => b.addEventListener('click', () => setPtab(b.dataset.ptab)));
+  // 폰: 시트 접기/펴기 (접으면 제목과 탭만 남아 지도를 넓게 봐요)
+  function setSheetMin(on) {
+    document.body.classList.toggle('sheet-min', on);
+    resize(); requestDraw();
+  }
+  $('#sheetToggle').addEventListener('click', () => setSheetMin(!document.body.classList.contains('sheet-min')));
+  document.querySelectorAll('[data-ptab]').forEach(b => b.addEventListener('click', () => {
+    if (document.body.classList.contains('sheet-min')) setSheetMin(false);   // 접힌 상태에서 탭을 누르면 펼침
+    setPtab(b.dataset.ptab);
+  }));
 
   // 호수
   function renderLakes() {
@@ -1202,6 +1214,7 @@
       b.onclick = () => setStyle({ shape: sh }); ps.appendChild(b);
     }
     $('#pSize').value = st.size; $('#pSizeOut').textContent = st.size;
+    $('#styDot').style.background = st.color;
     $('#pOutline').checked = !!st.outline;
   }
   $('#pSize').addEventListener('input', e => { $('#pSizeOut').textContent = e.target.value; setStyle({ size: +e.target.value }); });
