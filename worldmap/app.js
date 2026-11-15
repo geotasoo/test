@@ -65,7 +65,10 @@
 
   // ───────── DOM ─────────
   const $ = s => document.querySelector(s);
-  const stage = $('#stage'), canvas = $('#map'), ctx = canvas.getContext('2d');
+  const stage = $('#stage'), canvas = $('#map');
+  let ctx = canvas.getContext('2d');   // 저장할 때는 잠시 다른 캔버스로 바꿔 그려요
+  let EXP = null;                      // 저장 중: { exam, phase: 'map'|'over', rect }
+  const outRect = p => EXP && EXP.rect && (p[0] < EXP.rect.x || p[0] > EXP.rect.x + EXP.rect.w || p[1] < EXP.rect.y || p[1] > EXP.rect.y + EXP.rect.h);
   const tip = $('#tip'), toast = $('#toast');
 
   // ───────── 지도 투영 ─────────
@@ -387,6 +390,11 @@
     };
     requestAnimationFrame(step);
   }
+  function buildEESync() {
+    ee.job++; ee.lon = S.eeLon; ee.shapes = new Map(); ee.shared = {};
+    for (const f of countries) ee.shapes.set(f, makeShapeEE(f));
+    ee.ready = true;
+  }
   const shapeOf = o => isEE() ? ee.shapes.get(o) : (o.shape || (o.shape = makeShape(o)));
   const SH = { merc: {} };
   function sharedShape(name, geo) {
@@ -408,7 +416,8 @@
   function draw() {
     drawQueued = false;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = isEE() ? '#EEF1F5' : S.ocean; ctx.fillRect(0, 0, W, H);
+    if (EXP && EXP.phase === 'over') { ctx.clearRect(0, 0, W, H); drawTextLayer(); return; }
+    ctx.fillStyle = isEE() ? (EXP ? '#FFFFFF' : '#EEF1F5') : S.ocean; ctx.fillRect(0, 0, W, H);
     if (!countries.length) return;
     if (isEE()) updateProjName();
     updateZoomPct();
@@ -422,7 +431,7 @@
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     if (isEE()) {   // 지도 바깥 테두리(타원) 안을 바다색으로
       const sp = shared('sphere', () => SPHERE);
-      ctx.save(); ctx.shadowColor = 'rgba(20,40,70,.10)'; ctx.shadowBlur = 18;
+      ctx.save(); if (!EXP) { ctx.shadowColor = 'rgba(20,40,70,.10)'; ctx.shadowBlur = 18; }
       ctx.fillStyle = S.ocean; ctx.fill(sp); ctx.restore();
     }
 
@@ -452,7 +461,7 @@
       if (S.show.kp) ctx.stroke(shared('kp', () => kpMesh));
       ctx.setLineDash([]);
     }
-    if (isEE()) { ctx.lineWidth = 1.2 * px; ctx.strokeStyle = '#7d8a99'; ctx.stroke(shared('sphere', () => SPHERE)); }
+    if (isEE()) { ctx.lineWidth = 1.2 * px; ctx.strokeStyle = EXP ? '#1a1a1a' : '#7d8a99'; ctx.stroke(shared('sphere', () => SPHERE)); }
     // 6) 마우스를 올린 나라 강조
     if (hoverId && byId.has(hoverId) && !isEE()) {
       const f = byId.get(hoverId);
@@ -465,6 +474,14 @@
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawOverlays();
+  }
+
+  // 라벨·점·경위선 숫자·축척
+  function drawTextLayer() {
+    drawRegionLabels();
+    drawPoints();
+    if (S.show.grid && !(EXP && EXP.exam)) drawGridLabels();
+    if (S.show.scale && !(EXP && EXP.exam)) drawScale();
   }
 
   // 이퀄 어스를 돌리는 동안: 가벼운 지도를 바로 계산해서 그림
@@ -533,10 +550,8 @@
 
     // 7) 나라 이름
     if (S.show.names) drawLabels(z);
-    drawRegionLabels();
-    drawPoints();
-    if (S.show.grid) drawGridLabels();
-    if (S.show.scale) drawScale();
+    if (EXP) return;          // 저장할 때 라벨·점은 따로 (틀 바깥 여백까지 나갈 수 있게)
+    drawTextLayer();
 
     // 8) 도법을 바꾼 직후: 이전 화면을 서서히 지움
     if (fade) {
@@ -1082,8 +1097,8 @@
     ctx.save(); ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.lineJoin = 'round';
     ctx.font = `700 ${fs}px ${LABEL_FONT}`;
     for (const pt of S.points) {
-      const p = proj([pt.lon, pt.lat]); if (!p || p[0] < -200 || p[0] > W + 200 || p[1] < -200 || p[1] > H + 200) continue;
-      if (pt.id === selPoint && pointMode) {
+      const p = proj([pt.lon, pt.lat]); if (!p || p[0] < -200 || p[0] > W + 200 || p[1] < -200 || p[1] > H + 200 || outRect(p)) continue;
+      if (pt.id === selPoint && pointMode && !EXP) {
         ctx.beginPath(); ctx.arc(p[0], p[1], r * 1.5 + 5, 0, 2 * Math.PI);
         ctx.setLineDash([3, 3]); ctx.lineWidth = 1.5; ctx.strokeStyle = '#1f6feb'; ctx.stroke(); ctx.setLineDash([]);
       }
@@ -1111,7 +1126,7 @@
     }
     // 점은 가이드선 위에, 라벨은 맨 위에
     for (const pt of S.points) {
-      const p = proj([pt.lon, pt.lat]); if (!p) continue;
+      const p = proj([pt.lon, pt.lat]); if (!p || outRect(p)) continue;
       drawSymbol(ctx, st.shape, p[0], p[1], r, st.color, st.outline || st.color.toUpperCase() === '#FFFFFF');
     }
     for (const { pt } of labelBoxes) {
@@ -1238,7 +1253,7 @@
     ctx.font = `700 ${fs}px ${LABEL_FONT}`;
     for (const r of list) {
       const f = byId.get(r.id), a = proj(f.label);
-      if (!a || a[0] < -300 || a[0] > W + 300 || a[1] < -300 || a[1] > H + 300) continue;
+      if (!a || a[0] < -300 || a[0] > W + 300 || a[1] < -300 || a[1] > H + 300 || outRect(a)) continue;
       ensureFont(`700 ${fs}px "Noto Serif KR"`, r.label);
       const off = r.off || [0, 0], cx = a[0] + off[0], cy = a[1] + off[1];
       const w = ctx.measureText(r.label).width;
@@ -1573,6 +1588,159 @@
     document.querySelectorAll('[data-side]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); openSide(b.dataset.side); }));
     document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => openSide(null)));
     updateCounts();
+  }
+
+  // ───────── 이미지로 저장 ─────────
+  const gray = c => {
+    const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})/i.exec(c || ''); if (!m) return c;
+    const v = Math.round(0.299 * parseInt(m[1], 16) + 0.587 * parseInt(m[2], 16) + 0.114 * parseInt(m[3], 16));
+    const h = v.toString(16).padStart(2, '0'); return '#' + h + h + h;
+  };
+  const EX = { range: 'full', style: 'exam', fmt: 'png', k: 2, tick: true, rect: null };
+  const MARGIN = { l: 48, t: 24, r: 24, b: 24 };   // 시험지용: 틀 바깥 여백 (라벨·0° 자리)
+  function fullRect() { return { x: 0, y: 0, w: Math.round(W), h: Math.round(H) }; }
+  async function renderExport(k) {
+    const rect = EX.range === 'sel' && EX.rect ? EX.rect : fullRect();
+    const exam = EX.style === 'exam';
+    // 라벨 글꼴을 미리 불러옴
+    if (document.fonts) {
+      const texts = [...S.points.map(p => p.label), ...S.regions.map(r => r.label), '0°'].filter(Boolean).join('');
+      try { await Promise.race([document.fonts.load(`700 20px "Noto Serif KR"`, texts || '가'), new Promise(r => setTimeout(r, 1500))]); } catch (_) { }
+    }
+    if (isEE() && !(ee.ready && ee.lon === S.eeLon)) buildEESync();
+    const keep = { ctx, dpr, hoverId, fade, area: { ...area }, colors: S.colors, land: S.land, ocean: S.ocean, show: { ...S.show }, pcolor: S.pstyle.color };
+    const mk = () => { const c = document.createElement('canvas'); c.width = Math.round(W * k); c.height = Math.round(H * k); return c; };
+    let A, B, eqY = null;
+    try {
+      hoverId = null; fade = null;
+      if (exam) {
+        S.colors = new Map([...S.colors].map(([id, c]) => [id, gray(c)]));
+        S.land = '#FFFFFF'; S.ocean = '#E3E3E3'; S.show.equator = false; S.pstyle.color = gray(S.pstyle.color);
+      } else {
+        area = { ...area, top: rect.y, bot: rect.y + rect.h, left: rect.x, right: W - (rect.x + rect.w), line: rect.y + rect.h - 10 };
+      }
+      dpr = k;
+      A = mk(); ctx = A.getContext('2d'); EXP = { exam, phase: 'map', rect }; draw();
+      B = mk(); ctx = B.getContext('2d'); EXP.phase = 'over'; draw();
+      const e = proj([isEE() ? S.eeLon : lon0, 0]); if (e) eqY = e[1];
+    } finally {
+      ctx = keep.ctx; dpr = keep.dpr; hoverId = keep.hoverId; fade = keep.fade; area = keep.area;
+      S.colors = keep.colors; S.land = keep.land; S.ocean = keep.ocean; S.show = keep.show; S.pstyle.color = keep.pcolor;
+      EXP = null; requestDraw();
+    }
+    const m = exam ? { ...MARGIN } : { l: 0, t: 0, r: 0, b: 0 };
+    if (exam) {   // 틀 밖으로 뺀 라벨이 잘리지 않게 여백을 넓힘
+      for (const { box } of [...labelBoxes, ...rlabelBoxes]) {
+        m.l = Math.max(m.l, rect.x - box[0] + 6); m.t = Math.max(m.t, rect.y - box[1] + 6);
+        m.r = Math.max(m.r, box[2] - (rect.x + rect.w) + 6); m.b = Math.max(m.b, box[3] - (rect.y + rect.h) + 6);
+      }
+      for (const k2 of ['l', 't', 'r', 'b']) m[k2] = Math.min(400, Math.ceil(m[k2]));
+    }
+    const out = document.createElement('canvas');
+    out.width = Math.round((rect.w + m.l + m.r) * k); out.height = Math.round((rect.h + m.t + m.b) * k);
+    const g = out.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, out.width, out.height);
+    const fx = m.l * k, fy = m.t * k, fw = rect.w * k, fh = rect.h * k;
+    g.save(); g.beginPath(); g.rect(fx, fy, fw, fh); g.clip();
+    g.drawImage(A, fx - rect.x * k, fy - rect.y * k); g.restore();
+    if (exam) {
+      g.lineWidth = 1.4 * k; g.strokeStyle = '#000'; g.strokeRect(fx, fy, fw, fh);
+      if (EX.tick && eqY != null && eqY > rect.y + 2 && eqY < rect.y + rect.h - 2) {   // 적도 0° 눈금 (틀 왼쪽 바깥)
+        const y = (eqY - rect.y + m.t) * k;
+        g.beginPath(); g.moveTo(fx - 6 * k, y); g.lineTo(fx, y); g.lineWidth = 1.2 * k; g.stroke();
+        g.font = `600 ${15 * k}px ${LABEL_FONT}`; g.fillStyle = '#000'; g.textAlign = 'right'; g.textBaseline = 'middle';
+        g.fillText('0°', fx - 9 * k, y);
+      }
+    }
+    g.drawImage(B, fx - rect.x * k, fy - rect.y * k);   // 라벨·점: 틀 바깥 여백까지
+    return out;
+  }
+  const exportDlg = $('#exportDlg');
+  let previewTimer = 0;
+  function syncExportUI() {
+    document.querySelectorAll('#exportDlg [data-ex]').forEach(b => b.classList.toggle('sel', String(EX[b.dataset.ex]) === b.dataset.v));
+    $('#exSelAgain').hidden = EX.range !== 'sel';
+    $('#exTickRow').hidden = EX.style !== 'exam';
+    $('#exTick').checked = EX.tick;
+    $('#exStyleHint').textContent = EX.style === 'exam' ? '시험지용: 흑백, 회색 바다, 사각형 틀, 라벨은 틀 밖까지 (경위선 숫자·축척 없음)' : '지금 화면에 보이는 색·라벨·경위선 숫자·축척 그대로';
+    const r = EX.range === 'sel' && EX.rect ? EX.rect : fullRect();
+    const m = EX.style === 'exam' ? MARGIN : { l: 0, t: 0, r: 0, b: 0 };
+    $('#exSize').textContent = `${Math.round((r.w + m.l + m.r) * EX.k)} × ${Math.round((r.h + m.t + m.b) * EX.k)} 픽셀`;
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(async () => {
+      const c = await renderExport(Math.min(1.5, 900 / Math.max(r.w, r.h)) || 1);
+      const img = $('#exPreview'); img.src = c.toDataURL('image/png');
+    }, 60);
+  }
+  function openExport() {
+    if (typeof openLayers === 'function') openLayers(false);
+    exportDlg.hidden = false; syncExportUI();
+  }
+  $('#saveBtn').addEventListener('click', openExport);
+  $('#exClose').addEventListener('click', () => { exportDlg.hidden = true; });
+  exportDlg.addEventListener('click', e => { if (e.target === exportDlg) exportDlg.hidden = true; });
+  document.querySelectorAll('#exportDlg [data-ex]').forEach(b => b.addEventListener('click', () => {
+    const key = b.dataset.ex, v = b.dataset.v;
+    EX[key] = key === 'k' ? +v : v;
+    if (key === 'range' && v === 'sel') return startSelect();
+    syncExportUI();
+  }));
+  $('#exTick').addEventListener('change', e => { EX.tick = e.target.checked; syncExportUI(); });
+  $('#exSelAgain').addEventListener('click', startSelect);
+  const fileName = () => {
+    const d = new Date(), z = n => String(n).padStart(2, '0');
+    return `worldmap-${EX.style === 'exam' ? 'exam' : 'screen'}-${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}.${EX.fmt === 'jpg' ? 'jpg' : 'png'}`;
+  };
+  $('#exSave').addEventListener('click', async () => {
+    const c = await renderExport(EX.k);
+    const type = EX.fmt === 'jpg' ? 'image/jpeg' : 'image/png';
+    c.toBlob(blob => {
+      if (!blob) return showToast('이미지를 만들지 못했어요');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = fileName();
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      showToast('저장했어요 · 안 받아지면 미리보기를 오른쪽 클릭(폰은 길게 눌러) 저장하세요', false, 4200);
+    }, type, 0.92);
+  });
+  $('#exCopy').addEventListener('click', async () => {
+    try {
+      const c = await renderExport(EX.k);
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      showToast('복사했어요 · 한글·PPT에 붙여 넣으세요');
+    } catch (_) { showToast('이 환경에서는 복사가 안 돼요 · 미리보기를 오른쪽 클릭해 복사하세요', false, 3600); }
+  });
+
+  // 영역 선택: 지도 위에 사각형을 끌어서
+  const selLayer = $('#selLayer'), selBox = $('#selBox');
+  function startSelect() {
+    exportDlg.hidden = true; selLayer.hidden = false; selBox.hidden = true; document.body.classList.add('selecting');
+  }
+  function endSelect(rect) {
+    selLayer.hidden = true; document.body.classList.remove('selecting');
+    if (rect) { EX.rect = rect; EX.range = 'sel'; } else if (!EX.rect) EX.range = 'full';
+    openExport();
+  }
+  $('#selCancel').addEventListener('click', e => { e.stopPropagation(); endSelect(null); });
+  {
+    let st = null;
+    const rel = e => { const b = stage.getBoundingClientRect(); return [Math.max(0, Math.min(W, e.clientX - b.left)), Math.max(0, Math.min(H, e.clientY - b.top))]; };
+    const box = (a, b) => ({ x: Math.round(Math.min(a[0], b[0])), y: Math.round(Math.min(a[1], b[1])), w: Math.round(Math.abs(a[0] - b[0])), h: Math.round(Math.abs(a[1] - b[1])) });
+    selLayer.addEventListener('pointerdown', e => {
+      if (e.target.closest('.sel-banner')) return;
+      e.preventDefault(); selLayer.setPointerCapture(e.pointerId); st = rel(e);
+      Object.assign(selBox.style, { left: st[0] + 'px', top: st[1] + 'px', width: 0, height: 0 }); selBox.hidden = false;
+    });
+    selLayer.addEventListener('pointermove', e => {
+      if (!st) return; const r = box(st, rel(e));
+      Object.assign(selBox.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+    });
+    selLayer.addEventListener('pointerup', e => {
+      if (!st) return; const r = box(st, rel(e)); st = null;
+      if (r.w < 30 || r.h < 30) { selBox.hidden = true; return showToast('조금 더 크게 끌어 주세요'); }
+      endSelect(r);
+    });
   }
 
   // ───────── 자동 저장 ─────────

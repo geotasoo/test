@@ -14,7 +14,7 @@
   <div class="brand">
     <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5s-1.3 6.7-3.9 9.5c-2.6-2.8-3.9-6-3.9-9.5s1.3-6.7 3.9-9.5z"/></svg>
     <h1>세계지도 색칠하기</h1>
-    <span class="badge">시안 12</span>
+    <span class="badge">시안 13</span>
   </div>
   <div class="actions">
     <button class="btn" id="undo" title="되돌리기 (Ctrl+Z)" disabled>
@@ -22,6 +22,9 @@
     </button>
     <button class="btn" id="redo" title="다시 하기 (Ctrl+Y)" disabled>
       <svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg><span>다시 하기</span>
+    </button>
+    <button class="btn" id="saveBtn" title="이미지로 저장">
+      <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span>저장</span>
     </button>
     <button class="btn" id="resetBtn" title="모두 처음 상태로">
       <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>초기화</span>
@@ -186,6 +189,31 @@
       <p>색칠, 점, 라벨과 지도 요소 설정이 모두 처음 상태로 돌아가요.<br>잘못 눌렀다면 <b>되돌리기</b>로 되살릴 수 있어요.</p>
       <div class="confirm-actions"><button class="sbtn" id="resetCancel">취소</button><button class="sbtn danger" id="resetOk">초기화</button></div>
     </div>
+  </div>
+
+  <!-- 이미지로 저장 -->
+  <div class="confirm" id="exportDlg" hidden>
+    <div class="export-box" role="dialog" aria-labelledby="exTitle">
+      <header><h3 id="exTitle">이미지로 저장</h3><button class="close" id="exClose" title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+      <div class="ex-body">
+        <div class="ex-preview"><img id="exPreview" alt="저장될 이미지 미리보기"></div>
+        <div class="ex-opts">
+          <div class="ex-row"><span>범위</span><div class="mini-seg"><button data-ex="range" data-v="full">화면 전체</button><button data-ex="range" data-v="sel">영역 선택</button></div>
+            <button class="link" id="exSelAgain" hidden>다시 선택 ›</button></div>
+          <div class="ex-row"><span>스타일</span><div class="mini-seg"><button data-ex="style" data-v="exam">시험지용</button><button data-ex="style" data-v="screen">현재 화면대로</button></div></div>
+          <p class="hint ex-hint" id="exStyleHint">시험지용: 흑백, 사각형 틀, 라벨은 틀 밖까지</p>
+          <div class="ex-row" id="exTickRow"><span></span><label class="chk"><input type="checkbox" id="exTick"><span>적도가 범위 안에 있으면 틀 밖에 0° 표시</span></label></div>
+          <div class="ex-row"><span>형식</span><div class="mini-seg"><button data-ex="fmt" data-v="png">PNG</button><button data-ex="fmt" data-v="jpg">JPG</button></div></div>
+          <div class="ex-row"><span>크기</span><div class="mini-seg"><button data-ex="k" data-v="1">보통</button><button data-ex="k" data-v="2">고화질</button><button data-ex="k" data-v="3">인쇄용</button></div></div>
+          <p class="hint ex-hint" id="exSize"></p>
+        </div>
+      </div>
+      <footer><button class="sbtn" id="exCopy" title="한글·PPT에 바로 붙여 넣기">복사</button><button class="sbtn primary" id="exSave">저장</button></footer>
+    </div>
+  </div>
+  <div class="sel-layer" id="selLayer" hidden>
+    <div class="sel-banner">저장할 영역을 끌어서 선택하세요 <button id="selCancel">취소</button></div>
+    <div class="sel-box" id="selBox" hidden></div>
   </div>
 
   <div id="tip" role="status"></div>
