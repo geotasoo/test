@@ -536,3 +536,10 @@ body.dock-hidden .dock-wrap { display: none; }
   .pill.mode { font-size: 12.5px; }
 }
 @media (max-width: 360px) { .pill.mode span { display: none; } }
+/* 시안 12: 색칠은 네모, 점은 동그라미 */
+#colorBtn .dot { border-radius: 4px; }
+.swatch { border-radius: 10px; }
+.swatch.sel { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ink); }
+.guide-text { margin: 12px 16px 2px; line-height: 1.55; }
+.cgroup.free .gtoggle { color: #c62828; }
+@media (max-width: 719px) { .swatch { border-radius: 10px; } }

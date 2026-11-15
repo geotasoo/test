@@ -1,4 +1,4 @@
-/* 세계지도 색칠하기 — 시안 11
+/* 세계지도 색칠하기 — 시안 12
  * 도법 두 가지:
  *  - 메르카토르: 지도 한 장을 회전시켜 그려서 이음매가 없고, 좌우로 끝없이 돌릴 수 있어요.
  *  - 이퀄 어스: 넓이가 실제 비율대로 보이는 도법. 가운데 경선을 150°E로 고정한 태평양 중심 지도예요.
@@ -39,7 +39,7 @@
     ocean: '#E3E3E3',       // 시험지처럼 옅은 회색 바다
     line: 1.0,
     borderDash: true,       // 국경선 점선(기본) / 실선
-    show: { borders: true, kp: false, names: false, tiny: false, grid: true, equator: true, lakes: true, scale: true },
+    show: { borders: true, kp: false, names: false, tiny: false, grid: true, equator: false, lakes: true, scale: true },
     dockHidden: false,
     lakes: { sel: WM_PLACES.LAKES.filter(l => l.on).map(l => l.ko), all: false },   // 켜 둔 주요 호수
     points: [],             // 찍은 점 { id, lon, lat, city(목록 도시면 이름), label, off(라벨을 옮겼으면 [dx, dy]) }
@@ -1181,8 +1181,8 @@
     if (!ll) return showToast('지도 바깥에는 점을 찍을 수 없어요');
     let pt;
     pointsAction('점 찍음', () => { pt = { id: newId(), lon: ll[0], lat: ll[1], city: null, label: '', off: null }; S.points.push(pt); relabel(); });
-    selPoint = pt.id; setPtab('list');
-    showToast(`점 찍음${pt.label ? ' (' + pt.label + ')' : ''} · 목록에서 라벨을 넣을 수 있어요`, true);
+    selPoint = pt.id; if (ptab === 'cities') renderCities(); else setPtab('list');
+    showToast(`점 찍음${pt.label ? ' (' + pt.label + ')' : ''} · ‘라벨 입력’에서 라벨을 넣을 수 있어요`, true);
   }
   function deletePoint(id) {
     const pt = S.points.find(p => p.id === id); if (!pt) return;
@@ -1431,6 +1431,23 @@
         cl.appendChild(lab);
       }
       box.appendChild(g);
+    }
+    // 직접 찍은 곳: 오세아니아 아래에 찍은 순서대로
+    const free = S.points.filter(p => !p.city && (!q || (p.label || '').includes(q)));
+    if (!q || free.length) {
+      const g = document.createElement('div'); g.className = 'cgroup free' + (closedGroups.has('free') ? ' closed' : '');
+      g.innerHTML = `<div class="ghead"><button class="gtoggle"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>직접 찍은 곳 <small>${S.points.filter(p => !p.city).length}</small></button></div><div class="clist"></div>`;
+      g.querySelector('.gtoggle').onclick = () => { closedGroups.has('free') ? closedGroups.delete('free') : closedGroups.add('free'); renderCities(); };
+      const cl = g.querySelector('.clist');
+      if (!free.length) cl.innerHTML = '<div class="hint" style="padding:6px 22px">아직 없어요. 지도를 눌러 찍어 보세요.</div>';
+      for (const pt of free) {
+        const lab = document.createElement('label'); lab.className = 'chk';
+        lab.innerHTML = `<input type="checkbox" checked><span></span><small>${fmtLL(pt.lon, pt.lat)}</small>`;
+        lab.querySelector('span').textContent = pt.label || '(라벨 없음)';
+        lab.querySelector('input').onchange = () => deletePoint(pt.id);
+        cl.appendChild(lab);
+      }
+      box.appendChild(g); shown += free.length || 1;
     }
     if (!shown) box.innerHTML = `<div class="empty">‘${q.replace(/</g, '&lt;')}’ 도시가 목록에 없어요.<br>지도를 눌러 직접 찍을 수 있어요.</div>`;
   }
