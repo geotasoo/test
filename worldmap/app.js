@@ -1,4 +1,4 @@
-/* 세계지도 색칠하기 — 시안 8
+/* 세계지도 색칠하기 — 시안 9
  * 도법 두 가지:
  *  - 메르카토르: 지도 한 장을 회전시켜 그려서 이음매가 없고, 좌우로 끝없이 돌릴 수 있어요.
  *  - 이퀄 어스: 넓이가 실제 비율대로 보이는 도법. 가운데 경선을 150°E로 고정한 태평양 중심 지도예요.
@@ -983,12 +983,9 @@
         const box = [ax - 3, ay - fs / 2 - 3, ax + w + 3, ay + fs / 2 + 3];
         // 가이드선: 라벨을 점에서 떼어 놓았으면 점과 라벨을 이어요
         if (pt.off) {
-          // 점을 향한 변의 가운데에 연결 (점이 오른쪽이면 오른쪽 변 가운데, 위쪽이면 윗변 가운데 …)
+          // 라벨 네 모서리(왼쪽 위·왼쪽 아래·오른쪽 위·오른쪽 아래) 중 점 쪽 모서리에 연결
           const mx = (box[0] + box[2]) / 2, my = (box[1] + box[3]) / 2;
-          let nx, ny;
-          if (p[0] > box[2]) { nx = box[2]; ny = my; }
-          else if (p[0] < box[0]) { nx = box[0]; ny = my; }
-          else { nx = mx; ny = p[1] < box[1] ? box[1] : box[3]; }
+          const nx = p[0] > mx ? box[2] - 2 : box[0] + 2, ny = p[1] < my ? box[1] + 2 : box[3] - 2;
           const d = Math.hypot(nx - p[0], ny - p[1]);
           if (d > r + 6) {
             const ux = (nx - p[0]) / d, uy = (ny - p[1]) / d;
@@ -1181,8 +1178,18 @@
       shown += items.length;
       const on = all.filter(c => chosen.has(c.name)).length;
       const g = document.createElement('div'); g.className = 'cgroup' + (closedGroups.has(cont) && !q ? ' closed' : '');
-      g.innerHTML = `<button><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>${cont} <small style="font-weight:500;color:var(--ink-3)">${all.length}</small><em>${on ? '✓' + on : ''}</em></button><div class="clist"></div>`;
-      g.querySelector('button').onclick = () => { closedGroups.has(cont) ? closedGroups.delete(cont) : closedGroups.add(cont); renderCities(); };
+      g.innerHTML = `<div class="ghead"><button class="gtoggle"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>${cont} <small>${all.length}</small><em>${on ? '✓' + on : ''}</em></button><button class="gall">${on === all.length ? '모두 해제' : '모두 선택'}</button></div><div class="clist"></div>`;
+      g.querySelector('.gtoggle').onclick = () => { closedGroups.has(cont) ? closedGroups.delete(cont) : closedGroups.add(cont); renderCities(); };
+      g.querySelector('.gall').onclick = () => {
+        if (on === all.length) {
+          const names = new Set(all.map(c => c.name));
+          pointsAction(`${cont} 도시 모두 해제`, () => { S.points = S.points.filter(p => !names.has(p.city)); relabel(); });
+        } else {
+          const add = all.filter(c => !chosen.has(c.name)).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+          pointsAction(`${cont} 도시 ${add.length}개 추가`, () => { for (const c of add) S.points.push({ id: newId(), lon: c.lon, lat: c.lat, city: c.name, label: c.name, off: null }); relabel(); });
+          showToast(`${cont} 도시 ${add.length}개를 더했어요`, true);
+        }
+      };
       const cl = g.querySelector('.clist');
       for (const c of items) {
         const lab = document.createElement('label'); lab.className = 'chk';
@@ -1212,12 +1219,6 @@
     cl.innerHTML = `<input type="color" value="${st.color}">`;
     cl.querySelector('input').oninput = e => setStyle({ color: e.target.value.toUpperCase() });
     pc.appendChild(cl);
-    const ps = $('#pShapes'); ps.innerHTML = '';
-    for (const [sh, name] of SHAPES) {
-      const b = document.createElement('button'); b.title = name; b.className = sh === st.shape ? 'sel' : '';
-      b.innerHTML = `<img src="${shapeIcon(sh, sh === st.shape ? '#ffffff' : '#1d2733')}" width="16" height="16" alt="${name}">`;
-      b.onclick = () => setStyle({ shape: sh }); ps.appendChild(b);
-    }
     $('#pSize').value = st.size; $('#pSizeOut').textContent = st.size;
     $('#pFont').value = st.font; $('#pFontOut').textContent = st.font;
     $('#styDot').style.background = st.color;
@@ -1352,7 +1353,8 @@
         .map(p => ({ id: p.id, lon: p.lon, lat: p.lat, city: p.city || null, label: p.label || '', off: Array.isArray(p.off) ? p.off : null }));
       // 시안 5까지 따로 고르던 도시는 점으로 옮김
       if (Array.isArray(d.cities)) for (const n of d.cities) { const c = WM_PLACES.CITIES.find(x => x.name === n); if (c && !S.points.some(p => p.city === n)) S.points.push({ id: 'c' + n, lon: c.lon, lat: c.lat, city: n, label: n, off: null }); }
-      if (d.pstyle) for (const k of ['color', 'shape', 'size', 'outline', 'font']) if (k in d.pstyle) S.pstyle[k] = d.pstyle[k];
+      if (d.pstyle) for (const k of ['color', 'size', 'outline', 'font']) if (k in d.pstyle) S.pstyle[k] = d.pstyle[k];
+      S.pstyle.shape = 'circle';   // 점 모양은 동그라미 하나
       S.fill = d.fill === 'alpha' || d.fill === 'hangul' ? d.fill : null;
     } catch (_) { }
   }
