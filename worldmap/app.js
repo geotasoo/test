@@ -1597,7 +1597,8 @@
     const h = v.toString(16).padStart(2, '0'); return '#' + h + h + h;
   };
   const EX = { range: 'full', style: 'exam', fmt: 'png', k: 2, tick: true, rect: null };
-  const MARGIN = { l: 48, t: 24, r: 24, b: 24 };   // 시험지용: 틀 바깥 여백 (라벨·0° 자리)
+  // 시험지용 글자 크기: B4 2단(단 너비 약 11cm)에 지도를 약 9.5cm 폭으로 넣었을 때 9pt(약 3.2mm)가 되도록
+  const EXAM_FONT = 0.033;   // 지도 폭에 대한 글자 크기 비율
   function fullRect() { return { x: 0, y: 0, w: Math.round(W), h: Math.round(H) }; }
   async function renderExport(k) {
     const rect = EX.range === 'sel' && EX.rect ? EX.rect : fullRect();
@@ -1608,14 +1609,16 @@
       try { await Promise.race([document.fonts.load(`700 20px "Noto Serif KR"`, texts || '가'), new Promise(r => setTimeout(r, 1500))]); } catch (_) { }
     }
     if (isEE() && !(ee.ready && ee.lon === S.eeLon)) buildEESync();
-    const keep = { ctx, dpr, hoverId, fade, area: { ...area }, colors: S.colors, land: S.land, ocean: S.ocean, show: { ...S.show }, pcolor: S.pstyle.color };
+    const keep = { ctx, dpr, hoverId, fade, area: { ...area }, colors: S.colors, land: S.land, ocean: S.ocean, show: { ...S.show }, pcolor: S.pstyle.color, pfont: S.pstyle.font, rfont: S.rfont };
+    const examFont = Math.max(8, Math.round(rect.w * EXAM_FONT));
     const mk = () => { const c = document.createElement('canvas'); c.width = Math.round(W * k); c.height = Math.round(H * k); return c; };
     let A, B, eqY = null;
     try {
       hoverId = null; fade = null;
       if (exam) {
         S.colors = new Map([...S.colors].map(([id, c]) => [id, gray(c)]));
-        S.land = '#FFFFFF'; S.ocean = '#E3E3E3'; S.show.equator = false; S.pstyle.color = gray(S.pstyle.color);
+        S.land = '#FFFFFF'; S.ocean = '#E3E3E3'; S.show.equator = false; S.show.grid = false; S.pstyle.color = gray(S.pstyle.color);
+        S.pstyle.font = examFont; S.rfont = examFont;
       } else {
         area = { ...area, top: rect.y, bot: rect.y + rect.h, left: rect.x, right: W - (rect.x + rect.w), line: rect.y + rect.h - 10 };
       }
@@ -1625,17 +1628,10 @@
       const e = proj([isEE() ? S.eeLon : lon0, 0]); if (e) eqY = e[1];
     } finally {
       ctx = keep.ctx; dpr = keep.dpr; hoverId = keep.hoverId; fade = keep.fade; area = keep.area;
-      S.colors = keep.colors; S.land = keep.land; S.ocean = keep.ocean; S.show = keep.show; S.pstyle.color = keep.pcolor;
+      S.colors = keep.colors; S.land = keep.land; S.ocean = keep.ocean; S.show = keep.show; S.pstyle.color = keep.pcolor; S.pstyle.font = keep.pfont; S.rfont = keep.rfont;
       EXP = null; requestDraw();
     }
-    const m = exam ? { ...MARGIN } : { l: 0, t: 0, r: 0, b: 0 };
-    if (exam) {   // 틀 밖으로 뺀 라벨이 잘리지 않게 여백을 넓힘
-      for (const { box } of [...labelBoxes, ...rlabelBoxes]) {
-        m.l = Math.max(m.l, rect.x - box[0] + 6); m.t = Math.max(m.t, rect.y - box[1] + 6);
-        m.r = Math.max(m.r, box[2] - (rect.x + rect.w) + 6); m.b = Math.max(m.b, box[3] - (rect.y + rect.h) + 6);
-      }
-      for (const k2 of ['l', 't', 'r', 'b']) m[k2] = Math.min(400, Math.ceil(m[k2]));
-    }
+    const m = { l: 0, t: 0, r: 0, b: 0 };   // 선택한 사각형에 딱 맞게 (바깥 여백 없음)
     const out = document.createElement('canvas');
     out.width = Math.round((rect.w + m.l + m.r) * k); out.height = Math.round((rect.h + m.t + m.b) * k);
     const g = out.getContext('2d');
@@ -1644,15 +1640,18 @@
     g.save(); g.beginPath(); g.rect(fx, fy, fw, fh); g.clip();
     g.drawImage(A, fx - rect.x * k, fy - rect.y * k); g.restore();
     if (exam) {
-      g.lineWidth = 1.4 * k; g.strokeStyle = '#000'; g.strokeRect(fx, fy, fw, fh);
-      if (EX.tick && eqY != null && eqY > rect.y + 2 && eqY < rect.y + rect.h - 2) {   // 적도 0° 눈금 (틀 왼쪽 바깥)
-        const y = (eqY - rect.y + m.t) * k;
-        g.beginPath(); g.moveTo(fx - 6 * k, y); g.lineTo(fx, y); g.lineWidth = 1.2 * k; g.stroke();
-        g.font = `600 ${15 * k}px ${LABEL_FONT}`; g.fillStyle = '#000'; g.textAlign = 'right'; g.textBaseline = 'middle';
-        g.fillText('0°', fx - 9 * k, y);
+      const lw2 = Math.max(1.4, rect.w / 450) * k;
+      g.lineWidth = lw2; g.strokeStyle = '#000'; g.strokeRect(fx + lw2 / 2, fy + lw2 / 2, fw - lw2, fh - lw2);   // 틀 (안쪽에)
+      if (EX.tick && eqY != null && eqY > rect.y + examFont && eqY < rect.y + rect.h - examFont) {   // 적도 0° 눈금 (틀 안쪽 왼쪽)
+        const y = (eqY - rect.y) * k, fs = examFont * k, tl = fs * 0.55;
+        g.beginPath(); g.moveTo(fx, y); g.lineTo(fx + tl, y); g.lineWidth = lw2; g.stroke();
+        g.font = `600 ${fs}px ${LABEL_FONT}`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+        g.lineWidth = fs * 0.28; g.strokeStyle = '#fff'; g.strokeText('0°', fx + tl + fs * 0.2, y);
+        g.fillStyle = '#000'; g.fillText('0°', fx + tl + fs * 0.2, y);
       }
     }
-    g.drawImage(B, fx - rect.x * k, fy - rect.y * k);   // 라벨·점: 틀 바깥 여백까지
+    g.save(); g.beginPath(); g.rect(fx, fy, fw, fh); g.clip();
+    g.drawImage(B, fx - rect.x * k, fy - rect.y * k); g.restore();   // 라벨·점
     return out;
   }
   const exportDlg = $('#exportDlg');
@@ -1662,9 +1661,9 @@
     $('#exSelAgain').hidden = EX.range !== 'sel';
     $('#exTickRow').hidden = EX.style !== 'exam';
     $('#exTick').checked = EX.tick;
-    $('#exStyleHint').textContent = EX.style === 'exam' ? '시험지용: 흑백, 회색 바다, 사각형 틀, 라벨은 틀 밖까지 (경위선 숫자·축척 없음)' : '지금 화면에 보이는 색·라벨·경위선 숫자·축척 그대로';
+    $('#exStyleHint').textContent = EX.style === 'exam' ? '시험지용: 흑백·회색 바다·사각형 틀, 경위선·축척 없음. 글자는 B4 2단에 넣었을 때 약 9pt' : '지금 화면에 보이는 색·라벨·경위선 숫자·축척 그대로';
     const r = EX.range === 'sel' && EX.rect ? EX.rect : fullRect();
-    const m = EX.style === 'exam' ? MARGIN : { l: 0, t: 0, r: 0, b: 0 };
+    const m = { l: 0, t: 0, r: 0, b: 0 };
     $('#exSize').textContent = `${Math.round((r.w + m.l + m.r) * EX.k)} × ${Math.round((r.h + m.t + m.b) * EX.k)} 픽셀`;
     clearTimeout(previewTimer);
     previewTimer = setTimeout(async () => {
@@ -1689,7 +1688,7 @@
   $('#exSelAgain').addEventListener('click', startSelect);
   const fileName = () => {
     const d = new Date(), z = n => String(n).padStart(2, '0');
-    return `worldmap-${EX.style === 'exam' ? 'exam' : 'screen'}-${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}.${EX.fmt === 'jpg' ? 'jpg' : 'png'}`;
+    return `worldmap-${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}.${EX.fmt === 'jpg' ? 'jpg' : 'png'}`;
   };
   $('#exSave').addEventListener('click', async () => {
     const c = await renderExport(EX.k);
