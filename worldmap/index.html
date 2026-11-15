@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>세계지도 색칠하고 점찍기</title>
+<title>세계지도 색칠하고 도형찍기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="topbar">
   <div class="brand" id="brand" role="button" tabindex="0" title="처음 상태로 (초기화)">
     <span class="brand-emoji" aria-hidden="true">🗺️</span>
-    <h1>세계지도 색칠하고 점찍기</h1>
-    <span class="badge">3.0 (20261117)</span>
+    <div class="brand-text">
+      <div class="brand-line"><h1>세계지도 색칠하고 도형찍기</h1><span class="ver">v3.0 (20261117)</span></div>
+      <div class="pc-note" title="휴대폰·태블릿에서도 쓸 수 있지만, 시험지용 지도를 만들 때는 큰 화면이 편해요">PC에서 사용을 권합니다</div>
+    </div>
   </div>
   <div class="actions">
     <button class="btn" id="undo" title="되돌리기 (Ctrl+Z)" disabled>
@@ -47,7 +49,8 @@
       <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <button class="pill mode" id="colorBtn" title="색칠하기"><i class="dot"></i><span>색칠하기</span><b class="cnt" id="colorCount"></b></button>
-    <button class="pill mode" id="pointBtn" data-side="points" title="점찍기 (도시 고르기·직접 찍기)"><i class="dot pdot" id="pointDot"></i><span>점찍기</span><b class="cnt" id="pointsCount"></b></button>
+    <button class="pill mode" id="pointBtn" data-side="points" title="도형찍기 (도시 고르기·직접 찍기)"><i class="dot pdot" id="pointDot"></i><span>도형찍기</span><b class="cnt" id="pointsCount"></b></button>
+    <button class="pill mode" id="legendBtn" data-side="labels" title="라벨·범례"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7 9h2M12 9h5M7 13h2M12 13h5M7 17h2M12 17h3"/></svg><span>라벨·범례</span></button>
   </div>
 
   <div class="panel layers-panel" id="layersPanel" hidden>
@@ -64,10 +67,11 @@
     <div class="row"><label class="sw"><input type="checkbox" data-layer="kp"><span></span>남북한 경계</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="names"><span></span>나라 이름</label></div>
     <div class="row"><label class="sw" title="지도에서 점처럼 작은 나라를 동그라미로 표시"><input type="checkbox" data-layer="tiny"><span></span>작은 나라 동그라미</label></div>
+    <div class="row"><label class="sw"><input type="checkbox" data-layer="seas"><span></span>바다 이름</label><button class="link" data-side="seas">고르기 <b id="seasCount"></b> ›</button></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="lakes"><span></span>호수</label><button class="link" data-side="lakes">고르기 <b id="lakesCount"></b> ›</button></div>
-    <div class="row"><label class="sw"><input type="checkbox" data-layer="grid"><span></span>경위선과 라벨</label></div>
+    <div class="row"><label class="sw"><input type="checkbox" data-layer="grid"><span></span>경위선</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="equator"><span></span>적도</label></div>
-    <div class="row"><label class="sw"><input type="checkbox" data-layer="scale"><span></span>축척 (1 : ○○○)</label></div>
+    <div class="row"><label class="sw"><input type="checkbox" data-layer="scale"><span></span>축척</label></div>
   </div>
 
   <!-- 오른쪽 위: 확대·축소 -->
@@ -104,7 +108,7 @@
         <div class="base-row"><span>육지</span><div class="mini-swatches" data-target="land"></div></div>
         <div class="base-row"><span>바다</span><div class="mini-swatches" data-target="ocean"></div></div>
       </div>
-      <div class="status"><span id="count">칠한 나라 0개</span><button class="sbtn mini" data-side="regions" title="칠한 나라에 라벨 붙이기">라벨 <b id="regionsCount"></b>›</button></div>
+      <div class="status"><span id="count">칠한 나라 0개</span></div>
     </aside>
   </div>
 
@@ -127,69 +131,108 @@
       </div>
     </section>
 
-    <section data-panel="regions">
+    <section data-panel="seas">
+      <header class="side-head">
+        <h2>바다 이름</h2>
+        <button class="sbtn" id="seasNone">전체 해제</button>
+        <button class="sbtn" id="seasDefault">기본값</button>
+        <button class="close" data-close title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </header>
+      <div class="side-body">
+        <div class="note" id="seasSummary"></div>
+        <h3 class="sub">대양</h3>
+        <div class="checklist" id="seaList1"></div>
+        <h3 class="sub">바다·만</h3>
+        <div class="checklist" id="seaList2"></div>
+      </div>
+    </section>
+
+    <section data-panel="labels">
       <header class="side-head">
         <button class="sheet-handle" data-sheet title="시트 접기/펴기" aria-label="시트 접기/펴기"></button>
-        <h2>색칠한 나라 라벨</h2>
+        <h2>라벨·범례</h2>
         <button class="sbtn primary" data-close>완료</button>
       </header>
-      <div class="pstyle">
-        <div class="prow"><span class="plabel">글자</span><input type="range" id="rFont" min="9" max="36" step="1" aria-label="라벨 글자 크기"><output id="rFontOut"></output></div>
+      <div class="ptabs ltabs" role="tablist">
+        <button data-ltab="regions" class="sel">색칠 라벨 <b id="regionsCount"></b></button>
+        <button data-ltab="points">도형 라벨 <b id="plistCount"></b></button>
+        <button data-ltab="legend">범례</button>
       </div>
-      <div class="side-body">
-        <div class="fillbar" data-fillbar="regions">
-          <span>라벨 한꺼번에</span>
+
+      <div class="side-body" data-lbody="regions">
+        <div class="pstyle"><div class="prow"><span class="plabel">글자 크기</span><input type="range" id="rFont" min="9" max="36" step="1" aria-label="나라 라벨 글자 크기"><output id="rFontOut"></output></div></div>
+        <div class="fillbar">
+          <span>한꺼번에</span>
           <button data-rfill="alpha">A B C</button><button data-rfill="hangulp">(가)(나)(다)</button><button data-rfill="hangul">가 나 다</button><button data-rfill="name">나라 이름</button><button data-rfill="clear">지우기</button>
         </div>
         <p class="hint tip">칠한 순서대로 나와요. 줄을 <b>⋮⋮</b>로 끌면 순서가 바뀌고, 지도에서 <b>라벨을 끌면</b> 가이드선이 생겨요.</p>
         <div class="plist" id="regionList"></div>
+      </div>
+
+      <div class="side-body" data-lbody="points" hidden>
+        <div class="pstyle"><div class="prow"><span class="plabel">글자 크기</span><input type="range" id="pFont" min="9" max="30" step="1" aria-label="도형 라벨 글자 크기"><output id="pFontOut"></output></div></div>
+        <div class="fillbar">
+          <span>한꺼번에</span>
+          <button data-fill="alpha">A B C</button><button data-fill="hangulp">(가)(나)(다)</button><button data-fill="hangul">가 나 다</button><button data-fill="city">도시 이름</button><button data-fill="clear">지우기</button>
+        </div>
+        <p class="hint tip">찍은 순서대로 나와요. 도형 그림을 누르면 모양이 바뀌어요. 지도에서 <b>라벨을 끌면</b> 가이드선이 생겨요.</p>
+        <div class="plist" id="pointList"></div>
+      </div>
+
+      <div class="side-body" data-lbody="legend" hidden>
+        <div class="lg-top"><label class="sw"><input type="checkbox" id="lgShow"><span></span>지도에 범례 표시</label>
+          <div class="mini-seg" id="lgDir"><button data-dir="v">세로</button><button data-dir="h">가로</button></div></div>
+        <p class="hint tip">칠한 색과 도형 모양이 자동으로 한 줄씩 생겨요. 지도에서 <b>범례 상자를 끌면</b> 위치가 바뀌어요.</p>
+        <div class="lg-group" id="lg-fill">
+          <h3 class="sub">칠 (색칠하기)</h3>
+          <input class="lg-title" placeholder="묶음 제목 (예: 인구 밀도) · 비워도 돼요">
+          <div class="fillbar"><span>한꺼번에</span><button data-lfill="alpha">A B C</button><button data-lfill="hangulp">(가)(나)(다)</button><button data-lfill="hangul">가 나 다</button><button data-lfill="clear">지우기</button></div>
+          <div class="plist"></div>
+        </div>
+        <div class="lg-group" id="lg-point">
+          <h3 class="sub">도형 (도형찍기)</h3>
+          <input class="lg-title" placeholder="묶음 제목 (예: 도시 규모) · 비워도 돼요">
+          <div class="fillbar"><span>한꺼번에</span><button data-lfill="alpha">A B C</button><button data-lfill="hangulp">(가)(나)(다)</button><button data-lfill="hangul">가 나 다</button><button data-lfill="clear">지우기</button></div>
+          <div class="plist"></div>
+        </div>
       </div>
     </section>
 
     <section data-panel="points">
       <header class="side-head">
         <button class="sheet-handle" data-sheet title="시트 접기/펴기" aria-label="시트 접기/펴기"></button>
-        <h2>점찍기</h2>
-        <button class="sbtn" id="pointsClear" title="찍은 점과 라벨을 모두 지워요">점·라벨 모두 지우기</button>
+        <h2>도형찍기</h2>
+        <button class="sbtn" id="pointsClear" title="찍은 도형과 라벨을 모두 지워요">도형·라벨 모두 지우기</button>
         <button class="sbtn primary" data-close>완료</button>
       </header>
       <div class="pstyle">
         <div class="prow"><span class="plabel">색</span><div class="pcolors" id="pColors"></div></div>
+        <div class="prow top"><span class="plabel">모양</span><div><div class="pshapes" id="pShapes"></div><div class="pnext" id="pShapeHint"></div></div></div>
         <div class="prow"><span class="plabel">크기</span><input type="range" id="pSize" min="3" max="14" step="1"><output id="pSizeOut"></output>
-          <label class="sw small" title="점 테두리"><input type="checkbox" id="pOutline"><span></span>테두리</label></div>
-        <div class="prow"><span class="plabel">글자</span><input type="range" id="pFont" min="9" max="30" step="1" aria-label="라벨 글자 크기"><output id="pFontOut"></output></div>
+          <label class="sw small" title="도형 테두리"><input type="checkbox" id="pOutline"><span></span>테두리</label></div>
       </div>
-      <div class="ptabs" role="tablist">
-        <button data-ptab="cities" class="sel">점찍기</button>
-        <button data-ptab="list">라벨 입력 <b id="plistCount"></b></button>
-        <button data-ptab="style" class="phone-only">점 모양 <i class="sty-dot" id="styDot"></i></button>
+      <div class="ptabs phone-tabs" role="tablist">
+        <button data-ptab="cities" class="sel">도시·직접 찍기</button>
+        <button data-ptab="style">도형 모양 <i class="sty-dot" id="styDot"></i></button>
       </div>
       <div class="side-body" data-pbody="cities">
-        <p class="hint tip guide-text">주요 도시를 검색하거나 목록에서 선택하여 찍을 수 있습니다. 목록에 없는 곳은 <b>지도를 눌러</b> 직접 찍을 수 있어요.</p>
+        <p class="hint tip guide-text">주요 도시를 검색하거나 목록에서 선택하여 찍을 수 있습니다. 목록에 없는 곳은 <b>지도를 눌러</b> 직접 찍을 수 있어요. 라벨은 <b>[라벨·범례]</b>에서 붙여요.</p>
         <div class="side-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="citySearch" type="search" placeholder="도시 검색"></div>
         <div id="cityGroups"></div>
-      </div>
-      <div class="side-body" data-pbody="list" hidden>
-        <div class="fillbar">
-          <span>라벨 한꺼번에</span>
-          <button data-fill="alpha">A B C</button><button data-fill="hangulp">(가)(나)(다)</button><button data-fill="hangul">가 나 다</button><button data-fill="city">도시 이름</button><button data-fill="clear">지우기</button>
-        </div>
-        <p class="hint tip">줄을 <b>⋮⋮</b>로 끌면 순서가 바뀌어요. 지도에서 <b>라벨을 끌면</b> 가이드선이 생겨요.</p>
-        <div class="plist" id="pointList"></div>
       </div>
     </section>
   </aside>
 
   <div class="mode-banner" id="pointBanner" hidden>
     <svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
-    <span>점찍기 중 · 지도를 누르면 점이 찍혀요</span>
+    <span>도형찍기 중 · 지도를 누르면 도형이 찍혀요</span>
     <button data-close>완료</button>
   </div>
 
   <div class="confirm" id="resetConfirm" hidden>
     <div class="confirm-box" role="dialog" aria-labelledby="resetTitle">
       <h3 id="resetTitle">처음 상태로 돌릴까요?</h3>
-      <p>색칠, 점, 라벨과 지도 요소 설정이 모두 처음 상태로 돌아가요.<br>잘못 눌렀다면 <b>되돌리기</b>로 되살릴 수 있어요.</p>
+      <p>색칠, 도형, 라벨·범례와 지도 설정이 모두 처음 상태로 돌아가요.<br>잘못 눌렀다면 <b>되돌리기</b>로 되살릴 수 있어요.</p>
       <div class="confirm-actions"><button class="sbtn" id="resetCancel">취소</button><button class="sbtn danger" id="resetOk">초기화</button></div>
     </div>
   </div>
@@ -203,11 +246,15 @@
         <div class="ex-opts">
           <div class="ex-row"><span>범위</span><div class="mini-seg"><button data-ex="range" data-v="full">화면 전체</button><button data-ex="range" data-v="sel">영역 선택</button></div>
             <button class="link" id="exSelAgain" hidden>다시 선택 ›</button></div>
+          <p class="hint ex-hint">영역 선택 시 축척과 범례 공간을 고려하여 선택하세요.</p>
           <div class="ex-row"><span>스타일</span><div class="mini-seg"><button data-ex="style" data-v="exam">시험지용</button><button data-ex="style" data-v="screen">현재 화면대로</button></div></div>
+          <div class="ex-row" id="exSeaRow"><span>바다</span><div class="mini-seg"><button data-ex="sea" data-v="gray">회색</button><button data-ex="sea" data-v="white">흰색</button></div></div>
           <p class="hint ex-hint" id="exStyleHint">시험지용: 흑백, 사각형 틀, 라벨은 틀 밖까지</p>
           <div class="ex-row" id="exTickRow"><span></span><label class="chk"><input type="checkbox" id="exTick"><span>적도가 범위 안에 있으면 틀 안쪽에 0° 표시</span></label></div>
+          <div class="ex-row"><span>넣기</span><label class="chk"><input type="checkbox" id="exScale"><span>축척</span></label><label class="chk" id="exLegendRow"><input type="checkbox" id="exLegend"><span>범례</span></label>
+            <div class="mini-seg" id="exLplace"><button data-ex="lplace" data-v="in">지도 안</button><button data-ex="lplace" data-v="out">지도 밖</button></div></div>
+          <p class="hint ex-hint">미리보기에서 <b>축척·범례를 끌어</b> 위치를 정해요. ‘지도 밖’ 범례는 틀 둘레(위·아래·왼쪽·오른쪽)를 따라 옮겨지고 함께 저장돼요. 축척 값은 저장 범위에 맞게 자동이에요.</p>
           <p class="hint ex-hint" id="exSize"></p>
-          <p class="hint ex-hint">PNG · 인쇄용 고화질로 저장돼요.</p>
         </div>
       </div>
       <footer><button class="sbtn" id="exCopy" title="한글·PPT에 바로 붙여 넣기">복사</button><button class="sbtn primary" id="exSave">저장</button></footer>
@@ -218,37 +265,39 @@
     <div class="export-box help-box" role="dialog" aria-labelledby="helpTitle">
       <header><h3 id="helpTitle">🗺️ 도움말</h3><button class="close" id="helpClose" title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
       <div class="help-body">
-        <p class="help-pc">💻 <b>PC에서 사용을 권합니다.</b> 휴대폰·태블릿에서도 쓸 수 있지만, 시험지용 지도를 만들 때는 큰 화면이 편해요.</p>
 
         <h4>지도 보기</h4>
         <ul>
           <li><b>이동</b>: 지도를 끌어요. <b>확대·축소</b>: 마우스 휠 또는 오른쪽 위 <b>+ / −</b> (폰은 두 손가락).</li>
-          <li>+ 와 − 사이 숫자는 <b>확대 정도</b>예요. 숫자를 눌러 직접 입력할 수 있고, 어느 화면에서나 같은 값이에요.</li>
-          <li><b>[지도 설정]</b>에서 도법(메르카토르 / 이퀄 어스), 국경선(점선·실선, 굵기), 남북한 경계, 나라 이름, 호수, 경위선, 적도, 축척을 고를 수 있어요.</li>
+          <li>+ 와 − 사이 숫자는 <b>확대 정도</b>예요. 숫자를 눌러 직접 입력할 수 있어요.</li>
+          <li><b>[지도 설정]</b>에서 도법(메르카토르 / 이퀄 어스), 국경선(점선·실선, 굵기), 남북한 경계, 나라 이름, 바다 이름, 호수, 경위선, 적도, 축척을 켜고 끌 수 있어요.</li>
+          <li>바다 이름과 호수는 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
         </ul>
 
         <h4>색칠하기</h4>
         <ul>
           <li>색을 고르고 나라를 누르면 칠해져요. 같은 색으로 한 번 더 누르면 지워져요.</li>
-          <li><b>[라벨 ›]</b>에서 칠한 나라에 A B C, (가)(나)(다), 가 나 다, 나라 이름을 붙일 수 있어요.</li>
         </ul>
 
-        <h4>점찍기</h4>
+        <h4>도형찍기</h4>
         <ul>
-          <li><b>[점찍기]</b>를 누르고 주요 도시를 검색하거나 목록에서 고르세요. 목록에 없는 곳은 지도를 눌러 직접 찍어요.</li>
-          <li><b>[라벨 입력]</b> 탭에서 라벨을 쓰거나 한꺼번에 채우고, ⋮⋮ 손잡이로 순서를 바꿔요.</li>
+          <li><b>[도형찍기]</b>를 누르고 주요 도시를 검색하거나 목록에서 고르세요. 목록에 없는 곳은 지도를 눌러 직접 찍어요.</li>
+          <li>위쪽에서 색·모양(● ▲ ■ ○ △ □)을 고르면 <b>다음에 찍을 도형</b>부터 바뀌어요. 이미 찍은 도형은 [라벨·범례] → 도형 라벨 목록에서 그림을 눌러 모양을 바꿔요. 찍어 둔 도형은 끌어서 옮길 수 있어요.</li>
         </ul>
 
-        <h4>라벨과 가이드선</h4>
+        <h4>라벨·범례</h4>
         <ul>
-          <li>지도에서 라벨을 끌어 옮기면 점(나라)과 라벨을 잇는 <b>가이드선</b>이 생겨요.</li>
-          <li>목록의 가이드선 버튼으로 하나씩 끌 수 있고, ↺ 버튼으로 라벨을 원래 자리로 돌려요.</li>
+          <li><b>[라벨·범례]</b>에 세 탭이 있어요: <b>색칠 라벨</b>(칠한 나라) · <b>도형 라벨</b>(찍은 도형) · <b>범례</b>.</li>
+          <li>라벨은 직접 쓰거나 A B C, (가)(나)(다), 가 나 다, 이름으로 한꺼번에 채우고, ⋮⋮ 손잡이로 순서를 바꿔요.</li>
+          <li>지도에서 라벨을 끌어 옮기면 <b>가이드선</b>이 생기고 해당 탭이 열려요. 목록의 가이드선 버튼으로 하나씩 끄고, ↺ 버튼으로 원래 자리로 돌려요.</li>
+          <li><b>범례</b>는 칠한 색과 도형 모양마다 한 줄씩 자동으로 생겨요. <b>세로 / 가로</b>를 고를 수 있고(가로는 칠 한 줄, 도형 한 줄), 지도에서 범례 상자를 끌어 옮겨요. 범례는 처음엔 꺼져 있어요.</li>
         </ul>
 
         <h4>저장하기</h4>
         <ul>
           <li><b>[저장]</b> → 범위(화면 전체 / 영역 선택)와 스타일(시험지용 / 현재 화면대로)을 고르세요.</li>
           <li><b>시험지용</b>: 흑백, 사각형 틀, 적도 0° 표시. B4 2단 편집에서 지도를 약 10cm 폭으로 넣으면 글자가 9pt가 돼요.</li>
+          <li>미리보기에서 <b>축척과 범례를 끌어</b> 위치를 정해요. 범례는 <b>지도 안</b>(틀에 딱 붙일 수 있어요) 또는 <b>지도 밖</b>(틀 둘레에 붙어 함께 저장)을 고를 수 있어요.</li><li>영역 선택 시 축척과 범례 공간을 고려하여 선택하세요.</li>
           <li><b>[복사]</b>하면 한글·PPT에 바로 붙여 넣을 수 있어요.</li>
         </ul>
 
@@ -262,9 +311,9 @@
         <ul class="keys">
           <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기 · <kbd>Ctrl</kbd>+<kbd>Y</kbd> 다시 하기</li>
           <li><kbd>1</kbd>~<kbd>9</kbd> 색 고르기 · <kbd>E</kbd> 지우개 · <kbd>P</kbd> 도법 바꾸기</li>
-          <li><kbd>+</kbd> <kbd>−</kbd> 확대·축소 · 방향키 이동 · <kbd>Delete</kbd> 고른 점 지우기</li>
+          <li><kbd>+</kbd> <kbd>−</kbd> 확대·축소 · 방향키 이동 · <kbd>Delete</kbd> 고른 도형 지우기</li>
         </ul>
-        <p class="help-foot">세계지도 색칠하고 점찍기 3.0 (20261117) · 지도 데이터: Natural Earth · @geotasoo</p>
+        <p class="help-foot">세계지도 색칠하고 도형찍기 3.0 (20261117) · 지도 데이터: Natural Earth · @geotasoo</p>
       </div>
     </div>
   </div>
