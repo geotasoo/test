@@ -1,4 +1,4 @@
-/* 세계지도 색칠하기 — 시안 9
+/* 세계지도 색칠하기 — 시안 10
  * 도법 두 가지:
  *  - 메르카토르: 지도 한 장을 회전시켜 그려서 이음매가 없고, 좌우로 끝없이 돌릴 수 있어요.
  *  - 이퀄 어스: 넓이가 실제 비율대로 보이는 도법. 가운데 경선을 150°E로 고정한 태평양 중심 지도예요.
@@ -19,36 +19,48 @@
   };
 
   const PALETTES = [
+    { name: '시험지 회색', colors: ['#D9D9D9', '#BFBFBF', '#A6A6A6', '#8C8C8C', '#737373', '#595959', '#404040'] },
     { name: '기본', colors: ['#F94144', '#F8961E', '#F9C74F', '#90BE6D', '#43AA8B', '#4D96FF', '#7B61FF', '#E56BCF', '#9C6644', '#5C677D'] },
     { name: '파랑 단계', colors: ['#DCEBFA', '#A9CDF0', '#6AA6DE', '#2F78C2', '#164A8A'] },
     { name: '빨강 단계', colors: ['#FDE2D6', '#F9B193', '#F27A55', '#D9412B', '#A01B17'] },
     { name: '초록 단계', colors: ['#E3F2D9', '#B5DDA0', '#7CC16A', '#3F9441', '#1D5E28'] },
     { name: '노랑-갈색', colors: ['#FFF3C4', '#FAD776', '#F2B134', '#C98320', '#8A5A12'] },
-    { name: '회색', colors: ['#F1F3F5', '#CED4DA', '#ADB5BD', '#6C757D', '#343A40'] },
   ];
   const LAND_COLORS = ['#FFFFFF', '#F7F3EA', '#EEF1F4', '#E6E6E6'];
-  const OCEAN_COLORS = ['#DDEEFB', '#C9E4F7', '#FFFFFF', '#EEF3F7'];
+  const OCEAN_COLORS = ['#E3E3E3', '#DDEEFB', '#C9E4F7', '#FFFFFF'];
 
   // ───────── 상태 ─────────
   const S = {
     colors: new Map(),      // 나라코드 → 색
-    current: '#F9C74F',
+    current: '#A6A6A6',     // 시험지처럼 중간 회색
     palette: 0,
     tool: 'paint',          // 'paint' | 'erase'
     land: '#FFFFFF',
-    ocean: '#DDEEFB',
-    line: 0.6,
-    show: { borders: true, kp: false, names: false, tiny: false, grid: false, equator: true, lakes: true, scale: true },
+    ocean: '#E3E3E3',       // 시험지처럼 옅은 회색 바다
+    line: 1.0,
+    borderDash: true,       // 국경선 점선(기본) / 실선
+    show: { borders: true, kp: false, names: false, tiny: false, grid: true, equator: true, lakes: true, scale: true },
     dockHidden: false,
     lakes: { sel: WM_PLACES.LAKES.filter(l => l.on).map(l => l.ko), all: false },   // 켜 둔 주요 호수
     points: [],             // 찍은 점 { id, lon, lat, city(목록 도시면 이름), label, off(라벨을 옮겼으면 [dx, dy]) }
-    pstyle: { color: '#E63946', shape: 'circle', size: 6, outline: true, font: 14 },   // 모든 점 공통 모양 (font: 라벨 글자 크기)
-    fill: null,             // 'alpha' | 'hangul' 이면 순서대로 라벨 자동
+    pstyle: { color: '#1A1A1A', shape: 'circle', size: 6, outline: true, font: 16 },   // 모든 점 공통 모양 (font: 라벨 글자 크기)
+    fill: null,             // 'alpha' | 'hangulp' | 'hangul' 이면 순서대로 라벨 자동
+    regions: [],            // 색칠한 나라 라벨 { id, label, off }
+    rfill: null,            // 색칠 라벨 자동 순서
+    rfont: 20,              // 색칠 라벨 글자 크기
     view: null,             // 메르카토르 { lon, lat, z } 저장용
     proj: 'merc',           // 'merc' | 'ee'
     eeLon: EE_CENTER,       // 이퀄 어스 가운데 경선
   };
   const undoStack = [], redoStack = [];
+  // 라벨 글꼴: 시험지처럼 명조 계열 (웹 글꼴이 없으면 컴퓨터의 바탕·명조)
+  const LABEL_FONT = '"Noto Serif KR", "Nanum Myeongjo", "Batang", "AppleMyungjo", "Times New Roman", serif';
+  const fontAsked = new Set();
+  function ensureFont(font, text) {   // 캔버스는 웹 글꼴을 스스로 내려받지 않아서, 쓰는 글자를 미리 불러와요
+    if (!document.fonts || !text) return;
+    const k = font + '|' + text; if (fontAsked.has(k)) return; fontAsked.add(k);
+    document.fonts.load(font, text).then(() => requestDraw()).catch(() => {});
+  }
   const DOKDO = [131.8686, 37.2411];   // 독도: 지도 데이터에 없을 만큼 작아서 점으로 과장해 표시
 
   // ───────── DOM ─────────
@@ -399,6 +411,7 @@
     ctx.fillStyle = isEE() ? '#EEF1F5' : S.ocean; ctx.fillRect(0, 0, W, H);
     if (!countries.length) return;
     if (isEE()) updateProjName();
+    updateZoomPct();
     if (isEE() && !(ee.ready && ee.lon === S.eeLon)) { drawLiveEE(); return drawOverlays(); }
     const lw = S.line, px = 1 / s;   // 화면 1픽셀 = 기준 좌표 px
     const lakeShape = S.show.lakes ? shared('lakes:' + lakeKey(), () => FC(visibleLakes())) : null;
@@ -421,19 +434,24 @@
     // 2) 호수
     if (S.show.lakes) {
       ctx.fillStyle = S.ocean; ctx.fill(lakeShape);
-      ctx.lineWidth = lw * 0.8 * px; ctx.strokeStyle = '#7d8a99'; ctx.stroke(lakeShape);
+      ctx.lineWidth = lw * 0.8 * px; ctx.strokeStyle = '#333'; ctx.stroke(lakeShape);
     }
     // 3) 경위선·적도
     if (S.show.grid) {
-      ctx.setLineDash([4 * px, 4 * px]); ctx.lineWidth = 0.8 * px; ctx.strokeStyle = 'rgba(60,120,190,.55)';
+      ctx.lineWidth = 0.6 * px; ctx.strokeStyle = 'rgba(0,0,0,.22)';   /* 경위선은 가는 실선 (국경 점선과 구별) */
       ctx.stroke(gridShape); ctx.setLineDash([]);
     }
-    if (S.show.equator) { ctx.lineWidth = 1.1 * px; ctx.strokeStyle = 'rgba(220,60,60,.75)'; ctx.stroke(equatorShape); }
+    if (S.show.equator) { ctx.lineWidth = 1.1 * px; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.stroke(equatorShape); }
     // 4) 해안선·국경선
-    ctx.lineWidth = lw * px; ctx.strokeStyle = '#4b5663';
+    ctx.lineWidth = lw * px; ctx.strokeStyle = '#1a1a1a';
     ctx.stroke(coastShape);
-    if (S.show.borders) ctx.stroke(borderShape);
-    if (S.show.kp) ctx.stroke(shared('kp', () => kpMesh));
+    if (S.show.borders || S.show.kp) {
+      ctx.lineWidth = lw * 0.9 * px; ctx.strokeStyle = '#2b2b2b';
+      if (S.borderDash) ctx.setLineDash([3.2 * px * Math.max(1, lw), 2.2 * px * Math.max(1, lw)]);   // 시험지처럼 점선
+      if (S.show.borders) ctx.stroke(borderShape);
+      if (S.show.kp) ctx.stroke(shared('kp', () => kpMesh));
+      ctx.setLineDash([]);
+    }
     if (isEE()) { ctx.lineWidth = 1.2 * px; ctx.strokeStyle = '#7d8a99'; ctx.stroke(shared('sphere', () => SPHERE)); }
     // 6) 마우스를 올린 나라 강조
     if (hoverId && byId.has(hoverId) && !isEE()) {
@@ -465,11 +483,16 @@
       groups.get(c).push(f);
     }
     for (const [c, fs] of groups) { ctx.beginPath(); for (const f of fs) g(f); ctx.fillStyle = c; ctx.fill(); }
-    if (S.show.lakes) { ctx.beginPath(); g(src.lakes); ctx.fillStyle = S.ocean; ctx.fill(); ctx.lineWidth = lw * 0.8; ctx.strokeStyle = '#7d8a99'; ctx.stroke(); }
-    if (S.show.grid) { ctx.beginPath(); g(graticules[gridStep()]); ctx.setLineDash([4, 4]); ctx.lineWidth = 0.8; ctx.strokeStyle = 'rgba(60,120,190,.55)'; ctx.stroke(); ctx.setLineDash([]); }
-    if (S.show.equator) { ctx.beginPath(); g(equator); ctx.lineWidth = 1.1; ctx.strokeStyle = 'rgba(220,60,60,.75)'; ctx.stroke(); }
-    ctx.beginPath(); g(src.coast); if (S.show.borders) g(src.border); if (S.show.kp) g(src.kp || kpMesh);
-    ctx.lineWidth = lw; ctx.strokeStyle = '#4b5663'; ctx.stroke();
+    if (S.show.lakes) { ctx.beginPath(); g(src.lakes); ctx.fillStyle = S.ocean; ctx.fill(); ctx.lineWidth = lw * 0.8; ctx.strokeStyle = '#333'; ctx.stroke(); }
+    if (S.show.grid) { ctx.beginPath(); g(graticules[gridStep()]); ctx.lineWidth = 0.6; ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.stroke(); ctx.setLineDash([]); }
+    if (S.show.equator) { ctx.beginPath(); g(equator); ctx.lineWidth = 1.1; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.stroke(); }
+    ctx.beginPath(); g(src.coast); ctx.lineWidth = lw; ctx.strokeStyle = '#1a1a1a'; ctx.stroke();
+    if (S.show.borders || S.show.kp) {
+      ctx.beginPath(); if (S.show.borders) g(src.border); if (S.show.kp) g(src.kp || kpMesh);
+      ctx.lineWidth = lw * 0.9; ctx.strokeStyle = '#2b2b2b';
+      if (S.borderDash) ctx.setLineDash([3.2 * Math.max(1, lw), 2.2 * Math.max(1, lw)]);
+      ctx.stroke(); ctx.setLineDash([]);
+    }
     ctx.beginPath(); g(SPHERE); ctx.lineWidth = 1.2; ctx.strokeStyle = '#7d8a99'; ctx.stroke();
   }
 
@@ -495,12 +518,12 @@
       const r = Math.max(2.6, Math.min(4.5, 2.2 + z * 0.15));
       ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 2 * Math.PI);
       ctx.fillStyle = S.colors.get(f.id) || S.land; ctx.fill();
-      ctx.lineWidth = 0.9; ctx.strokeStyle = '#4b5663'; ctx.stroke();
+      ctx.lineWidth = 0.9; ctx.strokeStyle = '#1a1a1a'; ctx.stroke();
     }
 
     // 독도: 대한민국과 같은 색의 작은 점 (확대해도 점으로)
     {
-      const p = proj(DOKDO);
+      const p = dokdoVisible() && proj(DOKDO);
       if (p && p[0] > -10 && p[0] < W + 10 && p[1] > -10 && p[1] < H + 10) {
         ctx.beginPath(); ctx.arc(p[0], p[1], dokdoR(), 0, 2 * Math.PI);
         ctx.fillStyle = S.colors.get('KOR') || S.land; ctx.fill();
@@ -510,6 +533,7 @@
 
     // 7) 나라 이름
     if (S.show.names) drawLabels(z);
+    drawRegionLabels();
     drawPoints();
     if (S.show.grid) drawGridLabels();
     if (S.show.scale) drawScale();
@@ -538,7 +562,7 @@
   function drawGridLabels() {
     const step = gridStep(), top = area.top + 6, bot = area.bot - 8;   // 아래쪽 축척·출처와 겹치지 않게
     ctx.font = `600 11px ${FONT}`; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-    const col = 'rgba(35,85,145,.95)';
+    const col = '#333';
     // 위도: 왼쪽·오른쪽 가장자리
     for (let lat = -Math.floor(80 / step) * step; lat <= 80; lat += step) {
       let L, R;
@@ -637,7 +661,9 @@
 
   let hitDokdo = false;
   // 독도: 울릉도(지름 약 10km)의 1/4 크기 → 반지름 약 1.25km. 축소하면 사라지지 않게 가장 작은 점으로
-  const dokdoR = () => Math.max(1.2, 1.25 * s / (6371 * (isEE() ? 1 : Math.cos(DOKDO[1] * RAD))));
+  const pxPerKm = () => s / (6371 * (isEE() ? 1 : Math.cos(DOKDO[1] * RAD)));
+  const dokdoVisible = () => pxPerKm() * 10 >= 6;     // 울릉도(지름 약 10km)가 6px 이상으로 보일 때만
+  const dokdoR = () => Math.max(1.2, 1.25 * pxPerKm());
   function hitTest(px, py, tolerance) {
     let ll = proj.invert([px, py]);
     if (!ll || !isFinite(ll[0]) || !isFinite(ll[1])) return null;
@@ -648,7 +674,7 @@
     ll = [((ll[0] + 540) % 360) - 180, ll[1]];
     const [lon, lat] = ll;
     const dp = proj(DOKDO);   // 독도 점을 누르면 대한민국
-    if (dp && Math.hypot(dp[0] - px, dp[1] - py) < Math.max(dokdoR() + 3, tolerance * 0.6)) { hitDokdo = true; return byId.get('KOR'); }
+    if (dp && dokdoVisible() && Math.hypot(dp[0] - px, dp[1] - py) < Math.max(dokdoR() + 3, tolerance * 0.6)) { hitDokdo = true; return byId.get('KOR'); }
     hitDokdo = false;
     if (S.show.lakes && visibleLakes().some(l => inBox(l, lon, lat) && d3.geoContains(l, ll))) return null;
     // 작은 나라 우선 (큰 나라 안에 있는 바티칸·산마리노 등)
@@ -701,10 +727,18 @@
     $('#undo').disabled = !undoStack.length;
     $('#redo').disabled = !redoStack.length;
     $('#count').textContent = `칠한 나라 ${S.colors.size}개`;
+    syncRegions();
+    if (typeof renderRegions === 'function') renderRegions();
     if (typeof renderPoints === 'function') renderPoints();
     requestDraw(); saveSoon();
   }
 
+  function paintTo(f, color) {
+    const before = S.colors.get(f.id) || null;
+    if (before === color) return;
+    commit([[f.id, before, color]], f.properties.ko);
+    showToast(color ? `${f.properties.ko} 칠함` : `${f.properties.ko} 지움`, true);
+  }
   function paint(f) {
     const id = f.id, before = S.colors.get(id) || null;
     const name = f.properties.ko;
@@ -728,6 +762,7 @@
     if (pointers.size === 1) {
       tap = { id: e.pointerId, x, y, t: performance.now(), moved: false, type: e.pointerType };
       // 점찍기 중에 찍어 둔 점을 누르면: 끌어서 옮기기
+      if (sideName === 'regions') { const rl = rlabelAt(x, y); if (rl) tap.rlabel = { r: rl, base: rl.off ? [...rl.off] : [0, 0], from: rl.off ? [...rl.off] : null }; }
       if (pointMode) {
         const lp = labelAt(x, y);
         if (lp) tap.label = { pt: lp, base: lp.off ? [...lp.off] : defaultOff(), from: lp.off ? [...lp.off] : null };
@@ -745,7 +780,9 @@
     p.x = x; p.y = y;
     if (pointers.size === 1) {
       if (tap && !tap.moved && Math.hypot(x - tap.x, y - tap.y) > 6) { tap.moved = true; canvas.classList.add('dragging'); }
-      if (tap && tap.label && tap.moved) {          // 라벨 끌기 → 가이드선
+      if (tap && tap.rlabel && tap.moved) {         // 색칠 라벨 끌기
+        tap.rlabel.r.off = [tap.rlabel.base[0] + x - tap.x, tap.rlabel.base[1] + y - tap.y]; requestDraw();
+      } else if (tap && tap.label && tap.moved) {          // 라벨 끌기 → 가이드선
         tap.label.pt.off = [tap.label.base[0] + x - tap.x, tap.label.base[1] + y - tap.y]; requestDraw();
       } else if (tap && tap.point && tap.moved) {
         const ll = toLonLat(x, y);
@@ -762,7 +799,12 @@
     if (!pointers.has(e.pointerId)) return;
     pointers.delete(e.pointerId);
     canvas.classList.remove('dragging');
-    if (tap && tap.label && tap.moved) {          // 라벨 옮기기 끝 (원래 자리 가까이 놓으면 가이드선 없앰)
+    if (tap && tap.rlabel && tap.moved) {
+      const { r, from } = tap.rlabel;
+      let to = r.off; if (to && Math.hypot(to[0], to[1]) < 10) to = null;
+      r.off = from;
+      regionsAction(to ? '라벨 옮김' : '라벨 원래 자리', () => { const q = S.regions.find(x => x.id === r.id); if (q) q.off = to; });
+    } else if (tap && tap.label && tap.moved) {          // 라벨 옮기기 끝 (원래 자리 가까이 놓으면 가이드선 없앰)
       const { pt, from } = tap.label, d0 = defaultOff();
       let to = pt.off; if (to && Math.hypot(to[0] - d0[0], to[1] - d0[1]) < 12) to = null;
       pt.off = from;
@@ -776,7 +818,7 @@
         const hitP = tap.point ? tap.point.pt : tap.label ? tap.label.pt : null;
         if (hitP) selectPoint(hitP.id, true);
         else addPoint(tap.x, tap.y);
-      } else {
+      } else if (!tap.rlabel) {
         const f = hitTest(tap.x, tap.y, tap.type === 'mouse' ? 10 : 22);
         if (f) paint(f);
       }
@@ -796,6 +838,8 @@
 
   function hover(x, y) {
     const now = performance.now(); if (now - lastTip < 16) return; lastTip = now;
+    if (sideName === 'regions' && rlabelAt(x, y)) { canvas.style.cursor = 'grab'; if (hoverId) { hoverId = null; requestDraw(); } return hideTip(); }
+    if (sideName === 'regions') canvas.style.cursor = '';
     if (pointMode) {
       const pt = labelAt(x, y) || pointAt(x, y, 4);
       canvas.style.cursor = pt ? 'grab' : '';
@@ -870,8 +914,13 @@
   });
   function syncLayers() {
     document.querySelectorAll('input[data-layer]').forEach(cb => { cb.checked = !!S.show[cb.dataset.layer]; });
-    $('#lineWidth').closest('.row').classList.toggle('off', !S.show.borders);
+    $('#lineWidth').closest('.row').classList.toggle('off', !S.show.borders && !S.show.kp);
+    document.querySelector('[data-layer="borders"]').closest('.row').classList.toggle('off', !S.show.borders && !S.show.kp);
+    document.querySelectorAll('#dashSeg button').forEach(b => b.classList.toggle('sel', (b.dataset.dash === '1') === !!S.borderDash));
   }
+  document.querySelectorAll('#dashSeg button').forEach(b => b.addEventListener('click', () => {
+    S.borderDash = b.dataset.dash === '1'; syncLayers(); requestDraw(); saveSoon();
+  }));
   const layersBtn = $('#layersBtn'), layersPanel = $('#layersPanel');
   function openLayers(open) {
     layersPanel.hidden = !open; layersBtn.setAttribute('aria-expanded', String(open));
@@ -897,6 +946,35 @@
   const lineInput = $('#lineWidth'), lineOut = $('#lineWidthOut');
   lineInput.addEventListener('input', () => { S.line = +lineInput.value; lineOut.textContent = S.line.toFixed(1); requestDraw(); saveSoon(); });
 
+  // ───────── 초기화 (되돌리기로 되살릴 수 있게 전체 상태를 기억) ─────────
+  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'lakes', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'proj', 'eeLon'];
+  const fullSnap = () => JSON.parse(JSON.stringify({ ...Object.fromEntries(KEEP.map(k => [k, S[k]])), colors: [...S.colors] }));
+  function applySnap(sn) {
+    const proj0 = S.proj;
+    for (const k of KEEP) S[k] = JSON.parse(JSON.stringify(sn[k]));
+    S.colors = new Map(sn.colors);
+    if (S.proj !== proj0) { const to = S.proj; S.proj = proj0; setProjection(to, true); }
+    renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI();
+    lineInput.value = S.line; lineOut.textContent = S.line.toFixed(1);
+    selPoint = null;
+    if (sideName === 'points') { renderPstyle(); renderCities(); }
+    if (sideName === 'regions') renderRstyle();
+    if (sideName === 'lakes') renderLakes();
+  }
+  function resetAll() {
+    const before = fullSnap();
+    const def = JSON.parse(JSON.stringify(DEFAULTS));
+    applySnap({ ...Object.fromEntries(KEEP.map(k => [k, def[k]])), colors: [] });
+    const after = fullSnap();
+    commitAction({ label: '초기화', undo: () => applySnap(before), redo: () => applySnap(after) });
+    goHome();
+    showToast('처음 상태로 돌렸어요', true);
+  }
+  $('#resetBtn').addEventListener('click', () => { $('#resetConfirm').hidden = false; $('#resetOk').focus(); });
+  $('#resetCancel').addEventListener('click', () => { $('#resetConfirm').hidden = true; });
+  $('#resetConfirm').addEventListener('click', e => { if (e.target.id === 'resetConfirm') $('#resetConfirm').hidden = true; });
+  $('#resetOk').addEventListener('click', () => { $('#resetConfirm').hidden = true; resetAll(); });
+
   // ───────── 팔레트 접기 ─────────
   function syncDock() {
     document.body.classList.toggle('dock-hidden', !!S.dockHidden);
@@ -915,6 +993,28 @@
     const changes = [...S.colors].map(([id, c]) => [id, c, null]);
     commit(changes, '모두 지우기');
     showToast(`${changes.length}개 나라의 색을 지웠어요`, true);
+  });
+  // 확대 비율 (세계 전체 = 100%)
+  const zoomPct = $('#zoomPct');
+  let lastPct = '';
+  function updateZoomPct() {
+    const v = String(Math.round(s / sMin * 100));
+    if (v !== lastPct && document.activeElement !== zoomPct) { zoomPct.value = v; lastPct = v; }
+  }
+  function zoomToPct(pct) {
+    const target = Math.max(100, Math.min(MAX_ZOOM * 100, pct)) / 100 * sMin;
+    zoomAt((area.left + W - (area.right || 0)) / 2, (area.top + area.bot) / 2, target / s);
+  }
+  zoomPct.addEventListener('focus', () => zoomPct.select());
+  zoomPct.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { zoomPct.blur(); }
+    else if (e.key === 'Escape') { lastPct = ''; zoomPct.blur(); }
+    e.stopPropagation();
+  });
+  zoomPct.addEventListener('blur', () => {
+    const v = parseFloat(zoomPct.value.replace(/[^\d.]/g, ''));
+    lastPct = '';
+    if (isFinite(v) && v > 0) zoomToPct(v); else requestDraw();
   });
   $('#zoomIn').addEventListener('click', () => zoomAt(W / 2, H / 2, 1.6));
   $('#zoomOut').addEventListener('click', () => zoomAt(W / 2, H / 2, 1 / 1.6));
@@ -970,7 +1070,7 @@
     if (!S.points.length) return;
     const st = S.pstyle, r = st.size, fs = labelFont();
     ctx.save(); ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.lineJoin = 'round';
-    ctx.font = `700 ${fs}px ${FONT}`;
+    ctx.font = `700 ${fs}px ${LABEL_FONT}`;
     for (const pt of S.points) {
       const p = proj([pt.lon, pt.lat]); if (!p || p[0] < -200 || p[0] > W + 200 || p[1] < -200 || p[1] > H + 200) continue;
       if (pt.id === selPoint && pointMode) {
@@ -979,6 +1079,7 @@
       }
       if (pt.label) {
         const off = pt.off || defaultOff(), ax = p[0] + off[0], ay = p[1] + off[1];
+        ensureFont(`700 ${fs}px "Noto Serif KR"`, pt.label);
         const w = ctx.measureText(pt.label).width;
         const box = [ax - 3, ay - fs / 2 - 3, ax + w + 3, ay + fs / 2 + 3];
         // 가이드선: 라벨을 점에서 떼어 놓았으면 점과 라벨을 이어요
@@ -1005,7 +1106,7 @@
     }
     for (const { pt } of labelBoxes) {
       const [ax, ay] = pt._lab;
-      ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.strokeText(pt.label, ax, ay);
+      ctx.lineWidth = Math.max(3.2, fs * 0.28); ctx.strokeStyle = '#fff'; ctx.strokeText(pt.label, ax, ay);
       ctx.fillStyle = '#1d2733'; ctx.fillText(pt.label, ax, ay);
     }
     ctx.restore();
@@ -1021,16 +1122,19 @@
   // ───────── 점찍기 ─────────
   let pointMode = false, selPoint = null, ptab = 'cities';
   const SHAPES = [['circle', '동그라미'], ['square', '네모'], ['triangle', '세모'], ['diamond', '마름모'], ['star', '별'], ['cross', '십자']];
-  const PCOLORS = ['#E63946', '#F4A261', '#F9C74F', '#2A9D8F', '#277DA1', '#7B61FF', '#E56BCF', '#8D6E63', '#1D2733', '#FFFFFF'];
+  const PCOLORS = ['#1A1A1A', '#7F7F7F', '#FFFFFF', '#E63946', '#F4A261', '#F9C74F', '#2A9D8F', '#277DA1', '#7B61FF', '#E56BCF'];
+  const SEQ = ['alpha', 'hangulp', 'hangul'];
   const HANGUL = ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카', '타', '파', '하'];
   const seqLabel = (mode, i) => {
     if (mode === 'alpha') { let t = '', n = i + 1; while (n > 0) { const m = (n - 1) % 26; t = String.fromCharCode(65 + m) + t; n = Math.floor((n - 1) / 26); } return t; }
-    if (mode === 'hangul') return `(${HANGUL[i % 14]}${i >= 14 ? Math.floor(i / 14) + 1 : ''})`;
+    const h = `${HANGUL[i % 14]}${i >= 14 ? Math.floor(i / 14) + 1 : ''}`;
+    if (mode === 'hangulp') return `(${h})`;
+    if (mode === 'hangul') return h;
     return '';
   };
   // A B C 또는 (가)(나)로 채운 상태면, 점을 더하거나 빼거나 순서를 바꿀 때 다시 차례대로 붙여요
   function relabel() {
-    if (S.fill === 'alpha' || S.fill === 'hangul') S.points.forEach((p, i) => { p.label = seqLabel(S.fill, i); });
+    if (SEQ.includes(S.fill)) S.points.forEach((p, i) => { p.label = seqLabel(S.fill, i); });
   }
   function toLonLat(x, y) {
     const ll = proj.invert([x, y]);
@@ -1089,6 +1193,116 @@
   }
   function setStyle(patch) { Object.assign(S.pstyle, patch); saveSoon(); renderPstyle(); renderPoints(); requestDraw(); }
 
+  // ───────── 색칠한 나라 라벨 ─────────
+  // 칠한 나라 목록과 맞춰요: 새로 칠한 나라는 끝에 붙고, 색을 지운 나라는 빠져요
+  function syncRegions() {
+    const before = S.regions.length;
+    S.regions = S.regions.filter(r => S.colors.has(r.id));
+    const have = new Set(S.regions.map(r => r.id));
+    for (const id of S.colors.keys()) if (!have.has(id)) S.regions.push({ id, label: '', off: null });
+    if (S.regions.length !== before || SEQ.includes(S.rfill)) relabelRegions();
+  }
+  function relabelRegions() {
+    if (SEQ.includes(S.rfill)) S.regions.forEach((r, i) => { r.label = seqLabel(S.rfill, i); });
+  }
+  const snapRegions = () => ({ regions: S.regions.map(r => ({ ...r, off: r.off ? [...r.off] : null })), rfill: S.rfill || null });
+  const restoreRegions = sn => { S.regions = sn.regions.map(r => ({ ...r, off: r.off ? [...r.off] : null })); S.rfill = sn.rfill; };
+  let lastRTag = null;
+  function regionsAction(label, mutate, tag) {
+    const top = undoStack[undoStack.length - 1], now = performance.now();
+    if (tag && lastRTag && lastRTag.tag === tag && lastRTag.action === top && now - lastRTag.t < 1500) {
+      mutate(); lastRTag.action.after = snapRegions(); lastRTag.t = now; afterChange(); return;
+    }
+    const before = snapRegions(); mutate(); const after = snapRegions();
+    const action = { label, before, after, undo() { restoreRegions(this.before); }, redo() { restoreRegions(this.after); } };
+    lastRTag = tag ? { tag, action, t: now } : null;
+    commitAction(action);
+  }
+  let rlabelBoxes = [];
+  function drawRegionLabels() {
+    rlabelBoxes = [];
+    const list = S.regions.filter(r => r.label && byId.has(r.id));
+    if (!list.length) return;
+    const fs = S.rfont;
+    ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    ctx.font = `700 ${fs}px ${LABEL_FONT}`;
+    for (const r of list) {
+      const f = byId.get(r.id), a = proj(f.label);
+      if (!a || a[0] < -300 || a[0] > W + 300 || a[1] < -300 || a[1] > H + 300) continue;
+      ensureFont(`700 ${fs}px "Noto Serif KR"`, r.label);
+      const off = r.off || [0, 0], cx = a[0] + off[0], cy = a[1] + off[1];
+      const w = ctx.measureText(r.label).width;
+      const box = [cx - w / 2 - 3, cy - fs / 2 - 3, cx + w / 2 + 3, cy + fs / 2 + 3];
+      if (r.off && Math.hypot(off[0], off[1]) > fs * 0.9) {   // 가이드선: 나라 안쪽 기준점 → 라벨 모서리
+        const nx = a[0] > cx ? box[2] - 2 : box[0] + 2, ny = a[1] < cy ? box[1] + 2 : box[3] - 2;
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(nx, ny);
+        ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
+        ctx.lineWidth = 1; ctx.strokeStyle = '#1a1a1a'; ctx.stroke();
+      }
+      ctx.lineWidth = Math.max(3.5, fs * 0.3); ctx.strokeStyle = '#fff'; ctx.strokeText(r.label, cx, cy);
+      ctx.fillStyle = '#111'; ctx.fillText(r.label, cx, cy);
+      rlabelBoxes.push({ r, box });
+    }
+    ctx.restore();
+  }
+  function rlabelAt(x, y) {
+    for (let i = rlabelBoxes.length - 1; i >= 0; i--) {
+      const { r, box } = rlabelBoxes[i];
+      if (x >= box[0] - 3 && x <= box[2] + 3 && y >= box[1] - 3 && y <= box[3] + 3) return r;
+    }
+    return null;
+  }
+  function renderRstyle() { $('#rFont').value = S.rfont; $('#rFontOut').textContent = S.rfont; }
+  $('#rFont').addEventListener('input', e => { S.rfont = +e.target.value; $('#rFontOut').textContent = S.rfont; requestDraw(); saveSoon(); });
+  function renderRegions() {
+    updateCounts();
+    if (sideName !== 'regions') return;
+    document.querySelectorAll('[data-rfill]').forEach(b => b.classList.toggle('sel', b.dataset.rfill === S.rfill));
+    const list = $('#regionList');
+    if (list.contains(document.activeElement) || dragRow) return;
+    list.innerHTML = '';
+    if (!S.regions.length) { list.innerHTML = '<div class="empty">아직 칠한 나라가 없어요.<br>나라를 칠하면 여기에 차례대로 나와요.</div>'; return; }
+    for (const r of S.regions) {
+      const f = byId.get(r.id); if (!f) continue;
+      const row = document.createElement('div'); row.className = 'prow-item'; row.dataset.id = r.id;
+      row.innerHTML = `<span class="grip" title="끌어서 순서 바꾸기">⋮⋮</span><span class="rsw" style="background:${S.colors.get(r.id)}"></span>`;
+      const inp = document.createElement('input'); inp.value = r.label; inp.placeholder = '라벨 입력';
+      inp.oninput = () => {
+        regionsAction('라벨 수정', () => { const q = S.regions.find(x => x.id === r.id); if (q) q.label = inp.value; S.rfill = null; }, 'rl:' + r.id);
+        document.querySelectorAll('[data-rfill]').forEach(b => b.classList.remove('sel'));
+      };
+      inp.onkeydown = e => { if (e.key === 'Enter') { const nx = row.nextElementSibling && row.nextElementSibling.querySelector('input'); nx ? nx.focus() : inp.blur(); } };
+      const meta = document.createElement('span'); meta.className = 'meta'; meta.textContent = f.properties.ko;
+      row.append(inp, meta);
+      if (r.off) {
+        const rs = document.createElement('button'); rs.className = 'reset'; rs.title = '라벨을 원래 자리로 (가이드선 없애기)';
+        rs.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
+        rs.onclick = e => { e.stopPropagation(); regionsAction('라벨 위치 되돌림', () => { const q = S.regions.find(x => x.id === r.id); if (q) q.off = null; }); };
+        row.append(rs);
+      }
+      const del = document.createElement('button'); del.className = 'del'; del.title = '이 나라 색 지우기';
+      del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+      del.onclick = e => { e.stopPropagation(); paintTo(f, null); };
+      row.append(del);
+      row.querySelector('.grip').addEventListener('pointerdown', e => startRowDrag(e, row, list, order => {
+        if (order.join() !== S.regions.map(x => x.id).join()) regionsAction('순서 바꿈', () => { S.regions = order.map(id => S.regions.find(x => x.id === id)); relabelRegions(); });
+        else renderRegions();
+      }));
+      list.appendChild(row);
+    }
+  }
+  $('#regionsClearAll').addEventListener('click', () => $('#clear').click());   // 색칠하기의 '모두 지우기'와 같음 (라벨도 함께 사라짐)
+  document.querySelectorAll('[data-rfill]').forEach(b => b.addEventListener('click', () => {
+    const mode = b.dataset.rfill;
+    if (!S.regions.length) return showToast('먼저 나라를 칠해 주세요');
+    const names = { alpha: 'A B C', hangulp: '(가)(나)(다)', hangul: '가 나 다', name: '나라 이름', clear: '지우기' };
+    regionsAction(`라벨 ${names[mode]}`, () => {
+      if (SEQ.includes(mode)) { S.rfill = mode; relabelRegions(); }
+      else if (mode === 'name') { S.rfill = null; S.regions.forEach(r => { const f = byId.get(r.id); r.label = f ? f.properties.ko : ''; }); }
+      else { S.rfill = null; S.regions.forEach(r => { r.label = ''; }); }
+    });
+  }));
+
   // ───────── 오른쪽 패널 ─────────
   const side = $('#side');
   const cityByName = new Map(WM_PLACES.CITIES.map(c => [c.name, c]));
@@ -1101,12 +1315,14 @@
     document.querySelectorAll('.pill.tp').forEach(b => b.classList.toggle('on', b.dataset.side === name));
     document.body.classList.toggle('side-open', !!name);
     pointMode = name === 'points';
+    document.body.classList.toggle('label-mode', name === 'regions');
     if (!pointMode) selPoint = null;
     document.body.classList.toggle('point-mode', pointMode);
     $('#pointBanner').hidden = !pointMode;
     canvas.style.cursor = '';
     if (typeof openLayers === 'function') openLayers(false);
     if (name === 'lakes') renderLakes();
+    if (name === 'regions') { renderRstyle(); renderRegions(); }
     document.body.classList.remove('sheet-min');
     if (name === 'points') { setPtab('cities'); renderPstyle(); renderCities(); renderPoints(); }
     hoverId = null; hideTip();
@@ -1115,6 +1331,7 @@
   function updateCounts() {
     $('#lakesCount').textContent = !S.show.lakes ? '' : S.lakes.all ? '전체' : (S.lakes.sel.length || '');
     $('#pointsCount').textContent = S.points.length || '';
+    $('#regionsCount').textContent = S.regions.filter(r => r.label).length || '';
   }
   function setPtab(t) {
     if (t === 'style' && !isPhone()) t = 'cities';     // '점 모양' 탭은 폰에만 (PC는 위에 늘 보임)
@@ -1129,7 +1346,7 @@
     document.body.classList.toggle('sheet-min', on);
     resize(); requestDraw();
   }
-  $('#sheetToggle').addEventListener('click', () => setSheetMin(!document.body.classList.contains('sheet-min')));
+  document.querySelectorAll('[data-sheet]').forEach(b => b.addEventListener('click', () => setSheetMin(!document.body.classList.contains('sheet-min'))));
   document.querySelectorAll('[data-ptab]').forEach(b => b.addEventListener('click', () => {
     if (document.body.classList.contains('sheet-min')) setSheetMin(false);   // 접힌 상태에서 탭을 누르면 펼침
     setPtab(b.dataset.ptab);
@@ -1240,7 +1457,6 @@
     const list = $('#pointList');
     if (list.contains(document.activeElement) || dragRow) return;   // 라벨을 고치거나 끄는 중이면 다시 그리지 않음
     list.innerHTML = '';
-    $('#pointsClear').hidden = !S.points.length;
     if (!S.points.length) { list.innerHTML = '<div class="empty">아직 찍은 점이 없어요.<br>‘도시 고르기’에서 고르거나 지도를 눌러 찍어요.</div>'; return; }
     const st = S.pstyle, key = st.shape + st.color + st.outline;
     if (key !== symKey) {
@@ -1271,15 +1487,18 @@
       del.onclick = e => { e.stopPropagation(); deletePoint(pt.id); };
       row.append(del);
       row.onclick = e => { if (e.target === inp) return; selPoint = pt.id === selPoint ? null : pt.id; renderPoints(); requestDraw(); };
-      row.querySelector('.grip').addEventListener('pointerdown', e => startRowDrag(e, row));
+      row.querySelector('.grip').addEventListener('pointerdown', e => startRowDrag(e, row, list, order => {
+        if (order.join() !== S.points.map(p => p.id).join()) pointsAction('순서 바꿈', () => { S.points = order.map(id => S.points.find(p => p.id === id)); relabel(); });
+        else renderPoints();
+      }));
       list.appendChild(row);
     }
   }
-  // 줄 끌어서 순서 바꾸기 (마우스·손가락 모두)
+  // 줄 끌어서 순서 바꾸기 (마우스·손가락 모두) — 점 목록·색칠 라벨 목록 공용
   let dragRow = null;
-  function startRowDrag(e, row) {
+  function startRowDrag(e, row, list, onDone) {
     e.preventDefault(); e.stopPropagation();
-    const list = $('#pointList'), pid0 = e.pointerId;
+    const pid0 = e.pointerId;
     dragRow = row; row.classList.add('dragging');
     const move = ev => {
       if (ev.pointerId !== pid0) return;
@@ -1295,19 +1514,16 @@
       if (ev.pointerId !== pid0) return;
       window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
       row.classList.remove('dragging'); dragRow = null;
-      const order = [...list.querySelectorAll('.prow-item')].map(r => r.dataset.id);
-      if (order.join() !== S.points.map(p => p.id).join()) {
-        pointsAction('순서 바꿈', () => { S.points = order.map(id => S.points.find(p => p.id === id)); relabel(); });
-      } else renderPoints();
+      onDone([...list.querySelectorAll('.prow-item')].map(r => r.dataset.id));
     };
     window.addEventListener('pointermove', move, { passive: false }); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
   }
   document.querySelectorAll('[data-fill]').forEach(b => b.addEventListener('click', () => {
     const mode = b.dataset.fill;
     if (!S.points.length) return showToast('먼저 점을 찍거나 도시를 골라요');
-    const names = { alpha: 'A B C', hangul: '(가)(나)(다)', city: '도시 이름', clear: '지우기' };
+    const names = { alpha: 'A B C', hangulp: '(가)(나)(다)', hangul: '가 나 다', city: '도시 이름', clear: '지우기' };
     pointsAction(`라벨 ${names[mode]}`, () => {
-      if (mode === 'alpha' || mode === 'hangul') { S.fill = mode; relabel(); }
+      if (SEQ.includes(mode)) { S.fill = mode; relabel(); }
       else if (mode === 'city') { S.fill = null; S.points.forEach(p => { if (p.city) p.label = p.city; }); }
       else { S.fill = null; S.points.forEach(p => { p.label = ''; }); }
     });
@@ -1337,6 +1553,7 @@
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
         line: S.line, show: S.show, dockHidden: S.dockHidden, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
         lakes: S.lakes, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
+        regions: S.regions.map(({ _lab, ...r }) => r), rfill: S.rfill, rfont: S.rfont, borderDash: S.borderDash,
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
   }
@@ -1355,11 +1572,16 @@
       if (Array.isArray(d.cities)) for (const n of d.cities) { const c = WM_PLACES.CITIES.find(x => x.name === n); if (c && !S.points.some(p => p.city === n)) S.points.push({ id: 'c' + n, lon: c.lon, lat: c.lat, city: n, label: n, off: null }); }
       if (d.pstyle) for (const k of ['color', 'size', 'outline', 'font']) if (k in d.pstyle) S.pstyle[k] = d.pstyle[k];
       S.pstyle.shape = 'circle';   // 점 모양은 동그라미 하나
-      S.fill = d.fill === 'alpha' || d.fill === 'hangul' ? d.fill : null;
+      S.fill = d.fill === 'hangul' && S.points[0] && /^\(/.test(S.points[0].label) ? 'hangulp' : (['alpha', 'hangulp', 'hangul'].includes(d.fill) ? d.fill : null);
+      if (Array.isArray(d.regions)) S.regions = d.regions.filter(r => r && typeof r.id === 'string').map(r => ({ id: r.id, label: r.label || '', off: Array.isArray(r.off) ? r.off : null }));
+      S.rfill = ['alpha', 'hangulp', 'hangul'].includes(d.rfill) ? d.rfill : null;
+      if (isFinite(d.rfont)) S.rfont = d.rfont;
+      if (typeof d.borderDash === 'boolean') S.borderDash = d.borderDash;
     } catch (_) { }
   }
 
   // ───────── 시작 ─────────
+  const DEFAULTS = JSON.parse(JSON.stringify({ ...S, colors: [] }));
   load();
   renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI();
   initPanels();
