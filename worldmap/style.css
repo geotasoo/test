@@ -504,3 +504,35 @@ body.point-mode .dock-wrap { display: none; }
 }
 .side-head h2 { white-space: nowrap; }
 @media (max-width: 380px) { .side-head h2 { font-size: 15px; } .side-head .sbtn { padding: 0 8px; } }
+
+/* ===================== 시안 11 ===================== */
+.controls { flex-wrap: nowrap; }
+.pill.mode .dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(0,0,0,.25); flex: none; }
+.pill.mode .pdot { width: 12px; height: 12px; margin: 0 2px; }
+.pill.mode b.cnt { font-size: 11px; color: var(--accent); background: var(--accent-soft); border-radius: 99px; padding: 1px 6px; }
+.pill.mode b.cnt:empty { display: none; }
+.pill.mode.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.pill.mode.on b.cnt { background: rgba(255,255,255,.2); color: #fff; }
+.pill.mode.on .dot { border-color: rgba(255,255,255,.7); }
+.dock-wrap { top: calc(var(--gap) + 46px); }
+.dock-head { gap: 6px; }
+.dock-head .dock-title { margin-right: auto; }
+.dock-wrap { width: 230px; }
+.zoom .zpct input { width: 100%; text-align: center; }
+body.dock-hidden .dock-wrap { display: none; }
+@media (max-width: 719px) {
+  .controls { right: 60px; gap: 6px; }
+  .pill.mode { padding: 0 10px; gap: 6px; }
+  .pill#layersBtn { flex: none; }
+  .dock-wrap .dock { position: static; }
+}
+@media (max-width: 360px) { .pill.mode span { display: none; } }
+.prow-item .guide { width: 26px; height: 26px; border: 0; background: none; border-radius: 6px; color: var(--ink-3); display: grid; place-items: center; flex: none; opacity: .55; }
+.prow-item .guide.on { color: var(--accent); background: var(--accent-soft); opacity: 1; }
+.prow-item .guide svg { width: 14px; height: 14px; }
+@media (max-width: 719px) {
+  .dock-wrap { top: auto; bottom: 0; left: 0; right: 0; width: auto; }
+  .pill.mode span { display: inline; }
+  .pill.mode { font-size: 12.5px; }
+}
+@media (max-width: 360px) { .pill.mode span { display: none; } }
