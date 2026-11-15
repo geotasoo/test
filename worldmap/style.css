@@ -569,3 +569,26 @@ body.dock-hidden .dock-wrap { display: none; }
   .ex-opts { min-width: 0; }
 }
 body.selecting, body.selecting * { user-select: none; -webkit-user-select: none; }
+/* ===================== 3.0 ===================== */
+.brand { cursor: pointer; border-radius: 10px; padding: 4px 6px; margin-left: -6px; }
+.brand:hover { background: #f0f3f7; }
+.brand-emoji { font-size: 22px; line-height: 1; }
+.help-box { width: min(640px, 100%); }
+.help-body { padding: 8px 22px 18px; overflow: auto; font-size: 14px; line-height: 1.6; color: var(--ink); }
+.help-body h4 { margin: 16px 0 4px; font-size: 14.5px; }
+.help-body ul { margin: 0; padding-left: 18px; }
+.help-body li { margin: 2px 0; }
+.help-pc { margin: 10px 0 4px; padding: 10px 12px; background: var(--accent-soft); border-radius: 10px; color: #174ea6; }
+.help-foot { margin: 18px 0 0; font-size: 12px; color: var(--ink-3); }
+.help-body kbd { font: 600 11.5px system-ui; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; background: #fafbfc; }
+@media (max-width: 719px) {
+  .brand h1 { font-size: 14px; }
+  .brand-emoji { font-size: 19px; }
+  .badge { display: none; }
+}
+@media (max-width: 400px) { .brand h1 { display: none; } }
+@media (max-width: 400px) {
+  .brand h1 { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
+  .brand { min-width: 0; flex: 1; }
+  .actions .btn { padding: 0 7px; }
+}

@@ -94,7 +94,8 @@
     if (isEE()) { proj = projE.rotate([-S.eeLon, 0]).scale(s).translate([ex, ey]); }
     else { proj = projM.rotate([-lon0, 0]).scale(s).translate([W / 2, cy]); }
   }
-  function clampScale(v) { return Math.max(sMin, Math.min(sMin * MAX_ZOOM, v)); }
+  const MIN_ZOOM = 0.6;   // 꽉 찬 화면보다 더 축소 가능 (남극까지 한눈에)
+  function clampScale(v) { return Math.max(sMin * MIN_ZOOM, Math.min(sMin * MAX_ZOOM, v)); }
   function clampView() {
     s = clampScale(s);
     if (isEE()) {
@@ -108,7 +109,7 @@
       else ey = Math.min(top - s * y0, Math.max(bot - s * y1, ey));
     } else {
       const hi = s * merc(LAT_TOP);          // 위쪽 끝이 화면 위로 넘치지 않게
-      const lo = H + s * merc(LAT_BOT);      // 아래쪽 끝이 화면 아래로 넘치지 않게
+      const lo = H + s * merc(-85);          // 아래로는 남극(85°S)까지 내려 볼 수 있게
       cy = lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, cy));
       lon0 = ((lon0 % 360) + 540) % 360 - 180;
     }
@@ -988,7 +989,14 @@
     goHome();
     showToast('처음 상태로 돌렸어요', true);
   }
-  $('#resetBtn').addEventListener('click', () => { $('#resetConfirm').hidden = false; $('#resetOk').focus(); });
+  const askReset = () => { $('#resetConfirm').hidden = false; $('#resetOk').focus(); };
+  $('#resetBtn').addEventListener('click', askReset);
+  $('#brand').addEventListener('click', askReset);   // 제목을 눌러도 초기화
+  // 도움말
+  $('#helpBtn').addEventListener('click', () => { $('#helpDlg').hidden = false; });
+  $('#helpClose').addEventListener('click', () => { $('#helpDlg').hidden = true; });
+  $('#helpDlg').addEventListener('click', e => { if (e.target.id === 'helpDlg') $('#helpDlg').hidden = true; });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('#helpDlg').hidden = true; $('#exportDlg').hidden = true; } });
   $('#resetCancel').addEventListener('click', () => { $('#resetConfirm').hidden = true; });
   $('#resetConfirm').addEventListener('click', e => { if (e.target.id === 'resetConfirm') $('#resetConfirm').hidden = true; });
   $('#resetOk').addEventListener('click', () => { $('#resetConfirm').hidden = true; resetAll(); });
@@ -1027,7 +1035,7 @@
     if (v !== lastPct && document.activeElement !== zoomPct) { zoomPct.value = v; lastPct = v; }
   }
   function zoomToPct(pct) {
-    const target = Math.max(sMin, Math.min(sMin * MAX_ZOOM, pct / 100 * ZREF));
+    const target = Math.max(sMin * MIN_ZOOM, Math.min(sMin * MAX_ZOOM, pct / 100 * ZREF));
     zoomAt((area.left + W - (area.right || 0)) / 2, (area.top + area.bot) / 2, target / s);
   }
   zoomPct.addEventListener('focus', () => zoomPct.select());
@@ -1596,9 +1604,9 @@
     const v = Math.round(0.299 * parseInt(m[1], 16) + 0.587 * parseInt(m[2], 16) + 0.114 * parseInt(m[3], 16));
     const h = v.toString(16).padStart(2, '0'); return '#' + h + h + h;
   };
-  const EX = { range: 'full', style: 'exam', fmt: 'png', k: 2, tick: true, rect: null };
+  const EX = { range: 'full', style: 'exam', fmt: 'png', k: 3, tick: true, rect: null };   // PNG·인쇄용(3배) 고정
   // 시험지용 글자 크기: B4 2단(단 너비 약 11cm)에 지도를 약 9.5cm 폭으로 넣었을 때 9pt(약 3.2mm)가 되도록
-  const EXAM_FONT = 0.033;   // 지도 폭에 대한 글자 크기 비율
+  const EXAM_FONT = 0.0318;  // 지도 폭 10cm일 때 9pt(3.18mm) → 지도 폭의 3.18%
   function fullRect() { return { x: 0, y: 0, w: Math.round(W), h: Math.round(H) }; }
   async function renderExport(k) {
     const rect = EX.range === 'sel' && EX.rect ? EX.rect : fullRect();
@@ -1617,7 +1625,7 @@
       hoverId = null; fade = null;
       if (exam) {
         S.colors = new Map([...S.colors].map(([id, c]) => [id, gray(c)]));
-        S.land = '#FFFFFF'; S.ocean = '#E3E3E3'; S.show.equator = false; S.show.grid = false; S.pstyle.color = gray(S.pstyle.color);
+        S.land = '#FFFFFF'; S.ocean = '#E3E3E3'; S.show.equator = false; S.show.grid = false; S.show.names = false; S.pstyle.color = gray(S.pstyle.color);
         S.pstyle.font = examFont; S.rfont = examFont;
       } else {
         area = { ...area, top: rect.y, bot: rect.y + rect.h, left: rect.x, right: W - (rect.x + rect.w), line: rect.y + rect.h - 10 };
@@ -1661,7 +1669,7 @@
     $('#exSelAgain').hidden = EX.range !== 'sel';
     $('#exTickRow').hidden = EX.style !== 'exam';
     $('#exTick').checked = EX.tick;
-    $('#exStyleHint').textContent = EX.style === 'exam' ? '시험지용: 흑백·회색 바다·사각형 틀, 경위선·축척 없음. 글자는 B4 2단에 넣었을 때 약 9pt' : '지금 화면에 보이는 색·라벨·경위선 숫자·축척 그대로';
+    $('#exStyleHint').textContent = EX.style === 'exam' ? '시험지용: 흑백·회색 바다·사각형 틀, 경위선·나라 이름·축척 없음. B4 용지 2단 편집에서 지도를 약 10cm 폭으로 넣었을 때 글자가 9pt가 되도록 자동 조정해요.' : '지금 화면에 보이는 색·라벨·경위선 숫자·축척 그대로';
     const r = EX.range === 'sel' && EX.rect ? EX.rect : fullRect();
     const m = { l: 0, t: 0, r: 0, b: 0 };
     $('#exSize').textContent = `${Math.round((r.w + m.l + m.r) * EX.k)} × ${Math.round((r.h + m.t + m.b) * EX.k)} 픽셀`;
@@ -1675,7 +1683,8 @@
     if (typeof openLayers === 'function') openLayers(false);
     exportDlg.hidden = false; syncExportUI();
   }
-  $('#saveBtn').addEventListener('click', openExport);
+  function openExportFresh() { EX.range = 'full'; EX.rect = null; openExport(); }   // 다시 열면 '화면 전체'부터
+  $('#saveBtn').addEventListener('click', openExportFresh);
   $('#exClose').addEventListener('click', () => { exportDlg.hidden = true; });
   exportDlg.addEventListener('click', e => { if (e.target === exportDlg) exportDlg.hidden = true; });
   document.querySelectorAll('#exportDlg [data-ex]').forEach(b => b.addEventListener('click', () => {
@@ -1796,6 +1805,7 @@
     if (isEE()) eeStale();
     afterChange();
     if (S.colors.size) showToast(`지난번 작업을 불러왔어요 (${S.colors.size}개 나라)`);
+    else if (isPhone()) showToast('PC에서 사용을 권합니다', false, 3000);
   }).catch(() => { $('#loading').textContent = '지도를 불러오지 못했어요. 새로고침해 주세요.'; });
 
   // 테스트용
