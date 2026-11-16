@@ -568,11 +568,12 @@
     busy = false; render();
     try { localStorage.removeItem(LS.save); } catch (e) { }
     const rows = E.standings(M, S);
-    $('#rTitle').textContent = S.endReason === 'all' ? `🏆 ${S.players[rows[0].p].name}님이 모든 칸을 차지했어요!` : S.endReason === 'quit' ? `🏳️ ${S.round}라운드에서 그만했어요` : `🏁 ${S.maxRound}라운드 끝!`;
-    $('#rSub').textContent = `${G.preset.name} · ${G.cells.length}칸 · 주사위 ${S.cap}개 모드`;
+    $('#rTitle').textContent = '🎉 게임 끝!';
+    const why = S.endReason === 'all' ? `🏆 ${S.players[rows[0].p].name}님이 모든 칸을 차지했어요` : S.endReason === 'quit' ? `${S.round}라운드에서 그만했어요` : `${S.maxRound}라운드 모두 끝`;
+    $('#rSub').textContent = `${why} · ${G.preset.name} ${G.cells.length}칸 · 주사위 ${S.cap}개 모드`;
     $('#ranks').innerHTML = rows.map(r => {
       const [hz, ds] = TITLE_TXT[r.title];
-      return `<div class="rrow${r.rank === 1 ? ' first' : ''}"><span class="rk">${r.rank}등</span>${icon(r.p)}<span class="nm">${esc(r.name)}${r.ai ? ' 🤖' : ''}<small>${r.alive ? `${r.cells}칸 · 주사위 ${r.dice}개` : '탈락'}</small></span>` +
+      return `<div class="rrow${r.rank === 1 ? ' first' : ''}"><span class="rk">${r.rank}등</span>${icon(r.p)}<span class="nm">${esc(r.name)} ${r.ai ? '🤖' : '🧑'}<small>${r.alive ? `${r.cells}칸 · 주사위 ${r.dice}개` : '탈락'}</small></span>` +
         `<span class="ttl">${ds}</span></div>`;
     }).join('');
     const humans = S.players.map((p, i) => [p, i]).filter(([p]) => !p.ai);
@@ -581,7 +582,8 @@
       return `<div class="got"><h4>${icon(i, 'sm')} ${esc(p.name)}님이 차지했던 지역 (${names.length}곳)</h4>${names.length ? `<div class="chips">${names.map(n => `<span>${esc(n)}</span>`).join('')}</div>` : '<div class="none">공격으로 차지한 곳이 없어요</div>'}</div>`;
     }).join('');
     $('#result').hidden = false;
-    SND.win();
+    SND.fanfare();
+    confetti(3200, STYLES[S.players[rows[0].p].style].c);
   }
   $('#rMap').onclick = () => { $('#result').hidden = true; };
   $('#rAgain').onclick = () => { $('#result').hidden = true; openLobby(); };
@@ -663,6 +665,10 @@
       const j = lob.styles.indexOf(s); if (j !== i) lob.styles[j] = lob.styles[i];
       lob.styles[i] = s;
     } else if (b.id === 'rerollBtn') ensureNames(true);
+    else if (b.id === 'randMap') {
+      const pool = E.PRESETS.filter(p => p.id !== lob.preset);
+      lob.preset = pool[Math.floor(Math.random() * pool.length)].id; fitSeats(); ensureNames(true);
+    }
     else if (b.id === 'nextBtn') step = 2;
     else if (b.id === 'backBtn' || b.id === 'backBtn2') step = 1;
     else return;
@@ -688,7 +694,7 @@
     const s = E.newGame(M, { preset: lob.preset, cap: lob.cap, rounds: lob.rounds, players });
     begin(s);
     // 차례 순서 보여 주기 (4.1)
-    const list = s.players.map((p, i) => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><b style="width:2.2em">${i + 1}번</b><span class="dic">${dieIcon(p.style)}</span><span style="font-weight:700">${esc(p.name)}</span>${p.bonus ? `<small style="color:#8a96a3;margin-left:auto">후공 보정 주사위 +${p.bonus}</small>` : ''}</div>`).join('');
+    const list = s.players.map((p, i) => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><b style="width:2.2em">${i + 1}번</b><span class="dic">${dieIcon(p.style)}</span><span style="font-weight:700">${esc(p.name)}</span><span title="${p.ai ? 'AI' : '사람'}">${p.ai ? '🤖' : '🧑'}</span>${p.bonus ? `<small style="color:#8a96a3;margin-left:auto">후공 보정 주사위 +${p.bonus}</small>` : ''}</div>`).join('');
     await askConfirm(`<div style="font-size:18px;margin-bottom:6px">🎲 차례 순서</div>${list}`, '시작!', '');
     advance();
   };

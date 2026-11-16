@@ -81,18 +81,19 @@
     <h2>🎲🗺️ 주사위 땅따먹기 <small>우리나라 시·군</small></h2>
     <div class="lb-cols">
       <section class="lb-map">
-        <h3>지도</h3>
+        <h3 class="map-h">맵 선택 <button class="rand" id="randMap" title="맵을 랜덤으로 골라요">🎲 랜덤</button></h3>
         <div class="mapgroup">전국 · 권역</div>
         <div class="maps" id="mapSeg"></div>
-        <div class="mapgroup">도 하나 <small>특별·광역시는 빠져요</small></div>
+        <div class="mapgroup">도 하나</div>
         <div class="maps six" id="mapSeg2"></div>
+        <p class="map-note">특별·광역시는 빠져요. 전남광주통합특별시 출범(2026.7.1) 이전 행정구역 기준입니다.</p>
         <div class="card-actions step1">
           <button class="sub" data-resume hidden>▶ 이어서 하기</button>
           <button class="go" id="nextBtn">다음 ▶</button>
         </div>
       </section>
       <section class="lb-set">
-        <div class="picked step2"><span>지도</span><b id="pickedMap"></b><button class="link" id="backBtn">바꾸기</button></div>
+        <div class="picked step2"><span>맵</span><b id="pickedMap"></b><button class="link" id="backBtn">바꾸기</button></div>
         <h3>플레이어 <small id="seatSum"></small></h3>
         <p class="hint">이름은 <b>이 지도 속 지역</b>으로 정해져요. 주사위를 누르면 <b>색</b>, 아래 글자를 누르면 <b>사람 · AI · 빈자리</b>가 바뀌어요.</p>
         <div class="seats" id="seats"></div>
@@ -102,7 +103,7 @@
           <div><h3>라운드</h3><div class="seg" id="roundSeg"><button data-r="5">5</button><button data-r="10">10</button><button data-r="15">15</button></div></div>
         </div>
         <div class="card-actions">
-          <button class="sub step2-back" id="backBtn2">◀ 지도</button>
+          <button class="sub step2-back" id="backBtn2">◀ 맵</button>
           <button class="sub" data-resume hidden>▶ 이어서 하기</button>
           <button class="go" id="startBtn">새 게임 시작</button>
         </div>
