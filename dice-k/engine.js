@@ -13,6 +13,10 @@
       4: [0, 1, 2, 3], 5: [0, 1, 2, 3, 4], 6: [0, 1, 1, 2, 3, 4],
       7: [0, 1, 1, 2, 2, 3, 4], 8: [0, 1, 1, 2, 2, 3, 3, 4],
     },
+    // 미션: 앞으로 늘어남. 난이도에 따라 보상 주사위 개수를 다르게
+    missions: [
+      { id: 'home', icon: '🏠', name: '내 이름 땅 차지하기', desc: '내 이름이 된 지역을 공격으로 차지하면 (빼앗겼다 다시 차지해도) 주사위를 더 받아요', reward: 5 },
+    ],
     titles: {              // 4.6 등수 칭호
       4: '수우미가', 5: '수우미양가', 6: '수우우미양가', 7: '수우우미미양가', 8: '수우우미미양양가',
     },
@@ -107,6 +111,7 @@
       scatter(s, mine, left);
     });
     s.mapCells = g.cells;   // 원본 칸 번호 (화면용)
+    s.players.forEach(pl => { pl.homeL = pl.home != null ? g.cells.indexOf(pl.home) : -1; pl.hits = {}; });
     return s;
   }
 
@@ -157,6 +162,7 @@
       res.moved = s.dice[from] - 1;
       s.owner[to] = att; s.dice[to] = s.dice[from] - 1; s.dice[from] = 1;
       if (!s.players[att].got.includes(to)) s.players[att].got.push(to);
+      res.missions = checkMissions(s, att, to);
       if (!s.owner.includes(def)) { s.players[def].alive = false; s.players[def].outAt = s.log.length; res.out = def; }
       if (s.owner.every(o => o === att)) { s.over = true; s.endReason = 'all'; }
     } else {
@@ -165,6 +171,23 @@
     s.turnAttacks++;
     s.log.push({ t: 'atk', r: s.round, p: att, from, to, aSum, dSum, win });
     return res;
+  }
+
+  // ---------- 미션 (공격으로 칸을 차지했을 때) ----------
+  function checkMissions(s, p, cell) {
+    const pl = s.players[p], done = [];
+    const home = CFG.missions.find(m => m.id === 'home');
+    if (home && pl.homeL != null && pl.homeL >= 0 && pl.homeL === cell) done.push(giveBonus(s, p, home));
+    return done;
+  }
+  // 보상 주사위: 내 칸 빈자리에 랜덤으로, 넘치면 저장 주사위로
+  function giveBonus(s, p, m) {
+    const pl = s.players[p];
+    const left = scatter(s, ownedBy(s, p), m.reward);
+    pl.stock = Math.min(CFG.stockMax, (pl.stock || 0) + left);
+    pl.hits = pl.hits || {}; pl.hits[m.id] = (pl.hits[m.id] || 0) + 1;
+    s.log.push({ t: 'mission', r: s.round, p, id: m.id, reward: m.reward });
+    return { id: m.id, icon: m.icon, name: m.name, reward: m.reward, placed: m.reward - left, stocked: left, times: pl.hits[m.id] };
   }
 
   // ---------- 차례 끝내기 → 주사위 충전 (4.3) → 다음 차례 ----------
@@ -235,6 +258,7 @@
         // 빼앗은 칸이 바로 다시 위험해지지 않게: 그 칸 이웃 적 주사위가 크면 감점
         const threat = Math.max(0, ...nb[j].filter(k => s.owner[k] !== me && s.owner[k] !== s.owner[j]).map(k => s.dice[k]));
         score -= Math.max(0, threat - (a - 1)) * 0.7;
+        if (s.players[me].homeL === j) score += 8;   // 내 이름 땅 미션
         score += rand(s) * 0.5;
         if (score > bestScore) { bestScore = score; best = [i, j]; }
       }

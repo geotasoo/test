@@ -115,14 +115,16 @@ const cells = feats.map((f, i) => {
   let best = null, bestA = -1;
   for (const pg of polys) { const pr = pg.map(r => r.map(P)); const a = areaOf(pr[0]); if (a > bestA) { bestA = a; best = pr; } }
   const pl = polylabel(best, 0.5);
-  const xs = best[0].map(q => q[0]), ys = best[0].map(q => q[1]);   // 가장 큰 덩어리의 범위 (먼 작은 섬 빼고 화면 맞추기용)
+  const xs = best[0].map(q => q[0]), ys = best[0].map(q => q[1]);
+  const cen = centroidOf(best[0]);   // 방위(북동쪽 등) 계산용 무게중심   // 가장 큰 덩어리의 범위 (먼 작은 섬 빼고 화면 맞추기용)
   return {
     id: f.id, name: f.properties.name, label: f.properties.label, suffix: f.properties.suffix,
     prov: f.properties.prov, provShort: f.properties.provShort, region: f.properties.region,
-    lp: [r1(pl[0]), r1(pl[1])], bb: [r1(Math.min(...xs)), r1(Math.min(...ys)), r1(Math.max(...xs)), r1(Math.max(...ys))], room: r1(pl.distance), area: Math.round(polys.reduce((s, pg) => s + areaOf(pg[0].map(P)), 0)),
+    lp: [r1(pl[0]), r1(pl[1])], cen: [r1(cen[0]), r1(cen[1])], bb: [r1(Math.min(...xs)), r1(Math.min(...ys)), r1(Math.max(...xs)), r1(Math.max(...ys))], room: r1(pl.distance), area: Math.round(polys.reduce((s, pg) => s + areaOf(pg[0].map(P)), 0)),
     d: pathOf(tc.merge(sTopo, [sTopo.objects.c.geometries[i]])),   // 한 칸 안의 조각들을 합쳐 안쪽 선 없애기
   };
 });
+function centroidOf(ring) { let a = 0, x = 0, y = 0; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const f = ring[j][0] * ring[i][1] - ring[i][0] * ring[j][1]; a += f; x += (ring[j][0] + ring[i][0]) * f; y += (ring[j][1] + ring[i][1]) * f; } return [x / (3 * a), y / (3 * a)]; }
 function areaOf(ring) { let s = 0; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) s += (ring[j][0] + ring[i][0]) * (ring[j][1] - ring[i][1]); return Math.abs(s / 2); }
 
 // 다리: 두 칸에서 가장 가까운 꼭짓점 쌍을 이은 짧은 선

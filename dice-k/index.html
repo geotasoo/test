@@ -64,6 +64,11 @@
       <button id="zoomFit" title="맵 전체 보기"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
     </div>
 
+    <button class="misbtn" id="misBtn" hidden>🎯 미션</button>
+    <aside class="mis" id="misPanel" hidden aria-label="미션">
+      <header><b>🎯 미션</b><button class="close" id="misClose" title="닫기">✕</button></header>
+      <div id="misBody"></div>
+    </aside>
     <div class="toast" id="toast" hidden></div>
     <div class="notice" id="notice" hidden></div>
   </main>
@@ -152,6 +157,7 @@
   </div>
 </div>
 
+<canvas id="fxCanvas" hidden></canvas>
 <script src="data/kr161.js"></script>
 <script src="engine.js"></script>
 <script src="game.js"></script>

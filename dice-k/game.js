@@ -56,6 +56,7 @@
     lose: () => { beep(330, .14, 'sine', .14); beep(220, .22, 'sine', .14, .1); },
     charge: () => [1319, 1568, 2093].forEach((f, i) => beep(f, .09, 'sine', .09, i * .06)),
     tap: () => beep(900, .03, 'sine', .06),
+    fanfare: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => beep(f, i > 4 ? .3 : .12, 'triangle', .14, i * .09)),
   };
 
   // ---------- 무늬 정의 ----------
@@ -221,7 +222,7 @@
   function render() {
     if (!S) return;
     gCells.querySelectorAll('path').forEach(p => { const i = +p.dataset.i; p.setAttribute('fill', `url(#pat${S.players[S.owner[i]].style})`); p.classList.toggle('pick', i === sel.from); });
-    renderBadges(); renderHi(); renderNames(); renderHud(); renderPlayers(); renderRoll();
+    renderBadges(); renderHi(); renderNames(); renderHud(); renderPlayers(); renderRoll(); renderMissions();
   }
 
   function renderBadges() {
@@ -298,7 +299,7 @@
       $('#hCur').innerHTML = `${icon(p)}<span class="nm" style="color:${mix(STYLES[pl.style].c, .35)}">${esc(pl.name)}</span><span class="tag">${pl.ai ? '🤖' : ''} 차례</span>`;
       const h = $('#hud'); h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop');
     }
-    $('#hCur .tag').textContent = S.over ? '게임 끝' : pl.ai ? '🤖 차례' : '차례';
+    $('#hCur .tag').textContent = S.over ? '게임 끝' : pl.ai ? '🤖 AI 차례' : '🧑 차례';
     $('#speedBtn').innerHTML = `🤖<span> ${{ normal: '보통', fast: '빠르게' }[set.speed]}</span>`;
   }
 
@@ -307,18 +308,32 @@
     $('#players').innerHTML = S.players.map((pl, p) => {
       const cells = pl.alive ? E.ownedBy(S, p).length : 0, cl = pl.alive ? E.largestCluster(M, S, p).length : 0;
       return `<div class="pl${p === S.cur && !S.over ? ' cur' : ''}${pl.alive ? '' : ' out'}" title="${esc(pl.name)} · ${cells}칸 · 다음 충전 ${cl}개">` +
-        `${dieIcon(pl.style)}${pl.stock ? `<span class="stk">+${pl.stock}</span>` : ''}<span class="num">${cells}<small>충전 ${cl}</small></span><span class="nm">${esc(pl.name)}</span></div>`;
+        `${dieIcon(pl.style)}<span class="wb" title="${pl.ai ? 'AI' : '사람'}">${pl.ai ? '🤖' : '🧑'}</span>${pl.stock ? `<span class="stk">+${pl.stock}</span>` : ''}<span class="num">${cells}<small>충전 ${cl}</small></span><span class="nm">${esc(pl.name)}</span></div>`;
     }).join('');
     const cur = $('#players .cur'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  // ---------- 8방위: a에서 본 b의 방향 (두 칸 무게중심) ----------
+  const DIRS = [['동', '→'], ['북동', '↗'], ['북', '↑'], ['북서', '↖'], ['서', '←'], ['남서', '↙'], ['남', '↓'], ['남동', '↘']];
+  function dirOf(a, b) {
+    const A = M.cells[G.cells[a]].cen, B = M.cells[G.cells[b]].cen;
+    const k = ((Math.round(Math.atan2(-(B[1] - A[1]), B[0] - A[0]) / (Math.PI / 4)) % 8) + 8) % 8;
+    return { w: DIRS[k][0], a: DIRS[k][1], k };
+  }
+  const CLOCK = [2, 1, 0, 7, 6, 5, 4, 3];   // 북부터 시계 방향 순서
+  // "남원 ↑ 북쪽 장수" (뱃길이면 ⛴)
+  function relHtml(a, b) {
+    const d = dirOf(a, b), sea = E.linkType(M, S, a, b) === 'sea';
+    return `<div class="rb-names">${esc(cellLabel(a))}<em class="${sea ? 'sea' : ''}">${sea ? '⛴ ' : ''}${d.a} ${d.w}쪽</em>${esc(cellLabel(b))}</div>`;
   }
 
   // 글씨용 플레이어 색 (노랑처럼 밝은 색은 조금 진하게)
   const inkOf = p => { const c = STYLES[S.players[p].style].c; return c === '#E8B500' ? '#b38900' : c; };
   // "함안의 이웃: 창녕 · 의령 · 진주 · 창원" — 이름은 그 땅 주인의 주사위 색, 내 땅은 밑줄
   function nbLine(i) {
-    const items = G.nb[i].slice().sort((a, b) => cellLabel(a).localeCompare(cellLabel(b), 'ko')).map(j => {
+    const items = G.nb[i].slice().sort((a, b) => CLOCK.indexOf(dirOf(i, a).k) - CLOCK.indexOf(dirOf(i, b).k)).map(j => {
       const mine = S.owner[j] === S.cur, sea = E.linkType(M, S, i, j) === 'sea';
-      return `<span class="nbn${mine ? ' mine' : ''}" style="color:${inkOf(S.owner[j])}">${sea ? '⛴' : ''}${esc(cellLabel(j))}</span>`;
+      return `<span class="nbd">${sea ? '⛴' : ''}${dirOf(i, j).w}</span><span class="nbn${mine ? ' mine' : ''}" style="color:${inkOf(S.owner[j])}">${esc(cellLabel(j))}</span>`;
     });
     return `<div class="rb-nb"><span class="lead">${esc(cellLabel(i))}의 이웃</span>${items.join('<i>·</i>')}</div>`;
   }
@@ -329,7 +344,7 @@
     $('#endBtn').disabled = !myTurn();
     if (rolling) return;
     const rb = $('#rollbar'), pl = S.players[S.cur];
-    const names = (a, b) => { const lt = E.linkType(M, S, a, b); return `<div class="rb-names">${esc(cellLabel(a))}<em class="${lt === 'sea' ? 'sea' : ''}">${lt === 'sea' ? '⛴ 뱃길' : '옆'}</em>${esc(cellLabel(b))}</div>`; };
+    const names = relHtml;
     let h;
     if (S.over) h = '<div class="rb-msg">게임이 끝났어요</div>';
     else if (pl.ai) h = `<div class="rb-msg">🤖 <b>${esc(pl.name)}</b> 차례예요</div>`;
@@ -368,7 +383,7 @@
     const frame = (roll) => {
       const fa = roll ? res.a.map(() => 1 + Math.floor(Math.random() * 6)) : res.a, fd = roll ? res.d.map(() => 1 + Math.floor(Math.random() * 6)) : res.d;
       const cl = w => roll ? 'wait' : (w ? 'win' : 'lose');
-      rb.innerHTML = `<div class="rb-names">${esc(A)}<em class="${lt === 'sea' ? 'sea' : ''}">${lt === 'sea' ? '⛴ 뱃길' : '옆'}</em>${esc(D)}</div>` +
+      rb.innerHTML = relHtml(res.from, res.to) +
         `<div class="rb-row"><span class="rb-side l"><span class="rb-dice">${fa.map(v => dieHtml(v, sa, roll)).join('')}</span><b class="rb-sum ${cl(res.win)}" style="color:${STYLES[sa].c}">${roll ? '?' : res.aSum}</b></span>` +
         `<span class="rb-vs">:</span><span class="rb-side r"><b class="rb-sum ${cl(!res.win)}" style="color:${STYLES[sd].c}">${roll ? '?' : res.dSum}</b><span class="rb-dice">${fd.map(v => dieHtml(v, sd, roll)).join('')}</span></span></div>`;
     };
@@ -386,8 +401,10 @@
     (res.win ? SND.win : SND.lose)();
     await sleep(Math.min(450, tm.hold / 2));
     render();   // 결과 반영된 지도 (주사위가 새 칸으로 떨어짐)
-    const pair = `${esc(cellName(res.from))} ${lt === 'sea' ? '⛴' : '옆'} ${esc(cellName(res.to))}`;
-    const nbLine = `<small class="nb">${esc(cellLabel(res.to))}의 이웃: ${G.nb[res.to].map(j => esc(cellLabel(j))).join(' · ')}</small>`;
+    const dd = dirOf(res.from, res.to);
+    const pair = `${esc(cellName(res.from))} ${lt === 'sea' ? '⛴ ' : ''}${dd.w}쪽 ${esc(cellName(res.to))}`;
+    const nbs = G.nb[res.to].slice().sort((a, b) => CLOCK.indexOf(dirOf(res.to, a).k) - CLOCK.indexOf(dirOf(res.to, b).k));
+    const nbLine = `<small class="nb">${esc(cellLabel(res.to))}의 이웃: ${nbs.map(j => `${dirOf(res.to, j).w} ${esc(cellLabel(j))}`).join(' · ')}</small>`;
     if (res.win) toast(`${pair} 획득!${nbLine}`, 'ok', tm.hold + 300);
     else toast(`${pair} 방어 성공!${nbLine}`, 'ng', tm.hold + 300);
     await sleep(tm.hold);
@@ -400,10 +417,68 @@
     save();
     sel = { from: null, to: null }; info = null;
     if (timing(ai).roll || timing(ai).hold) await showAttack(res, ai); else render();
+    if (res.missions && res.missions.length) await celebrate(res, ai);
     if (res.out != null) { toast(`${esc(S.players[res.out].name)} 탈락`, '', 1100); if (timing(ai).hold) await sleep(900); }
     render();
     return res;
   }
+
+  // 받침에 따라 을/를
+  const josa = (w, a, b) => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c <= 11171 && c % 28 ? a : b; };
+  async function celebrate(res, ai) {
+    const pl = S.players[res.att], ms = !ai ? 2400 : set.speed === 'normal' ? 1700 : 1000;
+    render(); renderMissions(true);
+    for (const m of res.missions) {
+      confetti(ms, STYLES[pl.style].c);
+      SND.fanfare();
+      toast(`🎉 ${esc(pl.name)}님이 ${m.icon} 자기 이름 땅 <b>${esc(cellLabel(res.to))}</b>${josa(cellLabel(res.to), '을', '를')} 차지했어요!<small>미션 성공 · 주사위 +${m.reward}${m.stocked ? ` (자리가 없어 ${m.stocked}개는 저장)` : ''}${m.times > 1 ? ` · ${m.times}번째` : ''}</small>`, 'party', ms);
+      await sleep(ms);
+    }
+  }
+
+  // 폭죽·꽃가루 (캔버스)
+  function confetti(ms, color) {
+    const cv = $('#fxCanvas'), ctx = cv.getContext('2d'), dpr = window.devicePixelRatio || 1;
+    cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; cv.hidden = false; ctx.scale(dpr, dpr);
+    const cols = [color, '#ffd43b', '#ff6b6b', '#4dabf7', '#69db7c', '#f783ac', '#fff'];
+    const P = [];
+    const burst = (x, y, n) => { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = 4 + Math.random() * 9; P.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 5, r: 3 + Math.random() * 5, c: cols[i % cols.length], rot: Math.random() * 6, vr: (Math.random() - .5) * .4, shape: i % 3 }); } };
+    burst(innerWidth * .5, innerHeight * .42, 110); setTimeout(() => burst(innerWidth * .22, innerHeight * .35, 60), 250); setTimeout(() => burst(innerWidth * .78, innerHeight * .35, 60), 450);
+    const t0 = performance.now();
+    (function frame(t) {
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      const fade = Math.max(0, 1 - (t - t0) / ms);
+      for (const p of P) {
+        p.vy += .28; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        ctx.save(); ctx.globalAlpha = Math.min(1, fade * 1.6); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c;
+        if (p.shape === 0) ctx.fillRect(-p.r, -p.r * .45, p.r * 2, p.r * .9);
+        else if (p.shape === 1) { ctx.beginPath(); ctx.arc(0, 0, p.r * .6, 0, 7); ctx.fill(); }
+        else { ctx.beginPath(); ctx.moveTo(0, -p.r); ctx.lineTo(p.r * .8, p.r * .7); ctx.lineTo(-p.r * .8, p.r * .7); ctx.fill(); }
+        ctx.restore();
+      }
+      if (t - t0 < ms) requestAnimationFrame(frame); else { ctx.clearRect(0, 0, innerWidth, innerHeight); cv.hidden = true; }
+    })(t0);
+  }
+
+  // ---------- 미션 창 ----------
+  function renderMissions(flash) {
+    if (!S) return;
+    const box = $('#misBody');
+    box.innerHTML = E.CFG.missions.map(m => {
+      if (m.id !== 'home') return '';
+      const rows = S.players.map((pl, p) => {
+        if (pl.homeL == null || pl.homeL < 0) return '';
+        const o = S.owner[pl.homeL], ok = o === p, hit = (pl.hits && pl.hits[m.id]) || 0;
+        return `<li class="${pl.alive ? '' : 'out'}${ok ? ' ok' : ''}">${dieIcon(pl.style)}<span class="who">${esc(pl.name)}${pl.ai ? ' 🤖' : ''}</span>` +
+          `<span class="arw">→</span><b class="land" style="color:${inkOf(o)}" title="지금 ${esc(S.players[o].name)} 땅">${esc(cellLabel(pl.homeL))}</b>` +
+          `${ok ? '<span class="chk">✓</span>' : ''}${hit ? `<span class="hit">🎉${hit}</span>` : ''}</li>`;
+      }).join('');
+      return `<section class="mis-item"><h4>${m.icon} ${esc(m.name)} <span class="rw">🎲 +${m.reward}</span></h4><p>${esc(m.desc)}</p><ul>${rows}</ul></section>`;
+    }).join('');
+    if (flash) { const p = $('#misPanel'); p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash'); }
+  }
+  $('#misBtn').onclick = () => { const p = $('#misPanel'); p.hidden = !p.hidden; set.mis = !p.hidden; saveSet(); SND.tap(); };
+  $('#misClose').onclick = () => { $('#misPanel').hidden = true; set.mis = false; saveSet(); };
 
   async function doEnd(ai) {
     const res = E.endTurn(M, S);
@@ -483,6 +558,8 @@
     document.body.classList.add('playing');
     $('#hud').hidden = false; $('#speedBtn').hidden = false;
     $('#lobby').hidden = true; $('#result').hidden = true;
+    $('#misBtn').hidden = false;
+    $('#misPanel').hidden = set.mis === false || (set.mis == null && innerWidth < 1000);
     drawMap(); render(); save();
   }
 
