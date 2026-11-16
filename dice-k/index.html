@@ -33,6 +33,9 @@
     <div id="players" aria-label="차례 순서"></div>
     <button class="endt" id="endBtn" disabled>차례 끝내기</button>
   </div>
+  <!-- 굴리기 판 (차례 순서 바로 아래, 눈높이): "김포 옆 서울" + 주사위 + 합 -->
+  <section id="rollbar" aria-live="polite"></section>
+
   <main id="stage">
     <svg id="map" aria-label="대한민국 시군 지도">
       <defs id="defs">
@@ -65,8 +68,6 @@
     <div class="notice" id="notice" hidden></div>
   </main>
 
-  <!-- 가운데 굴리기 판: "김포 옆 서울" + 주사위 + 합 -->
-  <section id="rollbar" aria-live="polite"></section>
 </div>
 
 <!-- 처음 화면 (게임 설정) -->

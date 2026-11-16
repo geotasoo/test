@@ -33,7 +33,7 @@ body.playing .brand { display: none; }
 .tbtn:hover { background: rgba(255,255,255,.1); color: #fff; }
 
 /* ---------- 배치: 지도 / 가운데 굴리기 판 / 아래 차례 순서 (다이스 워즈처럼) ---------- */
-#app { position: absolute; inset: var(--topbar) 0 0 0; display: grid; grid-template-rows: auto 1fr auto; grid-template-areas: "bottom" "stage" "rollbar"; background: #fff; }
+#app { position: absolute; inset: var(--topbar) 0 0 0; display: grid; grid-template-rows: auto auto 1fr; grid-template-areas: "bottom" "rollbar" "stage"; background: #fff; }
 #stage { grid-area: stage; position: relative; overflow: hidden; min-height: 0; background: var(--sea); }
 #rollbar { grid-area: rollbar; }
 #bottom { grid-area: bottom; }
@@ -90,7 +90,7 @@ body:not(.playing) #rollbar, body:not(.playing) #bottom { display: none; }
 .notice { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 5; background: #1d2733; color: #fff; padding: 9px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; box-shadow: var(--shadow); white-space: nowrap; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; }
 
 /* ---------- 가운데 굴리기 판 ---------- */
-#rollbar { min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px 10px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: #fff; text-align: center; }
+#rollbar { min-height: 86px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--line); box-shadow: 0 2px 8px rgba(20,40,70,.06); position: relative; z-index: 2; background: #fff; text-align: center; }
 .rb-msg { font-size: 15px; color: var(--ink-2); line-height: 1.45; }
 .rb-msg b { color: var(--ink); }
 .rb-msg small { display: block; font-size: 12.5px; color: var(--ink-3); }
