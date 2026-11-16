@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>주사위 땅따먹기 · 우리나라 (dice-k)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand" id="brand" title="처음 화면으로">
+    <span class="brand-emoji" aria-hidden="true">🎲🗺️</span>
+    <div class="brand-text">
+      <h1>주사위 땅따먹기 <span class="kr">우리나라</span></h1>
+      <div class="sub-line"><span class="ver">dice-k v0.1 (20261116)</span></div>
+    </div>
+  </div>
+  <!-- 게임 중 상태 -->
+  <div class="hud" id="hud" hidden>
+    <div class="hud-round"><small>라운드</small><b id="hRound">1</b><span>/ <i id="hMax">15</i></span></div>
+    <div class="hud-cur" id="hCur"></div>
+  </div>
+  <div class="actions">
+    <button class="tbtn" id="speedBtn" title="AI 차례 속도" hidden></button>
+    <button class="tbtn icon" id="soundBtn" title="효과음 켜기/끄기"></button>
+    <button class="tbtn icon" id="menuBtn" title="메뉴"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</header>
+
+<div id="app">
+  <aside id="players" aria-label="플레이어 순위"></aside>
+
+  <main id="stage">
+    <svg id="map" aria-label="대한민국 시군 지도">
+      <defs id="defs">
+        <marker id="arrowHead" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#1d2733"/></marker>
+      </defs>
+      <g id="vp">
+        <g id="gOut"></g>
+        <g id="gCells"></g>
+        <path id="gProv"/>
+        <g id="gLinks"></g>
+        <g id="gHi"></g>
+        <g id="gProvNames"></g>
+        <g id="gBadges"></g>
+        <g id="gNames"></g>
+        <g id="gFx"></g>
+      </g>
+    </svg>
+    <div id="loading">지도를 불러오는 중…</div>
+
+    <div class="zoom" aria-label="확대·축소">
+      <button id="zoomIn" title="확대"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button id="zoomOut" title="축소"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+      <button id="zoomFit" title="맵 전체 보기"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div>
+
+    <div class="banner" id="banner" hidden></div>
+    <div class="toast" id="toast" hidden></div>
+    <div class="notice" id="notice" hidden></div>
+  </main>
+
+  <footer id="actions">
+    <div class="sel-info" id="selInfo"></div>
+    <div class="act-btns">
+      <button class="roll" id="rollBtn" disabled>🎲 <span>주사위 굴리기</span></button>
+      <button class="endt" id="endBtn" disabled>차례 끝내기</button>
+    </div>
+  </footer>
+</div>
+
+<!-- 처음 화면 (게임 설정) -->
+<div class="overlay" id="lobby" hidden>
+  <div class="card">
+    <h2>🎲🗺️ 주사위 땅따먹기 <small>우리나라 시·군</small></h2>
+    <ul class="rules">
+      <li>주사위가 <b>2개 이상</b>인 내 칸을 누르고, <b>맞닿은 이웃 칸</b>을 눌러 <b>공격</b>해요.</li>
+      <li>두 칸의 주사위를 모두 굴려 <b>합이 크면 차지</b>해요. 같으면 방어 성공.</li>
+      <li>차례가 끝나면 <b>서로 이어진 가장 큰 땅</b>의 칸 수만큼 <b>주사위 충전!</b></li>
+      <li><b>15라운드</b> 뒤 칸을 가장 많이 가진 사람이 1등이에요.</li>
+    </ul>
+
+    <h3>지도</h3>
+    <div class="maps" id="mapSeg"></div>
+
+    <div class="two">
+      <div><h3>모두 몇 명?</h3><div class="seg" id="nSeg"></div></div>
+      <div><h3>그중 사람은?</h3><div class="seg" id="hSeg"></div></div>
+    </div>
+
+    <h3>플레이어 <small>색을 누르면 바뀌어요</small></h3>
+    <div class="plist" id="plist"></div>
+
+    <h3>모드</h3>
+    <div class="seg mode" id="capSeg">
+      <button data-cap="5"><b>🎲 주사위 5개 모드</b><small>칸마다 최대 5개 · 빠른 템포</small></button>
+      <button data-cap="8"><b>🎲 주사위 8개 모드</b><small>칸마다 최대 8개 · 깊은 전략</small></button>
+    </div>
+
+    <div class="card-actions">
+      <button class="sub" id="resumeBtn" hidden>▶ 이어서 하기</button>
+      <button class="go" id="startBtn">새 게임 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- 차례 넘기기 (사람이 2명 이상일 때) -->
+<div class="overlay handoff" id="handoff" hidden>
+  <button class="hcard" id="handoffBtn"><span class="hicon" id="handoffIcon"></span><b id="handoffName"></b><span>님 차례입니다</span><small>눌러서 시작</small></button>
+</div>
+
+<!-- 메뉴 -->
+<div class="overlay" id="menu" hidden>
+  <div class="card small">
+    <h2>메뉴</h2>
+    <div class="menu-row"><span>지역 이름표</span><div class="seg tiny" id="labelSeg"><button data-l="1">켜기</button><button data-l="0">끄기</button></div></div>
+    <div class="menu-row"><span>AI 차례 속도</span><div class="seg tiny" id="speedSeg"><button data-s="normal">보통</button><button data-s="fast">빠르게</button><button data-s="skip">건너뛰기</button></div></div>
+    <div class="menu-row"><span>효과음</span><div class="seg tiny" id="sndSeg"><button data-snd="1">켜기</button><button data-snd="0">끄기</button></div></div>
+    <p class="menu-note">게임은 한 수마다 저장돼요. 처음 화면으로 나가도 <b>이어서 하기</b>로 돌아올 수 있어요.</p>
+    <div class="card-actions">
+      <button class="sub" id="toLobby">처음 화면으로</button>
+      <button class="go" id="menuClose">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 확인 창 -->
+<div class="overlay" id="confirm" hidden>
+  <div class="card small">
+    <p class="confirm-msg" id="confirmMsg"></p>
+    <div class="card-actions">
+      <button class="sub" id="confirmNo">아니요</button>
+      <button class="go" id="confirmYes">새로 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- 결과 -->
+<div class="overlay" id="result" hidden>
+  <div class="card">
+    <h2 id="rTitle">🏁 게임 끝!</h2>
+    <p class="rsub" id="rSub"></p>
+    <div class="ranks" id="ranks"></div>
+    <div id="gots"></div>
+    <div class="card-actions">
+      <button class="sub" id="rMap">지도 보기</button>
+      <button class="go" id="rAgain">새 게임</button>
+    </div>
+  </div>
+</div>
+
+<script src="data/kr161.js"></script>
+<script src="engine.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
