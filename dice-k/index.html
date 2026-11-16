@@ -28,15 +28,23 @@
 </header>
 
 <div id="app">
+  <!-- 상황판: 차례 순서 (순위 아님) + 차례 끝내기 -->
+  <div id="bottom">
+    <div id="players" aria-label="차례 순서"></div>
+    <button class="endt" id="endBtn" disabled>차례 끝내기</button>
+  </div>
   <main id="stage">
     <svg id="map" aria-label="대한민국 시군 지도">
       <defs id="defs">
         <marker id="arrowHead" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#e03131"/></marker>
       </defs>
+      <clipPath id="playClip"></clipPath>
       <g id="vp">
         <g id="gOut"></g>
         <g id="gCells"></g>
-        <path id="gProv"/>
+        <path id="gProvFaint"/>
+        <path id="gProvCase" clip-path="url(#playClip)"/>
+        <path id="gProv" clip-path="url(#playClip)"/>
         <g id="gLinks"></g>
         <g id="gHi"></g>
         <g id="gProvNames"></g>
@@ -59,12 +67,6 @@
 
   <!-- 가운데 굴리기 판: "김포 옆 서울" + 주사위 + 합 -->
   <section id="rollbar" aria-live="polite"></section>
-
-  <!-- 아래 줄: 차례 순서 (순위 아님) + 차례 끝내기 -->
-  <footer id="bottom">
-    <div id="players" aria-label="차례 순서"></div>
-    <button class="endt" id="endBtn" disabled>차례 끝내기</button>
-  </footer>
 </div>
 
 <!-- 처음 화면 (게임 설정) -->

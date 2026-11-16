@@ -92,7 +92,9 @@
       const p = el('path', { d: c.d, class: 'cell' + (on ? '' : ' off'), id: 'c' + g }, on ? gCells : gOut);
       if (on) p.dataset.i = localOf.get(g);
     });
-    $('#gProv').setAttribute('d', M.provLines);
+    ['#gProv', '#gProvCase', '#gProvFaint'].forEach(q => $(q).setAttribute('d', M.provLines));
+    // 시도 경계는 게임하는 지역 안에서만 진하게 (밖은 옅게)
+    $('#playClip').innerHTML = G.cells.map(g => `<path d="${M.cells[g].d}"/>`).join('');
     M.links.forEach(l => {
       const on = localOf.has(l.a) && localOf.has(l.b);
       const [[x1, y1], [x2, y2]] = l.line;
@@ -331,7 +333,7 @@
   const dieHtml = (v, style, roll) => `<span class="die2${roll ? ' rolling' : ''}${STYLES[style].c === '#E8B500' ? ' dk' : ''}" style="background:${STYLES[style].c}">${PIPS[v].map(([x, y]) => `<i style="left:${x}%;top:${y}%"></i>`).join('')}</span>`;
   const timing = ai => {
     const sp = ai ? set.speed : (set.speed === 'normal' ? 'normal' : 'fast');
-    return { normal: { roll: 750, hold: 1150 }, fast: { roll: 300, hold: 600 }, skip: { roll: 0, hold: 0 } }[sp];
+    return { normal: { roll: 750, hold: 1500 }, fast: { roll: 300, hold: 800 }, skip: { roll: 0, hold: 0 } }[sp];
   };
   async function showAttack(res, ai) {
     const tm = timing(ai);
@@ -361,8 +363,10 @@
     (res.win ? SND.win : SND.lose)();
     await sleep(Math.min(450, tm.hold / 2));
     render();   // 결과 반영된 지도 (주사위가 새 칸으로 떨어짐)
-    if (res.win) toast(`${esc(M.cells[G.cells[res.to]].name)} 획득!`, 'ok', tm.hold);
-    else toast(`${esc(M.cells[G.cells[res.to]].name)} 방어 성공!`, 'ng', tm.hold);
+    const pair = `${esc(cellName(res.from))} ${lt === 'sea' ? '⛴' : '옆'} ${esc(cellName(res.to))}`;
+    const nbLine = `<small class="nb">${esc(cellLabel(res.to))}의 이웃: ${G.nb[res.to].map(j => esc(cellLabel(j))).join(' · ')}</small>`;
+    if (res.win) toast(`${pair} 획득!${nbLine}`, 'ok', tm.hold + 300);
+    else toast(`${pair} 방어 성공!${nbLine}`, 'ng', tm.hold + 300);
     await sleep(tm.hold);
     gFx.textContent = '';
     rolling = false;
