@@ -55,14 +55,15 @@ body:not(.playing) #rollbar, body:not(.playing) #bottom { display: none; }
 .lk-off { display: none; }
 .ship { font-size: 14px; }
 #gHi path { fill: none; vector-effect: non-scaling-stroke; pointer-events: none; stroke-linejoin: round; }
-.hi-from { stroke: #e03131; stroke-width: 3.5; }
-.hi-tgt { stroke: #fff; stroke-width: 3.2; animation: blink 1s ease-in-out infinite; }
-.hi-to { stroke: #e03131; stroke-width: 3.5; }
+.hi-from { stroke: #fff; stroke-width: 3.2; }
+.hi-tgt { stroke: #e03131; stroke-width: 3.4; animation: blink .8s ease-in-out infinite; }
+.hi-to { stroke: #e03131; stroke-width: 5; }
 .hi-nb { stroke: #1d2733; stroke-width: 1.6; stroke-dasharray: 3 3; }
 .hi-cl { stroke: #ffd75e; stroke-width: 4; animation: glow .9s ease-in-out 2; }
-@keyframes blink { 50% { stroke-opacity: .35; } }
+@keyframes blink { 50% { stroke-opacity: .15; } }
 @keyframes glow { 50% { stroke: #fff; } }
-.arrow { stroke: #e03131; stroke-width: 3; vector-effect: non-scaling-stroke; marker-end: url(#arrowHead); pointer-events: none; }
+.arrow-case { stroke: #1d2733; stroke-width: 9; vector-effect: non-scaling-stroke; stroke-linecap: round; pointer-events: none; }
+.arrow { stroke: #ffd43b; stroke-width: 5; stroke-linecap: round; vector-effect: non-scaling-stroke; pointer-events: none; }
 .pname { font-size: 15px; font-weight: 800; fill: #48525e; opacity: .55; text-anchor: middle; dominant-baseline: middle; pointer-events: none; letter-spacing: .1em; }
 .cname { font-size: 11px; font-weight: 700; fill: #1d2733; text-anchor: middle; paint-order: stroke; stroke: rgba(255,255,255,.92); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
 .cname.hot { font-size: 13px; fill: #000; }
@@ -266,3 +267,25 @@ body:not(.playing) #rollbar, body:not(.playing) #bottom { display: none; }
   .lobby .card-actions { margin-top: 14px; }
 }
 .sub, .go { white-space: nowrap; }
+
+/* 이웃 목록 (주인 색 글씨) */
+.rb-nb { font-size: 14.5px; font-weight: 800; line-height: 1.5; max-width: 100%; }
+.rb-nb .lead { font-size: 12.5px; font-weight: 600; color: var(--ink-3); margin-right: 6px; }
+.rb-nb i { font-style: normal; color: #c3cad3; margin: 0 4px; font-weight: 500; }
+.rb-nb .nbn.mine { text-decoration: underline; text-underline-offset: 3px; }
+.rb-tip { font-size: 12px; color: var(--ink-3); }
+.cname.tgt { fill: #c92a2a; }
+
+/* 상단: 라운드·차례를 가운데에 크게 */
+.hud { justify-content: center; gap: 18px; }
+.hud-round b { font-size: 28px; }
+.hud-cur { font-size: 20px; gap: 9px; }
+.hud-cur .dic svg { width: 32px; height: 36px; }
+.hud-cur .tag { font-size: 13px; color: #c5ccd4; font-weight: 600; }
+.hud.pop .hud-cur { animation: hudPop .5s cubic-bezier(.3,1.6,.6,1); }
+@keyframes hudPop { 0% { transform: scale(.6); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@media (max-width: 520px) {
+  .hud { gap: 10px; } .hud-round b { font-size: 22px; } .hud-round small { display: none; }
+  .hud-cur { font-size: 17px; } .hud-cur .dic svg { width: 26px; height: 29px; } .hud-cur .tag { display: inline; font-size: 11.5px; }
+  #speedBtn { padding: 0 6px; } #speedBtn span { display: none; }
+}

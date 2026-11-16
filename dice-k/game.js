@@ -220,7 +220,7 @@
 
   function render() {
     if (!S) return;
-    gCells.querySelectorAll('path').forEach(p => { const i = +p.dataset.i; p.setAttribute('fill', `url(#pat${S.players[S.owner[i]].style})`); p.classList.toggle('pick', i === sel.from || i === sel.to); });
+    gCells.querySelectorAll('path').forEach(p => { const i = +p.dataset.i; p.setAttribute('fill', `url(#pat${S.players[S.owner[i]].style})`); p.classList.toggle('pick', i === sel.from); });
     renderBadges(); renderHi(); renderNames(); renderHud(); renderPlayers(); renderRoll();
   }
 
@@ -256,7 +256,7 @@
       const fits = c.room * k >= Math.max(c.label.length * 6 + 3, 20);   // 이름(아래)과 주사위 더미(위)가 칸 안에 들어갈 때
       const show = hot.has(i) || (set.labels && (z >= 3 || fits) && !(hot.size && z < 1.4));
       t.style.display = show ? '' : 'none';
-      t.setAttribute('class', 'cname sc' + (hot.has(i) ? ' hot' : '') + (tg.has(i) ? ' tgt' : '') + (i === sel.from || i === sel.to ? ' ondark' : ''));
+      t.setAttribute('class', 'cname sc' + (hot.has(i) ? ' hot' : '') + (tg.has(i) ? ' tgt' : '') + (i === sel.from ? ' ondark' : ''));
     });
     // 이름표는 맨 위로: 뜨거운 이름을 마지막에
     hot.forEach(i => { const t = gNames.querySelector(`[data-i="${i}"]`); if (t) gNames.appendChild(t); });
@@ -280,15 +280,26 @@
       hiPath(sel.to, 'hi-to');
       const a = M.cells[G.cells[sel.from]].lp, b = M.cells[G.cells[sel.to]].lp;
       const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, sh = Math.min(6, L * .2);
-      el('line', { x1: a[0] + dx / L * sh, y1: a[1] + dy / L * sh, x2: b[0] - dx / L * sh, y2: b[1] - dy / L * sh, class: 'arrow' }, gHi);
+      const ln = { x1: a[0] + dx / L * sh, y1: a[1] + dy / L * sh, x2: b[0] - dx / L * sh, y2: b[1] - dy / L * sh };
+      el('line', Object.assign({ class: 'arrow-case' }, ln), gHi); el('line', Object.assign({ class: 'arrow' }, ln), gHi);
+      // 화살촉: 화면에서 늘 같은 크기
+      const head = el('g', { class: 'sc', 'data-x': ln.x2, 'data-y': ln.y2 }, gHi);
+      head.innerHTML = `<polygon points="-6,-9 10,0 -6,9" transform="rotate(${Math.atan2(dy, dx) * 180 / Math.PI})" fill="#ffd43b" stroke="#1d2733" stroke-width="2.2" stroke-linejoin="round"/>`;
+      updateScaled();
     }
   }
 
   function renderHud() {
     $('#hRound').textContent = S.round; $('#hMax').textContent = S.maxRound;
     const p = S.cur, pl = S.players[p];
-    $('#hCur').innerHTML = `${icon(p)}<span class="nm">${esc(pl.name)}</span><span class="tag">${S.over ? '게임 끝' : pl.ai ? '🤖 생각 중…' : '차례'}</span>`;
-    $('#speedBtn').textContent = { normal: '🤖 보통', fast: '🤖 빠르게' }[set.speed];
+    const key = S.round + ':' + p;
+    if ($('#hCur').dataset.k !== key) {
+      $('#hCur').dataset.k = key;
+      $('#hCur').innerHTML = `${icon(p)}<span class="nm" style="color:${mix(STYLES[pl.style].c, .35)}">${esc(pl.name)}</span><span class="tag">${pl.ai ? '🤖' : ''} 차례</span>`;
+      const h = $('#hud'); h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop');
+    }
+    $('#hCur .tag').textContent = S.over ? '게임 끝' : pl.ai ? '🤖 차례' : '차례';
+    $('#speedBtn').innerHTML = `🤖<span> ${{ normal: '보통', fast: '빠르게' }[set.speed]}</span>`;
   }
 
   function dieIcon(style) { return `<svg viewBox="-12 -25 24 27"><use href="#die${style}" x="-11" y="-23" width="22" height="24"/></svg>`; }
@@ -299,6 +310,17 @@
         `${dieIcon(pl.style)}${pl.stock ? `<span class="stk">+${pl.stock}</span>` : ''}<span class="num">${cells}<small>충전 ${cl}</small></span><span class="nm">${esc(pl.name)}</span></div>`;
     }).join('');
     const cur = $('#players .cur'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  // 글씨용 플레이어 색 (노랑처럼 밝은 색은 조금 진하게)
+  const inkOf = p => { const c = STYLES[S.players[p].style].c; return c === '#E8B500' ? '#b38900' : c; };
+  // "함안의 이웃: 창녕 · 의령 · 진주 · 창원" — 이름은 그 땅 주인의 주사위 색, 내 땅은 밑줄
+  function nbLine(i) {
+    const items = G.nb[i].slice().sort((a, b) => cellLabel(a).localeCompare(cellLabel(b), 'ko')).map(j => {
+      const mine = S.owner[j] === S.cur, sea = E.linkType(M, S, i, j) === 'sea';
+      return `<span class="nbn${mine ? ' mine' : ''}" style="color:${inkOf(S.owner[j])}">${sea ? '⛴' : ''}${esc(cellLabel(j))}</span>`;
+    });
+    return `<div class="rb-nb"><span class="lead">${esc(cellLabel(i))}의 이웃</span>${items.join('<i>·</i>')}</div>`;
   }
 
   // 가운데 굴리기 판 (굴리는 중이 아닐 때)
@@ -312,8 +334,8 @@
     if (S.over) h = '<div class="rb-msg">게임이 끝났어요</div>';
     else if (pl.ai) h = `<div class="rb-msg">🤖 <b>${esc(pl.name)}</b> 차례예요</div>`;
     else if (sel.from != null && sel.to != null) h = names(sel.from, sel.to) + `<button class="roll" id="rollBtn">🎲 주사위 굴리기 <small style="font-weight:600;opacity:.8">${S.dice[sel.from]} : ${S.dice[sel.to]}</small></button>`;
-    else if (sel.from != null) h = `<div class="rb-msg"><b>${esc(cellName(sel.from))}</b> (주사위 ${S.dice[sel.from]}개)<small>빨간 테두리로 깜빡이는 이웃 칸을 눌러 공격할 곳을 골라요</small></div>`;
-    else if (info != null) h = `<div class="rb-msg"><b>${esc(cellName(info))}</b>의 이웃<small>${G.nb[info].map(j => esc(cellLabel(j))).join(', ')}</small></div>`;
+    else if (sel.from != null) h = `<div class="rb-msg"><b>${esc(cellName(sel.from))}</b> (주사위 ${S.dice[sel.from]}개)</div>${nbLine(sel.from)}<div class="rb-tip">빨갛게 깜빡이는 칸을 눌러 공격할 곳을 골라요</div>`;
+    else if (info != null) h = `<div class="rb-msg"><b style="color:${inkOf(S.owner[info])}">${esc(cellName(info))}</b> (주사위 ${S.dice[info]}개)</div>${nbLine(info)}`;
     else h = `<div class="rb-msg"><b>${esc(pl.name)}</b> 차례<small>주사위가 2개 이상인 내 칸을 눌러요</small></div>`;
     rb.innerHTML = h;
   }
@@ -352,7 +374,7 @@
     };
     // 굴리는 동안 두 칸을 검게
     gCells.querySelectorAll('.pick').forEach(p => p.classList.remove('pick'));
-    [res.from, res.to].forEach(i => { const p = gCells.querySelector(`[data-i="${i}"]`); if (p) p.classList.add('pick'); });
+    { const p = gCells.querySelector(`[data-i="${res.from}"]`); if (p) p.classList.add('pick'); }
     gHi.textContent = ''; hiPath(res.from, 'hi-from'); hiPath(res.to, 'hi-to');
     const t0 = performance.now();
     while (performance.now() - t0 < tm.roll) { frame(true); SND.tick(); await sleep(70); }
@@ -552,7 +574,7 @@
   }
   $('#lobby').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.p) lob.preset = b.dataset.p;
+    if (b.dataset.p) { if (lob.preset !== b.dataset.p) { lob.preset = b.dataset.p; fitSeats(); ensureNames(true); } }
     else if (b.dataset.cap) lob.cap = +b.dataset.cap;
     else if (b.dataset.r) lob.rounds = +b.dataset.r;
     else if (b.dataset.kind) {   // 사람 → AI → 빈자리 → 사람 (규칙에 맞는 다음 것으로)
