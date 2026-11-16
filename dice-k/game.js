@@ -27,6 +27,7 @@
   const load = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
   const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 저장 못 해도 진행 */ } };
   const set = Object.assign({ speed: 'normal', sound: true, labels: true }, load(LS.set) || {});
+  if (!['normal', 'fast'].includes(set.speed)) set.speed = 'fast';   // 예전 '건너뛰기'는 빠르게로
   const saveSet = () => store(LS.set, set);
 
   // ---------- 상태 ----------
@@ -106,7 +107,7 @@
         if (on) { const t = el('text', { class: 'ship sc', 'data-x': (mx + cx) / 2, 'data-y': (my + cy) / 2, 'text-anchor': 'middle', 'dominant-baseline': 'central' }, gLinks); t.textContent = '⛴'; }
       }
     });
-    M.provLabels.filter(p => G.preset.regions.includes(p.region)).forEach(p => {
+    M.provLabels.filter(p => G.preset.provs ? G.preset.provs.includes(p.name) : G.preset.regions.includes(p.region)).forEach(p => {
       const t = el('text', { class: 'pname sc', 'data-x': p.p[0], 'data-y': p.p[1] }, gProvNames); t.textContent = p.name;
     });
     G.cells.forEach((g, i) => {
@@ -287,7 +288,7 @@
     $('#hRound').textContent = S.round; $('#hMax').textContent = S.maxRound;
     const p = S.cur, pl = S.players[p];
     $('#hCur').innerHTML = `${icon(p)}<span class="nm">${esc(pl.name)}</span><span class="tag">${S.over ? '게임 끝' : pl.ai ? '🤖 생각 중…' : '차례'}</span>`;
-    $('#speedBtn').textContent = { normal: '🤖 보통', fast: '🤖 빠르게', skip: '🤖 건너뛰기' }[set.speed];
+    $('#speedBtn').textContent = { normal: '🤖 보통', fast: '🤖 빠르게' }[set.speed];
   }
 
   function dieIcon(style) { return `<svg viewBox="-12 -25 24 27"><use href="#die${style}" x="-11" y="-23" width="22" height="24"/></svg>`; }
@@ -332,8 +333,8 @@
   const PIPS = { 1: [[50, 50]], 2: [[28, 28], [72, 72]], 3: [[25, 25], [50, 50], [75, 75]], 4: [[28, 28], [72, 28], [28, 72], [72, 72]], 5: [[26, 26], [74, 26], [50, 50], [26, 74], [74, 74]], 6: [[28, 24], [72, 24], [28, 50], [72, 50], [28, 76], [72, 76]] };
   const dieHtml = (v, style, roll) => `<span class="die2${roll ? ' rolling' : ''}${STYLES[style].c === '#E8B500' ? ' dk' : ''}" style="background:${STYLES[style].c}">${PIPS[v].map(([x, y]) => `<i style="left:${x}%;top:${y}%"></i>`).join('')}</span>`;
   const timing = ai => {
-    const sp = ai ? set.speed : (set.speed === 'normal' ? 'normal' : 'fast');
-    return { normal: { roll: 750, hold: 1500 }, fast: { roll: 300, hold: 800 }, skip: { roll: 0, hold: 0 } }[sp];
+    if (!ai) return { roll: 750, hold: 1500, pick: 0 };   // 내 공격은 천천히 읽을 수 있게
+    return { normal: { roll: 300, hold: 800, pick: 180 }, fast: { roll: 110, hold: 330, pick: 60 } }[set.speed];
   };
   async function showAttack(res, ai) {
     const tm = timing(ai);
@@ -408,12 +409,11 @@
       for (let guard = 0; guard < 500 && !S.over && S.cur === me; guard++) {
         const mv = E.aiMove(M, S);
         if (!mv) break;
-        if (set.speed !== 'skip') { sel = { from: mv[0], to: mv[1] }; render(); busy = true; await sleep(set.speed === 'fast' ? 180 : 450); }
+        sel = { from: mv[0], to: mv[1] }; render(); busy = true; await sleep(timing(true).pick);
         await doAttack(mv[0], mv[1], true);
       }
       if (S.over) break;
       await doEnd(true);
-      if (set.speed === 'skip') await sleep(40);
     }
     busy = false;
     if (!S) return;
@@ -469,12 +469,12 @@
     busy = false; render();
     try { localStorage.removeItem(LS.save); } catch (e) { }
     const rows = E.standings(M, S);
-    $('#rTitle').textContent = S.endReason === 'all' ? `🏆 ${S.players[rows[0].p].name}님이 모든 칸을 차지했어요!` : `🏁 ${S.maxRound}라운드 끝!`;
+    $('#rTitle').textContent = S.endReason === 'all' ? `🏆 ${S.players[rows[0].p].name}님이 모든 칸을 차지했어요!` : S.endReason === 'quit' ? `🏳️ ${S.round}라운드에서 그만했어요` : `🏁 ${S.maxRound}라운드 끝!`;
     $('#rSub').textContent = `${G.preset.name} · ${G.cells.length}칸 · 주사위 ${S.cap}개 모드`;
     $('#ranks').innerHTML = rows.map(r => {
       const [hz, ds] = TITLE_TXT[r.title];
       return `<div class="rrow${r.rank === 1 ? ' first' : ''}"><span class="rk">${r.rank}등</span>${icon(r.p)}<span class="nm">${esc(r.name)}${r.ai ? ' 🤖' : ''}<small>${r.alive ? `${r.cells}칸 · 주사위 ${r.dice}개` : '탈락'}</small></span>` +
-        `<span class="ttl"><b>${r.title}<span>(${hz})</span></b><small>${ds}</small></span></div>`;
+        `<span class="ttl">${ds}</span></div>`;
     }).join('');
     const humans = S.players.map((p, i) => [p, i]).filter(([p]) => !p.ai);
     $('#gots').innerHTML = humans.map(([p, i]) => {
@@ -488,21 +488,28 @@
   $('#rAgain').onclick = () => { $('#result').hidden = true; openLobby(); };
 
   // ---------- 로비 ----------
-  const lob = Object.assign({ preset: 'all', n: 4, h: 1, cap: 5, names: ['플레이어1', '플레이어2', '플레이어3', '플레이어4', '플레이어5', '플레이어6', '플레이어7', '플레이어8'], styles: [0, 1, 2, 3, 4, 5, 6, 7] }, load(LS.lobby) || {});
+  const lob = Object.assign({ preset: 'all', n: 4, h: 1, cap: 5, rounds: 10, names: ['플레이어1', '플레이어2', '플레이어3', '플레이어4', '플레이어5', '플레이어6', '플레이어7', '플레이어8'], styles: [0, 1, 2, 3, 4, 5, 6, 7] }, load(LS.lobby) || {});
+  if (![5, 10, 15].includes(lob.rounds)) lob.rounds = 10;
   const presetCount = id => E.buildGraph(M, id).cells.length;
   function renderLobby() {
-    $('#mapSeg').innerHTML = E.PRESETS.map(p => `<button data-p="${p.id}" class="${p.id === lob.preset ? 'sel' : ''}">${p.name}<small>${presetCount(p.id)}칸</small></button>`).join('');
-    $('#nSeg').innerHTML = [4, 5, 6, 7, 8].map(n => `<button data-n="${n}" class="${n === lob.n ? 'sel' : ''}">${n}명</button>`).join('');
+    const btn = p => `<button data-p="${p.id}" class="${p.id === lob.preset ? 'sel' : ''}">${p.name}<small>${presetCount(p.id)}칸</small></button>`;
+    $('#mapSeg').innerHTML = E.PRESETS.filter(p => !p.group).map(btn).join('');
+    $('#mapSeg2').innerHTML = E.PRESETS.filter(p => p.group === 'prov').map(btn).join('');
+    const maxN = E.maxPlayers(presetCount(lob.preset));
+    lob.n = Math.min(lob.n, maxN);
+    $('#nSeg').innerHTML = [4, 5, 6, 7, 8].map(n => `<button data-n="${n}" class="${n === lob.n ? 'sel' : ''}"${n > maxN ? ' disabled title="칸이 적어서 이 지도는 ' + maxN + '명까지"' : ''}>${n}명</button>`).join('');
+    $('#nNote').textContent = maxN < 8 ? `이 지도는 칸이 적어서 ${maxN}명까지 할 수 있어요` : '';
     lob.h = Math.min(lob.h, lob.n);
     $('#hSeg').innerHTML = Array.from({ length: lob.n }, (_, i) => i + 1).map(h => `<button data-h="${h}" class="${h === lob.h ? 'sel' : ''}">${h}</button>`).join('');
     let ai = 0;
     $('#plist').innerHTML = Array.from({ length: lob.n }, (_, i) => {
       const st = STYLES[lob.styles[i]], human = i < lob.h;
       const nm = human ? lob.names[i] : `AI ${++ai}`;
-      return `<div class="prow"><button class="sw" data-sw="${i}" title="${st.name} (눌러서 바꾸기)">${dieIcon(lob.styles[i])}</button>` +
-        `<input data-nm="${i}" maxlength="8" value="${esc(nm)}" ${human ? '' : 'disabled'} aria-label="닉네임"><span class="who">${human ? '사람' : '🤖'}</span></div>`;
+      return `<div class="prow${human ? ' human' : ''}"><button class="sw" data-sw="${i}" title="${st.name} (눌러서 바꾸기)">${dieIcon(lob.styles[i])}</button>` +
+        `<input data-nm="${i}" maxlength="8" value="${esc(nm)}" ${human ? 'placeholder="이름을 써 주세요"' : 'disabled'} aria-label="닉네임">${human ? '<span class="who">✏️</span>' : '<span class="who">🤖</span>'}</div>`;
     }).join('');
     $('#capSeg').querySelectorAll('button').forEach(b => b.classList.toggle('sel', +b.dataset.cap === lob.cap));
+    $('#roundSeg').querySelectorAll('button').forEach(b => b.classList.toggle('sel', +b.dataset.r === lob.rounds));
     $('#resumeBtn').hidden = !savedGame();
   }
   $('#lobby').addEventListener('click', e => {
@@ -511,6 +518,7 @@
     else if (b.dataset.n) lob.n = +b.dataset.n;
     else if (b.dataset.h) lob.h = +b.dataset.h;
     else if (b.dataset.cap) lob.cap = +b.dataset.cap;
+    else if (b.dataset.r) lob.rounds = +b.dataset.r;
     else if (b.dataset.sw) {   // 다른 사람이 안 쓰는 다음 색으로
       const i = +b.dataset.sw, used = new Set(lob.styles.slice(0, lob.n).filter((_, k) => k !== i));
       let s = lob.styles[i]; do { s = (s + 1) % STYLES.length; } while (used.has(s));
@@ -540,7 +548,7 @@
     const players = Array.from({ length: lob.n }, (_, i) => i < lob.h
       ? { name: (lob.names[i] || '').trim() || `플레이어${i + 1}`, style: lob.styles[i], ai: false }
       : { name: `AI ${++ai}`, style: lob.styles[i], ai: true });
-    const s = E.newGame(M, { preset: lob.preset, cap: lob.cap, players });
+    const s = E.newGame(M, { preset: lob.preset, cap: lob.cap, rounds: lob.rounds, players });
     begin(s);
     // 차례 순서 보여 주기 (4.1)
     const list = s.players.map((p, i) => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><b style="width:2.2em">${i + 1}번</b><span class="dic">${dieIcon(p.style)}</span><span style="font-weight:700">${esc(p.name)}</span>${p.bonus ? `<small style="color:#8a96a3;margin-left:auto">후공 보정 주사위 +${p.bonus}</small>` : ''}</div>`).join('');
@@ -569,8 +577,14 @@
     saveSet(); syncMenu(); if (S) renderNames();
   });
   $('#soundBtn').onclick = () => { set.sound = !set.sound; saveSet(); syncMenu(); };
-  $('#speedBtn').onclick = () => { set.speed = { normal: 'fast', fast: 'skip', skip: 'normal' }[set.speed]; saveSet(); syncMenu(); };
+  $('#speedBtn').onclick = () => { set.speed = set.speed === 'normal' ? 'fast' : 'normal'; saveSet(); syncMenu(); };
   $('#toLobby').onclick = () => { $('#menu').hidden = true; save(); openLobby(); };
+  $('#quitBtn').onclick = async () => {
+    $('#menu').hidden = true;
+    if (!S || S.over) return;
+    if (!(await askConfirm('게임을 그만할까요?<br><small style="font-weight:500;color:#5b6672">지금까지의 땅으로 등수를 보여 줄게요.</small>', '그만하기', '계속하기'))) return;
+    E.quit(S); busy = false; finish();
+  };
 
   // ---------- 시작 ----------
   makePatterns(); syncMenu();

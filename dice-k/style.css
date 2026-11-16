@@ -157,13 +157,13 @@ body:not(.playing) #rollbar, body:not(.playing) #bottom { display: none; }
 .maps button small { display: block; font-size: 11px; font-weight: 500; color: var(--ink-3); }
 .maps button.sel, .seg button.sel { border-color: var(--ink); background: #2B2F36; color: #fff; }
 .maps button.sel small, .seg button.sel small { color: #c5ccd4; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .seg { display: flex; gap: 5px; }
 .seg button { flex: 1; min-width: 0; padding: 8px 2px; }
 .seg.mode button { padding: 9px 6px; display: flex; flex-direction: column; gap: 2px; }
 .seg.mode small { font-size: 11.5px; font-weight: 500; color: var(--ink-3); }
 .seg.tiny button { padding: 6px 10px; font-size: 13px; flex: none; }
-.plist { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.plist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .prow { display: flex; align-items: center; gap: 7px; border: 1.5px solid var(--line); border-radius: 12px; padding: 5px 8px 5px 5px; }
 .prow .sw { width: 36px; height: 36px; border-radius: 10px; border: 0; background: #f3f5f8; display: grid; place-items: center; color: #fff; font-size: 15px; font-weight: 800; flex-shrink: 0; text-shadow: 0 1px 2px rgba(0,0,0,.35); box-shadow: inset 0 0 0 2px rgba(0,0,0,.12); }
 .prow input { flex: 1; min-width: 0; border: 0; font: inherit; font-size: 14px; font-weight: 700; padding: 4px 2px; outline: none; background: none; }
@@ -212,3 +212,24 @@ body:not(.playing) #rollbar, body:not(.playing) #bottom { display: none; }
 @media (max-width: 520px) { .hud-cur .tag { display: none; } .hud { gap: 10px; } .hud-cur { font-size: 14px; } }
 #players { justify-content: flex-start; }
 .toast small.nb { font-size: 12.5px; font-weight: 600; max-width: 80vw; white-space: normal; line-height: 1.5; margin-top: 5px; }
+
+/* 로비 정리: 가로 스크롤 없음 */
+.card { overflow-x: hidden; }
+.maps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.maps.six { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.maps button { min-width: 0; }
+.mapgroup { font-size: 12px; font-weight: 700; color: var(--ink-2); margin: 8px 0 5px; }
+.mapgroup:first-of-type { margin-top: 0; }
+.mapgroup small { font-weight: 500; color: var(--ink-3); margin-left: 4px; }
+.seg button:disabled { opacity: .3; cursor: default; }
+.hint { margin: -2px 0 7px; font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
+.hint b { color: var(--ink-2); }
+#nNote { margin: 5px 0 0; }
+#nNote:empty { display: none; }
+.prow.human { border-color: #9cc0f5; background: #f5f9ff; }
+.prow.human input { border-bottom: 1.5px dashed #9cc0f5; }
+.prow .who { font-size: 13px; }
+.ttl { font-size: 13px; font-weight: 700; color: var(--ink-2); text-align: right; white-space: nowrap; }
+.rrow.first .ttl { color: #8a5a00; }
+.sub.quit { color: #c92a2a; border-color: #f3c2c2; margin-right: auto; }
+@media (max-width: 480px) { .maps.six { grid-template-columns: repeat(3, minmax(0, 1fr)); } .card-actions { flex-wrap: wrap; } }

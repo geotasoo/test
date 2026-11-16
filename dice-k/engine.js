@@ -29,7 +29,15 @@
     { id: 'chung-gang', name: '충청강원', regions: ['chungcheong', 'gangwon'] },
     { id: 'gang-yeong', name: '강원영남', regions: ['gangwon', 'yeongnam'] },
     { id: 'yeong-honam-jeju', name: '영남호남제주', regions: ['yeongnam', 'honam', 'jeju'] },
+    // 도 하나 (특별·광역시는 빠짐)
+    { id: 'p-gg', name: '경기', group: 'prov', provs: ['경기'] },
+    { id: 'p-gw', name: '강원', group: 'prov', provs: ['강원'] },
+    { id: 'p-gb', name: '경북', group: 'prov', provs: ['경북'] },
+    { id: 'p-gn', name: '경남', group: 'prov', provs: ['경남'] },
+    { id: 'p-jb', name: '전북', group: 'prov', provs: ['전북'] },
+    { id: 'p-jn', name: '전남', group: 'prov', provs: ['전남'] },
   ];
+  const maxPlayers = n => Math.max(4, Math.min(8, Math.floor(n / 3)));   // 칸이 적은 맵은 인원 제한 (1인당 3칸 이상)
 
   // ---------- 난수 (판 상태에 저장 → 새로고침해도 같은 결과) ----------
   function rand(s) {   // mulberry32, s.rng 를 갱신
@@ -47,7 +55,8 @@
     const pre = PRESETS.find(p => p.id === presetId) || PRESETS[0];
     const cells = [];
     const local = new Map();
-    pack.cells.forEach((c, i) => { if (pre.regions.includes(c.region)) { local.set(i, cells.length); cells.push(i); } });
+    const inMap = c => pre.provs ? pre.provs.includes(c.provShort) : pre.regions.includes(c.region);
+    pack.cells.forEach((c, i) => { if (inMap(c)) { local.set(i, cells.length); cells.push(i); } });
     const nb = cells.map(() => []);
     const link = {};
     const add = (a, b, type) => {
@@ -69,7 +78,7 @@
     const s = {
       v: 1, preset: g.preset.id, cap: cfg.cap === 8 ? 8 : 5,
       rng: (cfg.seed != null ? cfg.seed : Math.floor(Math.random() * 2 ** 31)) | 0,
-      round: 1, maxRound: CFG.rounds, cur: 0, over: false,
+      round: 1, maxRound: [5, 10, 15].includes(cfg.rounds) ? cfg.rounds : CFG.rounds, cur: 0, over: false,
       players: [], owner: [], dice: [], log: [], turnAttacks: 0,
     };
     // 1. 순서 섞기
@@ -232,6 +241,9 @@
     return best;
   }
 
-  const api = { CFG, PRESETS, buildGraph, newGame, attack, endTurn, standings, aiMove, largestCluster, canAttackFrom, targetsOf, anyAttack, linkType, ownedBy, graphOf };
+  // 게임 그만하기: 지금 상태로 끝내고 등수 매기기
+  function quit(s) { s.over = true; s.endReason = 'quit'; }
+
+  const api = { CFG, PRESETS, maxPlayers, quit, buildGraph, newGame, attack, endTurn, standings, aiMove, largestCluster, canAttackFrom, targetsOf, anyAttack, linkType, ownedBy, graphOf };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.DiceK = api;
 })(typeof window !== 'undefined' ? window : globalThis);
