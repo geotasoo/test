@@ -70,37 +70,38 @@
 
 </div>
 
-<!-- 처음 화면 (게임 설정) -->
+<!-- 처음 화면 (게임 설정): PC는 두 칸, 폰은 두 단계 -->
 <div class="overlay" id="lobby" hidden>
-  <div class="card">
+  <div class="card lobby" data-step="1">
     <h2>🎲🗺️ 주사위 땅따먹기 <small>우리나라 시·군</small></h2>
-    <h3>지도</h3>
-    <div class="mapgroup">전국 · 권역</div>
-    <div class="maps" id="mapSeg"></div>
-    <div class="mapgroup">도 하나 <small>특별·광역시는 빠져요</small></div>
-    <div class="maps six" id="mapSeg2"></div>
-
-    <div class="two">
-      <div><h3>모두 몇 명?</h3><div class="seg" id="nSeg"></div><p class="hint" id="nNote"></p></div>
-      <div><h3>그중 사람은?</h3><div class="seg" id="hSeg"></div></div>
-    </div>
-
-    <h3>플레이어</h3>
-    <p class="hint">✏️ 이름 칸을 눌러 <b>닉네임을 직접 쓸 수 있어요</b> · 주사위를 누르면 색이 바뀌어요</p>
-    <div class="plist" id="plist"></div>
-
-    <h3>모드</h3>
-    <div class="seg mode" id="capSeg">
-      <button data-cap="5"><b>🎲 주사위 5개 모드</b><small>칸마다 최대 5개 · 빠른 템포</small></button>
-      <button data-cap="8"><b>🎲 주사위 8개 모드</b><small>칸마다 최대 8개 · 깊은 전략</small></button>
-    </div>
-
-    <h3>라운드 <small>살아 있는 모두가 한 번씩 하면 1라운드</small></h3>
-    <div class="seg" id="roundSeg"><button data-r="5">5라운드</button><button data-r="10">10라운드</button><button data-r="15">15라운드</button></div>
-
-    <div class="card-actions">
-      <button class="sub" id="resumeBtn" hidden>▶ 이어서 하기</button>
-      <button class="go" id="startBtn">새 게임 시작</button>
+    <div class="lb-cols">
+      <section class="lb-map">
+        <h3>지도</h3>
+        <div class="mapgroup">전국 · 권역</div>
+        <div class="maps" id="mapSeg"></div>
+        <div class="mapgroup">도 하나 <small>특별·광역시는 빠져요</small></div>
+        <div class="maps six" id="mapSeg2"></div>
+        <div class="card-actions step1">
+          <button class="sub" data-resume hidden>▶ 이어서 하기</button>
+          <button class="go" id="nextBtn">다음 ▶</button>
+        </div>
+      </section>
+      <section class="lb-set">
+        <div class="picked step2"><span>지도</span><b id="pickedMap"></b><button class="link" id="backBtn">바꾸기</button></div>
+        <h3>플레이어 <small id="seatSum"></small></h3>
+        <p class="hint">이름은 <b>이 지도 속 지역</b>으로 정해져요. 주사위를 누르면 <b>색</b>, 아래 글자를 누르면 <b>사람 · AI · 빈자리</b>가 바뀌어요.</p>
+        <div class="seats" id="seats"></div>
+        <div class="seat-foot"><span id="seatNote"></span><button class="link" id="rerollBtn">🔀 이름 다시 뽑기</button></div>
+        <div class="opt-row">
+          <div><h3>모드</h3><div class="seg" id="capSeg"><button data-cap="5">주사위 5개<small>빠른 템포</small></button><button data-cap="8">주사위 8개<small>깊은 전략</small></button></div></div>
+          <div><h3>라운드</h3><div class="seg" id="roundSeg"><button data-r="5">5</button><button data-r="10">10</button><button data-r="15">15</button></div></div>
+        </div>
+        <div class="card-actions">
+          <button class="sub step2-back" id="backBtn2">◀ 지도</button>
+          <button class="sub" data-resume hidden>▶ 이어서 하기</button>
+          <button class="go" id="startBtn">새 게임 시작</button>
+        </div>
+      </section>
     </div>
   </div>
 </div>

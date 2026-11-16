@@ -488,50 +488,91 @@
   $('#rAgain').onclick = () => { $('#result').hidden = true; openLobby(); };
 
   // ---------- 로비 ----------
-  const lob = Object.assign({ preset: 'all', n: 4, h: 1, cap: 5, rounds: 10, names: ['플레이어1', '플레이어2', '플레이어3', '플레이어4', '플레이어5', '플레이어6', '플레이어7', '플레이어8'], styles: [0, 1, 2, 3, 4, 5, 6, 7] }, load(LS.lobby) || {});
+  // 성씨: 2015 인구주택총조사 상위 100 (같은 한글 성씨는 합침). 많이 쓰는 성씨가 너무 몰리지 않게 제곱근 비율로 뽑음
+  const SURNAMES = [['김', 9925949], ['이', 6794637], ['박', 3895121], ['최', 2169704], ['정', 2208095], ['강', 1153911], ['조', 1347230], ['윤', 948600], ['장', 936647], ['임', 935493],
+    ['한', 706908], ['신', 911686], ['오', 706908], ['서', 693954], ['권', 652495], ['황', 644294], ['송', 634345], ['안', 637786], ['류', 603084], ['홍', 518635], ['전', 681768], ['고', 435839],
+    ['문', 426927], ['손', 415182], ['양', 482568], ['배', 372064], ['백', 351275], ['허', 300448], ['남', 257178], ['심', 252255], ['유', 437309], ['노', 287376], ['하', 209756], ['곽', 187322],
+    ['성', 184555], ['차', 180589], ['구', 178167], ['우', 176682], ['주', 215010], ['나', 172022], ['민', 159054], ['진', 163663], ['지', 140824], ['엄', 132990], ['원', 119356], ['채', 114069],
+    ['천', 103811], ['공', 83164], ['현', 81807], ['방', 116776], ['변', 131554], ['함', 75955], ['염', 63951], ['여', 74843], ['추', 54667], ['도', 52349], ['석', 46066], ['소', 39552],
+    ['선', 38870], ['설', 38766], ['마', 35096], ['길', 32418], ['위', 28675], ['연', 28447], ['표', 28398], ['명', 26746], ['기', 24385], ['금', 23489], ['왕', 23447], ['반', 23216],
+    ['옥', 22964], ['육', 21545], ['인', 20635], ['맹', 20219], ['제', 19595], ['탁', 19395], ['모', 18955], ['남궁', 18743], ['어', 17551], ['국', 16697], ['은', 15657], ['편', 14675]];
+  const pickSurname = used => {
+    const pool = SURNAMES.filter(([n]) => !used.has(n)), w = pool.map(([, c]) => Math.sqrt(c)), t = w.reduce((a, b) => a + b, 0);
+    let r = Math.random() * t; for (let k = 0; k < pool.length; k++) { r -= w[k]; if (r <= 0) return pool[k][0]; } return pool[0][0];
+  };
+
+  // 자리 8개: h = 사람, a = AI, x = 빈자리
+  const lob = Object.assign({ preset: 'all', cap: 5, rounds: 10, seats: ['h', 'a', 'a', 'a', 'x', 'x', 'x', 'x'], styles: [0, 1, 2, 3, 4, 5, 6, 7], auto: [] }, load(LS.lobby) || {});
   if (![5, 10, 15].includes(lob.rounds)) lob.rounds = 10;
+  if (!Array.isArray(lob.seats) || lob.seats.length !== 8) lob.seats = ['h', 'a', 'a', 'a', 'x', 'x', 'x', 'x'];
+  let step = 1;
   const presetCount = id => E.buildGraph(M, id).cells.length;
+  const presetName = id => (E.PRESETS.find(p => p.id === id) || E.PRESETS[0]).name;
+  const seatsN = () => lob.seats.filter(t => t !== 'x').length, seatsH = () => lob.seats.filter(t => t === 'h').length;
+  const seatOK = seats => { const n = seats.filter(t => t !== 'x').length, h = seats.filter(t => t === 'h').length; return n >= 4 && n <= E.maxPlayers(presetCount(lob.preset)) && h >= 1; };
+  function fitSeats() {   // 지도가 바뀌어 인원 제한을 넘으면 뒤쪽 AI부터 빈자리로
+    const maxN = E.maxPlayers(presetCount(lob.preset));
+    for (let k = 7; k >= 0 && seatsN() > maxN; k--) if (lob.seats[k] === 'a') lob.seats[k] = 'x';
+    for (let k = 7; k >= 0 && seatsN() > maxN; k--) if (lob.seats[k] === 'h' && seatsH() > 1) lob.seats[k] = 'x';
+  }
+  // 이름: 성씨 + 이 지도 속 지역 (서로 겹치지 않게). 지도가 바뀌면 그 지도에 없는 이름만 다시 뽑음
+  function ensureNames(all) {
+    const cells = new Set(E.buildGraph(M, lob.preset).cells);
+    if (!Array.isArray(lob.auto) || lob.auto.length !== 8 || all) lob.auto = new Array(8).fill(null);
+    const usedS = new Set(), usedG = new Set();
+    lob.auto.forEach((a, k) => { if (a && cells.has(a.g) && !usedS.has(a.s) && !usedG.has(a.g)) { usedS.add(a.s); usedG.add(a.g); } else lob.auto[k] = null; });
+    const free = [...cells].filter(g => !usedG.has(g));
+    lob.auto = lob.auto.map(a => {
+      if (a) return a;
+      const g = free.splice(Math.floor(Math.random() * free.length), 1)[0], s = pickSurname(usedS); usedS.add(s);
+      return { s, g };
+    });
+  }
+  const autoName = k => lob.auto[k].s + M.cells[lob.auto[k].g].label;
+
   function renderLobby() {
+    fitSeats(); ensureNames();
     const btn = p => `<button data-p="${p.id}" class="${p.id === lob.preset ? 'sel' : ''}">${p.name}<small>${presetCount(p.id)}칸</small></button>`;
     $('#mapSeg').innerHTML = E.PRESETS.filter(p => !p.group).map(btn).join('');
     $('#mapSeg2').innerHTML = E.PRESETS.filter(p => p.group === 'prov').map(btn).join('');
+    $('#pickedMap').textContent = `${presetName(lob.preset)} · ${presetCount(lob.preset)}칸`;
     const maxN = E.maxPlayers(presetCount(lob.preset));
-    lob.n = Math.min(lob.n, maxN);
-    $('#nSeg').innerHTML = [4, 5, 6, 7, 8].map(n => `<button data-n="${n}" class="${n === lob.n ? 'sel' : ''}"${n > maxN ? ' disabled title="칸이 적어서 이 지도는 ' + maxN + '명까지"' : ''}>${n}명</button>`).join('');
-    $('#nNote').textContent = maxN < 8 ? `이 지도는 칸이 적어서 ${maxN}명까지 할 수 있어요` : '';
-    lob.h = Math.min(lob.h, lob.n);
-    $('#hSeg').innerHTML = Array.from({ length: lob.n }, (_, i) => i + 1).map(h => `<button data-h="${h}" class="${h === lob.h ? 'sel' : ''}">${h}</button>`).join('');
-    let ai = 0;
-    $('#plist').innerHTML = Array.from({ length: lob.n }, (_, i) => {
-      const st = STYLES[lob.styles[i]], human = i < lob.h;
-      const nm = human ? lob.names[i] : `AI ${++ai}`;
-      return `<div class="prow${human ? ' human' : ''}"><button class="sw" data-sw="${i}" title="${st.name} (눌러서 바꾸기)">${dieIcon(lob.styles[i])}</button>` +
-        `<input data-nm="${i}" maxlength="8" value="${esc(nm)}" ${human ? 'placeholder="이름을 써 주세요"' : 'disabled'} aria-label="닉네임">${human ? '<span class="who">✏️</span>' : '<span class="who">🤖</span>'}</div>`;
+    $('#seats').innerHTML = lob.seats.map((t, k) => {
+      const off = t === 'x' && k >= 0 && !seatOK(lob.seats.map((v, q) => q === k ? 'a' : v));   // 인원 제한으로 못 채우는 자리
+      return `<div class="seat ${t}"><button class="sw" data-sw="${k}" title="색 바꾸기">${dieIcon(lob.styles[k])}</button>` +
+        `<span class="snm">${t === 'x' ? '빈자리' : esc(autoName(k))}</span>` +
+        `<button class="kind" data-kind="${k}"${off ? ' disabled' : ''}>${{ h: '사람', a: '🤖 AI', x: '+ 추가' }[t]}</button></div>`;
     }).join('');
+    $('#seatSum').textContent = `${seatsN()}명 (사람 ${seatsH()} · AI ${seatsN() - seatsH()})`;
+    $('#seatNote').textContent = maxN < 8 ? `이 지도는 칸이 적어서 ${maxN}명까지` : '4~8명';
     $('#capSeg').querySelectorAll('button').forEach(b => b.classList.toggle('sel', +b.dataset.cap === lob.cap));
     $('#roundSeg').querySelectorAll('button').forEach(b => b.classList.toggle('sel', +b.dataset.r === lob.rounds));
-    $('#resumeBtn').hidden = !savedGame();
+    document.querySelectorAll('[data-resume]').forEach(b => b.hidden = !savedGame());
+    $('#lobby .card').dataset.step = step;
   }
   $('#lobby').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.p) lob.preset = b.dataset.p;
-    else if (b.dataset.n) lob.n = +b.dataset.n;
-    else if (b.dataset.h) lob.h = +b.dataset.h;
     else if (b.dataset.cap) lob.cap = +b.dataset.cap;
     else if (b.dataset.r) lob.rounds = +b.dataset.r;
-    else if (b.dataset.sw) {   // 다른 사람이 안 쓰는 다음 색으로
-      const i = +b.dataset.sw, used = new Set(lob.styles.slice(0, lob.n).filter((_, k) => k !== i));
+    else if (b.dataset.kind) {   // 사람 → AI → 빈자리 → 사람 (규칙에 맞는 다음 것으로)
+      const k = +b.dataset.kind, order = { h: ['a', 'x'], a: ['x', 'h'], x: ['h', 'a'] }[lob.seats[k]];
+      for (const t of order) { const next = lob.seats.slice(); next[k] = t; if (seatOK(next)) { lob.seats = next; break; } }
+    } else if (b.dataset.sw) {   // 다른 자리가 안 쓰는 다음 색으로 (빈자리 색과는 맞바꿈)
+      const i = +b.dataset.sw, used = new Set(lob.styles.filter((_, k) => k !== i && lob.seats[k] !== 'x'));
       let s = lob.styles[i]; do { s = (s + 1) % STYLES.length; } while (used.has(s));
-      // 화면에 안 보이는 자리(인원 밖)가 그 색을 쓰고 있으면 맞바꾸기
-      const j = lob.styles.indexOf(s); if (j >= lob.n) lob.styles[j] = lob.styles[i];
+      const j = lob.styles.indexOf(s); if (j !== i) lob.styles[j] = lob.styles[i];
       lob.styles[i] = s;
-    } else return;
+    } else if (b.id === 'rerollBtn') ensureNames(true);
+    else if (b.id === 'nextBtn') step = 2;
+    else if (b.id === 'backBtn' || b.id === 'backBtn2') step = 1;
+    else return;
     SND.tap(); store(LS.lobby, lob); renderLobby();
+    if (b.id === 'nextBtn' || b.id === 'backBtn' || b.id === 'backBtn2') $('#lobby .card').scrollTop = 0;
   });
-  $('#lobby').addEventListener('input', e => { if (e.target.dataset.nm != null) { lob.names[+e.target.dataset.nm] = e.target.value; store(LS.lobby, lob); } });
 
   function openLobby() {
-    renderLobby(); $('#lobby').hidden = false;
+    step = 1; renderLobby(); $('#lobby').hidden = false;
   }
   function askConfirm(msg, yes = '새로 시작', no = '아니요') {
     return new Promise(res => {
@@ -544,10 +585,7 @@
   $('#startBtn').onclick = async () => {
     ac();
     if (savedGame() && !(await askConfirm('진행 중인 게임 기록이 사라집니다.<br>새로 시작할까요?'))) return;
-    let ai = 0;
-    const players = Array.from({ length: lob.n }, (_, i) => i < lob.h
-      ? { name: (lob.names[i] || '').trim() || `플레이어${i + 1}`, style: lob.styles[i], ai: false }
-      : { name: `AI ${++ai}`, style: lob.styles[i], ai: true });
+    const players = lob.seats.map((t, k) => t === 'x' ? null : { name: autoName(k), style: lob.styles[k], ai: t === 'a', home: lob.auto[k].g }).filter(Boolean);
     const s = E.newGame(M, { preset: lob.preset, cap: lob.cap, rounds: lob.rounds, players });
     begin(s);
     // 차례 순서 보여 주기 (4.1)
@@ -555,7 +593,7 @@
     await askConfirm(`<div style="font-size:18px;margin-bottom:6px">🎲 차례 순서</div>${list}`, '시작!', '');
     advance();
   };
-  $('#resumeBtn').onclick = () => { ac(); const s = savedGame(); if (!s) return renderLobby(); begin(s); advance(); };
+  document.querySelectorAll('[data-resume]').forEach(b => b.onclick = () => { ac(); const s = savedGame(); if (!s) return renderLobby(); begin(s); advance(); });
   $('#brand').onclick = () => { if (!S || S.over) openLobby(); };
 
   // ---------- 메뉴 ----------

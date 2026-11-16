@@ -85,6 +85,7 @@
     const order = shuffle(s, cfg.players.map((p, i) => i));
     s.players = order.map((k, i) => ({
       name: cfg.players[k].name, style: cfg.players[k].style, ai: !!cfg.players[k].ai,
+      home: cfg.players[k].home != null ? cfg.players[k].home : null,   // 이름이 된 지역(원본 칸 번호) — 자기 이름 땅 보너스용 (다음 업데이트)
       seat: i, alive: true, stock: 0, outAt: null, got: [],
     }));
     // 2. 칸 나누기: 균등, 남는 칸은 뒷순번부터 1칸씩
