@@ -11,8 +11,8 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 
 /* 상단바 (색칠 웹앱과 같은 먹색) */
 .topbar { height: var(--topbar); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 14px; background: #2B2F36; color: #fff; position: relative; z-index: 10; }
-.brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.brand-emoji { font-size: 24px; line-height: 1; }
+.brand { display: flex; align-items: center; gap: 9px; min-width: 0; cursor: pointer; user-select: none; }
+.brand-emoji { font-size: 24px; line-height: 1; white-space: nowrap; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
 .brand h1 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; }
 .sub-line { display: flex; gap: 8px; margin-top: 2px; font-size: 11px; white-space: nowrap; }
@@ -61,14 +61,17 @@ body.playing #map.dragging { cursor: grabbing; }
 .name-pop.ok { background: var(--ok); }
 .fb { position: absolute; left: 50%; top: 45%; font-size: 64px; pointer-events: none; z-index: 6; animation: pop .6s ease forwards; }
 @keyframes pop { 0% { opacity: 0; transform: translate(-50%,-60%) scale(.5); } 30% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); } 70% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-44%) scale(.9); } }
-.danger { position: absolute; inset: 0; pointer-events: none; z-index: 2; box-shadow: inset 0 0 0 0 rgba(214,69,61,0); }
+.danger { position: fixed; inset: 0; pointer-events: none; z-index: 30; background: rgba(230,40,50,.2); opacity: 0; }
 .danger.on { animation: danger 1s infinite; }
-@keyframes danger { 0%, 100% { box-shadow: inset 0 0 0 6px rgba(214,69,61,.75); } 50% { box-shadow: inset 0 0 0 0 rgba(214,69,61,0); } }
+@keyframes danger { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
 /* 시작 화면 */
 .overlay { position: absolute; inset: 0; background: rgba(29,39,51,.45); display: flex; align-items: center; justify-content: center; z-index: 20; padding: 16px; }
 .card { width: min(520px, 100%); max-height: 100%; overflow: auto; background: #fff; border-radius: 18px; box-shadow: 0 16px 50px rgba(0,0,0,.28); padding: 26px 28px 22px; }
+.card { position: relative; }
 .card h2 { margin: 0 0 12px; font-size: 24px; }
+.card-x { position: absolute; right: 14px; top: 14px; width: 34px; height: 34px; border: 0; border-radius: 10px; background: #f0f3f7; color: var(--ink-2); display: grid; place-items: center; }
+.card-x:hover { background: #e4e9ef; color: var(--ink); }
 .rules { margin: 0 0 16px; padding: 12px 16px 12px 30px; background: #f5f7fa; border-radius: 12px; font-size: 13.5px; line-height: 1.75; color: var(--ink-2); }
 .rules b { color: var(--ink); }
 .range h3 { margin: 0 0 8px; font-size: 14px; }
@@ -84,19 +87,19 @@ body.playing #map.dragging { cursor: grabbing; }
 .conts input { width: 16px; height: 16px; margin: 0; accent-color: #2B2F36; }
 .best { margin-top: 14px; font-size: 12.5px; color: var(--ink-2); text-align: center; min-height: 1.2em; }
 .card-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
-.go { height: 46px; padding: 0 34px; border: 0; border-radius: 12px; background: #2e9e5b; color: #fff; font-size: 16px; font-weight: 800; }
+.go { height: 46px; padding: 0 28px; border: 0; border-radius: 12px; background: #2e9e5b; color: #fff; font-size: 16px; font-weight: 800; }
 .go:hover { background: #26864c; }
 .go:disabled { background: #b8c2cc; cursor: default; }
-.sub { height: 46px; padding: 0 22px; border: 0; border-radius: 12px; background: #eef1f5; color: var(--ink); font-size: 15px; font-weight: 700; }
+.sub { height: 46px; padding: 0 18px; border: 0; border-radius: 12px; background: #eef1f5; color: var(--ink); font-size: 15px; font-weight: 700; }
 
 /* 결과 */
-.result { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 15; width: 560px; max-width: calc(100% - 24px); }
+.result { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 15; width: 520px; max-width: calc(100% - 24px); }
 .rcard { background: #fff; border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.25); overflow: hidden; }
 .rhead { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #2B2F36; color: #fff; }
 .rhead h2 { margin: 0; font-size: 17px; }
 .x { width: 30px; height: 30px; border: 0; border-radius: 8px; background: rgba(255,255,255,.12); color: #fff; font-size: 16px; }
 .result.min .rbody { display: none; }
-.rbody { padding: 14px 18px 16px; max-height: calc(100vh - 160px); overflow: auto; }
+.rbody { padding: 14px 16px 16px; max-height: calc(100vh - 150px); overflow: auto; }
 .badges { display: flex; gap: 10px; justify-content: center; }
 .bdg { flex: 1; max-width: 140px; border-radius: 12px; padding: 8px 6px; text-align: center; }
 .bdg b { display: block; font-size: 28px; line-height: 1.1; }
@@ -125,5 +128,36 @@ body.playing #map.dragging { cursor: grabbing; }
   .conts { grid-template-columns: repeat(2, 1fr); }
   .card { padding: 20px 18px 18px; }
   .credit { display: none; }
-  .result { top: 8px; }
+  .result { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-width: none; transform: none; }
+  .rcard { border-radius: 16px 16px 0 0; }
+  .rbody { max-height: 38vh; }
 }
+.tag.on { outline: 2px solid #2B2F36; outline-offset: 1px; }
+
+/* 게임 종류 · 이 나라는? · 효과음 */
+.range h3 + .seg2 { margin-bottom: 14px; }
+.seg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.seg2 button { padding: 10px 8px; border: 1.5px solid var(--line); background: #fff; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--ink-2); }
+.seg2 button b { font-size: 14px; } .seg2 button small { font-size: 11.5px; color: var(--ink-3); }
+.seg2 button.sel { border-color: #2B2F36; background: #2B2F36; color: #fff; } .seg2 button.sel small { color: #cfd5dc; }
+.snd { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.snd-seg { display: inline-flex; padding: 3px; gap: 3px; background: #f0f3f7; border-radius: 10px; }
+.snd-seg button { width: 44px; height: 32px; border: 0; border-radius: 8px; background: none; color: var(--ink-3); display: grid; place-items: center; }
+.snd-seg button svg { width: 20px; height: 20px; }
+.snd-seg button.sel { background: #2B2F36; color: #fff; }
+.hbtn.icon { display: grid; place-items: center; } .hbtn.icon svg { width: 18px; height: 18px; }
+.hbtn.icon { width: 34px; padding: 0; font-size: 15px; }
+.choices { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 6; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 520px; max-width: calc(100% - 24px); }
+.choices button { height: 52px; border: 0; border-radius: 14px; background: #fff; box-shadow: var(--shadow); font-size: 18px; font-weight: 800; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.choices button kbd { font: 600 11px system-ui; color: var(--ink-3); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+.choices button:hover:not(:disabled):not(.ok):not(.ng) { background: #f2f6fa; }
+.choices button.ng { background: #fdecea; color: #b3332c; }
+.choices button.ok { background: #2e9e5b; color: #fff; } .choices button.ok kbd { color: #dff3e7; border-color: rgba(255,255,255,.4); }
+.choices button:disabled { cursor: default; }
+@media (max-width: 719px) { .choices { bottom: 12px; } .choices button { height: 48px; font-size: 16px; } .choices kbd { display: none; } .hbtn.icon { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; } .hud { padding-right: 70px; } }
+
+/* 다른 앱으로 가는 알약 버튼 (눈에 띄게) */
+.jump { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 15px; margin-right: 8px; border-radius: 99px; background: #FFD84D; color: #1d2733; font-size: 13.5px; font-weight: 800; text-decoration: none; white-space: nowrap; box-shadow: 0 2px 0 #c9a520, 0 4px 14px rgba(255,216,77,.35); transition: background .12s; }
+.jump:hover { background: #FFE27A; }
+.jump .short { display: none; }
+@media (max-width: 719px) { .jump { height: 30px; padding: 0 11px; font-size: 12.5px; margin-right: 4px; } .jump .long { display: none; } .jump .short { display: inline; } }
