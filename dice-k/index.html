@@ -28,12 +28,10 @@
 </header>
 
 <div id="app">
-  <aside id="players" aria-label="플레이어 순위"></aside>
-
   <main id="stage">
     <svg id="map" aria-label="대한민국 시군 지도">
       <defs id="defs">
-        <marker id="arrowHead" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#1d2733"/></marker>
+        <marker id="arrowHead" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#e03131"/></marker>
       </defs>
       <g id="vp">
         <g id="gOut"></g>
@@ -55,17 +53,17 @@
       <button id="zoomFit" title="맵 전체 보기"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
     </div>
 
-    <div class="banner" id="banner" hidden></div>
     <div class="toast" id="toast" hidden></div>
     <div class="notice" id="notice" hidden></div>
   </main>
 
-  <footer id="actions">
-    <div class="sel-info" id="selInfo"></div>
-    <div class="act-btns">
-      <button class="roll" id="rollBtn" disabled>🎲 <span>주사위 굴리기</span></button>
-      <button class="endt" id="endBtn" disabled>차례 끝내기</button>
-    </div>
+  <!-- 가운데 굴리기 판: "김포 옆 서울" + 주사위 + 합 -->
+  <section id="rollbar" aria-live="polite"></section>
+
+  <!-- 아래 줄: 차례 순서 (순위 아님) + 차례 끝내기 -->
+  <footer id="bottom">
+    <div id="players" aria-label="차례 순서"></div>
+    <button class="endt" id="endBtn" disabled>차례 끝내기</button>
   </footer>
 </div>
 

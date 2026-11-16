@@ -62,15 +62,25 @@
     const defs = $('#defs');
     STYLES.forEach((st, k) => {
       const p = el('pattern', { id: 'pat' + k, patternUnits: 'userSpaceOnUse', width: 5, height: 5 }, defs);
-      el('rect', { width: 5, height: 5, fill: mix(st.c, .38) }, p);
+      el('rect', { width: 5, height: 5, fill: mix(st.c, .2) }, p);
       const ink = { stroke: st.c, 'stroke-width': .7, opacity: .55, fill: 'none' };
       const L = d => el('path', Object.assign({ d }, ink), p);
       ({ diag: () => L('M0,5L5,0M-1,1L1,-1M4,6L6,4'), rdiag: () => L('M0,0L5,5M-1,4L1,6M4,-1L6,1'), hor: () => L('M0,2.5H5'), ver: () => L('M2.5,0V5'),
         cross: () => L('M0,5L5,0M0,0L5,5'), grid: () => L('M0,2.5H5M2.5,0V5'),
         dots: () => el('circle', { cx: 2.5, cy: 2.5, r: .9, fill: st.c, opacity: .55 }, p),
         ring: () => el('circle', Object.assign({ cx: 2.5, cy: 2.5, r: 1.3 }, ink), p) })[st.pat]();
+      // 3D 주사위 한 개 (바닥 가운데가 0,0). 윗면·왼면·오른면 + 눈
+      const sym = el('symbol', { id: 'die' + k, viewBox: '-11 -23 22 24', overflow: 'visible' }, defs);
+      const pip = st.c === '#E8B500' ? '#1d2733' : '#fff';
+      sym.innerHTML = `<path d="M0,-22L10,-17L0,-12L-10,-17Z" fill="${mix(st.c, .35)}" stroke="#1d2733" stroke-width=".9" stroke-linejoin="round"/>` +
+        `<path d="M-10,-17L0,-12L0,0L-10,-5Z" fill="${st.c}" stroke="#1d2733" stroke-width=".9" stroke-linejoin="round"/>` +
+        `<path d="M10,-17L0,-12L0,0L10,-5Z" fill="${shade(st.c, .28)}" stroke="#1d2733" stroke-width=".9" stroke-linejoin="round"/>` +
+        `<ellipse cx="0" cy="-17" rx="2.2" ry="1.2" fill="${pip}"/>` +
+        `<circle cx="-7" cy="-11.3" r="1.3" fill="${pip}"/><circle cx="-3" cy="-5.6" r="1.3" fill="${pip}"/>` +
+        `<circle cx="2.6" cy="-10.6" r="1.2" fill="${pip}"/><circle cx="5" cy="-7.8" r="1.2" fill="${pip}"/><circle cx="7.4" cy="-5" r="1.2" fill="${pip}"/>`;
     });
   }
+  function shade(hex, t) { const n = parseInt(hex.slice(1), 16), f = v => Math.round(v * (1 - t)); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; }
 
   // ---------- 지도 그리기 (프리셋이 바뀔 때) ----------
   function drawMap() {
@@ -100,9 +110,8 @@
     G.cells.forEach((g, i) => {
       const c = M.cells[g];
       const b = el('g', { class: 'badge sc', 'data-x': c.lp[0], 'data-y': c.lp[1] }, gBadges); b.dataset.i = i;
-      const t = el('text', { class: 'cname sc', 'data-x': c.lp[0], 'data-y': c.lp[1], y: -15 }, gNames); t.textContent = c.label; t.dataset.i = i;
+      const t = el('text', { class: 'cname sc', 'data-x': c.lp[0], 'data-y': c.lp[1], y: 17 }, gNames); t.textContent = c.label; t.dataset.i = i;
     });
-    badgeMode = null;
     fit();
   }
 
@@ -129,17 +138,14 @@
     vp.setAttribute('transform', `translate(${view.x},${view.y}) scale(${view.k})`);
     if (!rafPending) { rafPending = true; requestAnimationFrame(() => { rafPending = false; updateScaled(); }); }
   }
-  // 글자·배지는 화면에서 같은 크기로
-  let badgeMode = null;
+  // 글자·주사위 더미는 화면에서 같은 크기로
   function updateScaled() {
     const k = view.k, inv = 1 / k, z = k / k0;
     vp.querySelectorAll('.sc').forEach(e => e.setAttribute('transform', `translate(${e.dataset.x},${e.dataset.y}) scale(${inv})`));
     // 무늬는 화면에서 늘 같은 촘촘함으로
     document.querySelectorAll('#defs pattern').forEach(pt => pt.setAttribute('patternTransform', `scale(${(7 / (5 * k)).toFixed(4)})`));
-    // 좁은 칸의 숫자 배지는 칸 크기에 맞춰 작게 (이웃을 덜 가리게)
-    if (S) gBadges.querySelectorAll('.badge').forEach(b => { const c = M.cells[G.cells[+b.dataset.i]]; const s = Math.max(.6, Math.min(1, c.room * k / 5.5)); b.setAttribute('transform', `translate(${b.dataset.x},${b.dataset.y}) scale(${inv * s})`); });
-    const mode = z >= 2.6 ? 'stack' : 'num';
-    if (mode !== badgeMode && S) { badgeMode = mode; renderBadges(); }
+    // 주사위 더미는 칸 크기에 맞춰 (좁은 칸은 작게, 이웃을 덜 가리게)
+    gBadges.querySelectorAll('.badge').forEach(b => { const c = M.cells[G.cells[+b.dataset.i]]; const s = Math.max(.4, Math.min(1.05, c.room * k / 17)); b.setAttribute('transform', `translate(${b.dataset.x},${b.dataset.y}) scale(${inv * s})`); });
     renderNames();
   }
 
@@ -207,28 +213,28 @@
   // ---------- 그리기 ----------
   const cellName = i => M.cells[G.cells[i]].name, cellLabel = i => M.cells[G.cells[i]].label;
   const stOf = p => STYLES[S.players[p].style];
-  function icon(p, cls = 'ic') { const st = stOf(p); return `<span class="${cls}" style="background:${st.c}">${st.ic}</span>`; }
+  function icon(p, cls = '') { return `<span class="dic ${cls}">${dieIcon(S.players[p].style)}</span>`; }
 
   function render() {
     if (!S) return;
-    gCells.querySelectorAll('path').forEach(p => { const i = +p.dataset.i; p.setAttribute('fill', `url(#pat${S.players[S.owner[i]].style})`); });
-    renderBadges(); renderHi(); renderNames(); renderHud(); renderPlayers(); renderActions();
+    gCells.querySelectorAll('path').forEach(p => { const i = +p.dataset.i; p.setAttribute('fill', `url(#pat${S.players[S.owner[i]].style})`); p.classList.toggle('pick', i === sel.from || i === sel.to); });
+    renderBadges(); renderHi(); renderNames(); renderHud(); renderPlayers(); renderRoll();
   }
 
   function renderBadges() {
-    const stack = badgeMode === 'stack';
     gBadges.querySelectorAll('.badge').forEach(b => {
-      const i = +b.dataset.i, n = S.dice[i], st = STYLES[S.players[S.owner[i]].style];
-      const key = (stack ? 's' : 'n') + n + ':' + S.owner[i];
-      if (b.dataset.k === key) return; b.dataset.k = key;
-      let h = '';
-      if (!stack) h = `<circle r="9.5" fill="#fff"/><circle r="9.5" fill="none" stroke="${st.c}" stroke-width="3"/><text>${n}</text>`;
-      else {
-        h += '<g transform="scale(1.5)">';
-        for (let d = 0; d < n; d++) { const y = -d * 7; h += `<g transform="translate(0,${y})"><path d="M-7,-3L0,-7L7,-3L0,1Z" fill="${mix(st.c, .45)}" stroke="#1d2733" stroke-width=".8"/><path d="M-7,-3L0,1L0,9L-7,5Z" fill="${st.c}" stroke="#1d2733" stroke-width=".8"/><path d="M7,-3L0,1L0,9L7,5Z" fill="${mix(st.c, .15)}" stroke="#1d2733" stroke-width=".8"/><circle cx="-3.5" cy="3" r="1" fill="#fff"/><circle cx="3.5" cy="3" r="1" fill="#fff"/></g>`; }
-        h += `<rect x="-7" y="${-n * 7 - 1}" width="14" height="${n * 7 + 11}" fill="transparent"/></g>`;
-      }
-      b.innerHTML = h;
+      const i = +b.dataset.i, n = S.dice[i], o = S.owner[i], st = S.players[o].style;
+      const key = n + ':' + o;
+      if (b.dataset.k === key) return;
+      const [pn, po] = (b.dataset.k || '0:-1').split(':').map(Number);
+      const fresh = po !== o ? 0 : pn;          // 주인이 바뀌면 모두 새로, 늘었으면 늘어난 만큼만 떨어짐
+      b.dataset.k = key;
+      const pos = d => { const col = Math.floor(d / 4), row = d % 4; return [col * 9, -row * 12 - col * 5]; };
+      let h = `<ellipse cx="${n > 4 ? 6 : 1}" cy="1" rx="${n > 4 ? 17 : 12}" ry="4.5" fill="rgba(0,0,0,.28)"/>`;
+      const order = [...Array(n).keys()].sort((a, c) => (Math.floor(c / 4) - Math.floor(a / 4)) || (a - c));   // 뒷줄 먼저
+      for (const d of order) { const [x, y] = pos(d); h += `<use href="#die${st}" x="${x - 11}" y="${y - 23}" width="22" height="24"${d >= fresh && b.dataset.k0 ? ` class="drop" style="animation-delay:${(d - fresh) * 45}ms"` : ''}/>`; }
+      h += `<rect x="-13" y="${-Math.min(n, 4) * 12 - 14}" width="${n > 4 ? 35 : 26}" height="${Math.min(n, 4) * 12 + 18}" fill="transparent"/>`;
+      b.innerHTML = h; b.dataset.k0 = 1;
     });
   }
 
@@ -244,10 +250,10 @@
     gProvNames.style.display = z < 1.4 && set.labels && !hot.size ? '' : 'none';
     gNames.querySelectorAll('.cname').forEach(t => {
       const i = +t.dataset.i, c = M.cells[G.cells[i]];
-      const fits = c.room * k >= Math.max(c.label.length * 6.2 + 3, 16);   // 이름(위)과 숫자 배지(아래)가 칸 안에 들어갈 때
+      const fits = c.room * k >= Math.max(c.label.length * 6 + 3, 20);   // 이름(아래)과 주사위 더미(위)가 칸 안에 들어갈 때
       const show = hot.has(i) || (set.labels && (z >= 3 || fits) && !(hot.size && z < 1.4));
       t.style.display = show ? '' : 'none';
-      t.setAttribute('class', 'cname sc' + (hot.has(i) ? ' hot' : '') + (tg.has(i) ? ' tgt' : ''));
+      t.setAttribute('class', 'cname sc' + (hot.has(i) ? ' hot' : '') + (tg.has(i) ? ' tgt' : '') + (i === sel.from || i === sel.to ? ' ondark' : ''));
     });
     // 이름표는 맨 위로: 뜨거운 이름을 마지막에
     hot.forEach(i => { const t = gNames.querySelector(`[data-i="${i}"]`); if (t) gNames.appendChild(t); });
@@ -278,34 +284,35 @@
   function renderHud() {
     $('#hRound').textContent = S.round; $('#hMax').textContent = S.maxRound;
     const p = S.cur, pl = S.players[p];
-    $('#hCur').innerHTML = `${icon(p, 'ic hi-ic')}<span class="nm">${esc(pl.name)}</span><span class="tag">${S.over ? '게임 끝' : pl.ai ? '🤖 생각 중…' : '차례'}</span>`;
-    const hc = $('#hCur .hi-ic'); if (hc) hc.style.cssText += ';width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;flex-shrink:0;text-shadow:0 1px 2px rgba(0,0,0,.35)';
+    $('#hCur').innerHTML = `${icon(p)}<span class="nm">${esc(pl.name)}</span><span class="tag">${S.over ? '게임 끝' : pl.ai ? '🤖 생각 중…' : '차례'}</span>`;
     $('#speedBtn').textContent = { normal: '🤖 보통', fast: '🤖 빠르게', skip: '🤖 건너뛰기' }[set.speed];
   }
 
+  function dieIcon(style) { return `<svg viewBox="-12 -25 24 27"><use href="#die${style}" x="-11" y="-23" width="22" height="24"/></svg>`; }
   function renderPlayers() {
-    const rows = E.standings(M, S);
-    $('#players').innerHTML = '<div class="players-head">순위 · 칸 수</div>' + rows.map(r =>
-      `<div class="pl${r.p === S.cur && !S.over ? ' cur' : ''}${r.alive ? '' : ' out'}" title="${esc(r.name)}">` +
-      `${icon(r.p)}<span class="nm">${esc(r.name)}</span><span class="cells">${r.cells}<small>칸</small></span>` +
-      `<span class="st"><span>${r.rank}등</span><span>이어진 땅 ${r.cluster}</span><span>주사위 ${r.dice}</span>${r.stock ? `<span>저장 ${r.stock}</span>` : ''}</span></div>`).join('');
+    $('#players').innerHTML = S.players.map((pl, p) => {
+      const cells = pl.alive ? E.ownedBy(S, p).length : 0, cl = pl.alive ? E.largestCluster(M, S, p).length : 0;
+      return `<div class="pl${p === S.cur && !S.over ? ' cur' : ''}${pl.alive ? '' : ' out'}" title="${esc(pl.name)} · ${cells}칸 · 다음 충전 ${cl}개">` +
+        `${dieIcon(pl.style)}${pl.stock ? `<span class="stk">+${pl.stock}</span>` : ''}<span class="num">${cells}<small>충전 ${cl}</small></span><span class="nm">${esc(pl.name)}</span></div>`;
+    }).join('');
+    const cur = $('#players .cur'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 
-  function renderActions() {
-    const mine = myTurn();
-    $('#rollBtn').disabled = !(mine && sel.from != null && sel.to != null);
-    $('#endBtn').disabled = !mine;
-    let h = '';
-    const pl = S.players[S.cur];
-    if (S.over) h = '게임이 끝났어요';
-    else if (pl.ai) h = `🤖 <b>${esc(pl.name)}</b> 차례예요`;
-    else if (sel.from != null && sel.to != null) {
-      const lt = E.linkType(M, S, sel.from, sel.to);
-      h = `<span class="vs">${esc(cellLabel(sel.from))} ${S.dice[sel.from]} <em>${lt === 'sea' ? '⛴ 뱃길' : '옆'}</em> ${esc(cellLabel(sel.to))} ${S.dice[sel.to]}</span><br>🎲 주사위를 굴려 공격해요`;
-    } else if (sel.from != null) h = `<b>${esc(cellName(sel.from))}</b> (주사위 ${S.dice[sel.from]}개)<br>깜빡이는 이웃 칸을 눌러 공격할 곳을 골라요`;
-    else if (info != null) h = `<b>${esc(cellName(info))}</b>의 이웃: ${G.nb[info].map(j => esc(cellLabel(j))).join(', ')}`;
-    else h = '주사위가 <b>2개 이상</b>인 내 칸을 눌러요';
-    $('#selInfo').innerHTML = h;
+  // 가운데 굴리기 판 (굴리는 중이 아닐 때)
+  let rolling = false;
+  function renderRoll() {
+    $('#endBtn').disabled = !myTurn();
+    if (rolling) return;
+    const rb = $('#rollbar'), pl = S.players[S.cur];
+    const names = (a, b) => { const lt = E.linkType(M, S, a, b); return `<div class="rb-names">${esc(cellLabel(a))}<em class="${lt === 'sea' ? 'sea' : ''}">${lt === 'sea' ? '⛴ 뱃길' : '옆'}</em>${esc(cellLabel(b))}</div>`; };
+    let h;
+    if (S.over) h = '<div class="rb-msg">게임이 끝났어요</div>';
+    else if (pl.ai) h = `<div class="rb-msg">🤖 <b>${esc(pl.name)}</b> 차례예요</div>`;
+    else if (sel.from != null && sel.to != null) h = names(sel.from, sel.to) + `<button class="roll" id="rollBtn">🎲 주사위 굴리기 <small style="font-weight:600;opacity:.8">${S.dice[sel.from]} : ${S.dice[sel.to]}</small></button>`;
+    else if (sel.from != null) h = `<div class="rb-msg"><b>${esc(cellName(sel.from))}</b> (주사위 ${S.dice[sel.from]}개)<small>빨간 테두리로 깜빡이는 이웃 칸을 눌러 공격할 곳을 골라요</small></div>`;
+    else if (info != null) h = `<div class="rb-msg"><b>${esc(cellName(info))}</b>의 이웃<small>${G.nb[info].map(j => esc(cellLabel(j))).join(', ')}</small></div>`;
+    else h = `<div class="rb-msg"><b>${esc(pl.name)}</b> 차례<small>주사위가 2개 이상인 내 칸을 눌러요</small></div>`;
+    rb.innerHTML = h;
   }
 
   // ---------- 알림 ----------
@@ -321,39 +328,44 @@
 
   // ---------- 공격 연출: 배너 "거제 옆 부산 / 4 : 6" ----------
   const PIPS = { 1: [[50, 50]], 2: [[28, 28], [72, 72]], 3: [[25, 25], [50, 50], [75, 75]], 4: [[28, 28], [72, 28], [28, 72], [72, 72]], 5: [[26, 26], [74, 26], [50, 50], [26, 74], [74, 74]], 6: [[28, 24], [72, 24], [28, 50], [72, 50], [28, 76], [72, 76]] };
-  const dieHtml = (v, rolling) => `<span class="die${rolling ? ' rolling' : ''}">${PIPS[v].map(([x, y]) => `<i style="left:${x}%;top:${y}%"></i>`).join('')}</span>`;
+  const dieHtml = (v, style, roll) => `<span class="die2${roll ? ' rolling' : ''}${STYLES[style].c === '#E8B500' ? ' dk' : ''}" style="background:${STYLES[style].c}">${PIPS[v].map(([x, y]) => `<i style="left:${x}%;top:${y}%"></i>`).join('')}</span>`;
   const timing = ai => {
     const sp = ai ? set.speed : (set.speed === 'normal' ? 'normal' : 'fast');
-    return { normal: { roll: 750, hold: 1250 }, fast: { roll: 300, hold: 650 }, skip: { roll: 0, hold: 0 } }[sp];
+    return { normal: { roll: 750, hold: 1150 }, fast: { roll: 300, hold: 600 }, skip: { roll: 0, hold: 0 } }[sp];
   };
   async function showAttack(res, ai) {
     const tm = timing(ai);
     if (!tm.roll && !tm.hold) return;
+    rolling = true;
     const A = cellLabel(res.from), D = cellLabel(res.to), lt = E.linkType(M, S, res.from, res.to);
-    const mid = lt === 'sea' ? '⛴ 뱃길' : '옆';
-    const ca = STYLES[S.players[res.att].style].c, cd = STYLES[S.players[res.def].style].c;
-    const bn = $('#banner'); bn.hidden = false;
-    const frame = (rolling) => {
-      const fa = rolling ? res.a.map(() => 1 + Math.floor(Math.random() * 6)) : res.a, fd = rolling ? res.d.map(() => 1 + Math.floor(Math.random() * 6)) : res.d;
-      bn.innerHTML = `<div class="bn-row bn-names"><span class="l">${esc(A)}</span><span class="mid">${mid}</span><span class="r">${esc(D)}</span></div>` +
-        `<div class="bn-row bn-dice"><span class="l">${fa.map(v => dieHtml(v, rolling)).join('')}</span><span></span><span class="r">${fd.map(v => dieHtml(v, rolling)).join('')}</span></div>` +
-        (rolling ? `<div class="bn-row bn-sum"><span class="l wait">?</span><span class="mid">:</span><span class="r wait">?</span></div>`
-          : `<div class="bn-row bn-sum"><span class="l ${res.win ? 'win' : 'lose'}" style="color:${mix(ca, .25)}">${res.aSum}</span><span class="mid">:</span><span class="r ${res.win ? 'lose' : 'win'}" style="color:${mix(cd, .25)}">${res.dSum}</span></div>`);
+    const sa = S.players[res.att].style, sd = S.players[res.def].style;
+    const rb = $('#rollbar');
+    const frame = (roll) => {
+      const fa = roll ? res.a.map(() => 1 + Math.floor(Math.random() * 6)) : res.a, fd = roll ? res.d.map(() => 1 + Math.floor(Math.random() * 6)) : res.d;
+      const cl = w => roll ? 'wait' : (w ? 'win' : 'lose');
+      rb.innerHTML = `<div class="rb-names">${esc(A)}<em class="${lt === 'sea' ? 'sea' : ''}">${lt === 'sea' ? '⛴ 뱃길' : '옆'}</em>${esc(D)}</div>` +
+        `<div class="rb-row"><span class="rb-side l"><span class="rb-dice">${fa.map(v => dieHtml(v, sa, roll)).join('')}</span><b class="rb-sum ${cl(res.win)}" style="color:${STYLES[sa].c}">${roll ? '?' : res.aSum}</b></span>` +
+        `<span class="rb-vs">:</span><span class="rb-side r"><b class="rb-sum ${cl(!res.win)}" style="color:${STYLES[sd].c}">${roll ? '?' : res.dSum}</b><span class="rb-dice">${fd.map(v => dieHtml(v, sd, roll)).join('')}</span></span></div>`;
     };
-    // 굴리기
+    // 굴리는 동안 두 칸을 검게
+    gCells.querySelectorAll('.pick').forEach(p => p.classList.remove('pick'));
+    [res.from, res.to].forEach(i => { const p = gCells.querySelector(`[data-i="${i}"]`); if (p) p.classList.add('pick'); });
+    gHi.textContent = ''; hiPath(res.from, 'hi-from'); hiPath(res.to, 'hi-to');
     const t0 = performance.now();
     while (performance.now() - t0 < tm.roll) { frame(true); SND.tick(); await sleep(70); }
     frame(false);
     // 지도 위 큰 숫자
     gFx.textContent = '';
-    const bigNum = (i, v, win, c) => { const lp = M.cells[G.cells[i]].lp; const t = el('text', { class: 'sum sc' + (win ? '' : ' lose'), 'data-x': lp[0], 'data-y': lp[1], fill: mix(c, .2) }, gFx); t.textContent = v; };
-    bigNum(res.from, res.aSum, res.win, ca); bigNum(res.to, res.dSum, !res.win, cd); updateScaled();
+    const bigNum = (i, v, win, st) => { const lp = M.cells[G.cells[i]].lp; const t = el('text', { class: 'sum sc' + (win ? '' : ' lose'), 'data-x': lp[0], 'data-y': lp[1], fill: mix(STYLES[st].c, .15) }, gFx); t.textContent = v; };
+    bigNum(res.from, res.aSum, res.win, sa); bigNum(res.to, res.dSum, !res.win, sd); updateScaled();
     (res.win ? SND.win : SND.lose)();
-    render();   // 결과 반영된 지도
+    await sleep(Math.min(450, tm.hold / 2));
+    render();   // 결과 반영된 지도 (주사위가 새 칸으로 떨어짐)
     if (res.win) toast(`${esc(M.cells[G.cells[res.to]].name)} 획득!`, 'ok', tm.hold);
     else toast(`${esc(M.cells[G.cells[res.to]].name)} 방어 성공!`, 'ng', tm.hold);
     await sleep(tm.hold);
-    gFx.textContent = ''; bn.hidden = true;
+    gFx.textContent = '';
+    rolling = false;
   }
 
   async function doAttack(from, to, ai) {
@@ -419,14 +431,15 @@
   }
   $('#handoffBtn').onclick = () => { $('#handoff').hidden = true; waitingHandoff = false; SND.tap(); render(); checkStuck(); };
 
-  $('#rollBtn').onclick = async () => {
+  $('#rollbar').addEventListener('click', async e => {
+    if (!e.target.closest('#rollBtn')) return;
     if (!myTurn() || sel.from == null || sel.to == null) return;
-    busy = true; $('#notice').hidden = true; render();
+    ac(); busy = true; $('#notice').hidden = true;
     await doAttack(sel.from, sel.to, false);
     busy = false;
     if (S.over) return finish();
     render(); checkStuck();
-  };
+  });
   $('#endBtn').onclick = async () => {
     if (!myTurn()) return;
     $('#endBtn').classList.remove('pulse'); $('#notice').hidden = true;
@@ -462,9 +475,8 @@
     const humans = S.players.map((p, i) => [p, i]).filter(([p]) => !p.ai);
     $('#gots').innerHTML = humans.map(([p, i]) => {
       const names = p.got.map(c => M.cells[G.cells[c]].name);
-      return `<div class="got"><h4>${icon(i, 'ic')} ${esc(p.name)}님이 차지했던 지역 (${names.length}곳)</h4>${names.length ? `<div class="chips">${names.map(n => `<span>${esc(n)}</span>`).join('')}</div>` : '<div class="none">공격으로 차지한 곳이 없어요</div>'}</div>`;
+      return `<div class="got"><h4>${icon(i, 'sm')} ${esc(p.name)}님이 차지했던 지역 (${names.length}곳)</h4>${names.length ? `<div class="chips">${names.map(n => `<span>${esc(n)}</span>`).join('')}</div>` : '<div class="none">공격으로 차지한 곳이 없어요</div>'}</div>`;
     }).join('');
-    $('#gots').querySelectorAll('.got h4 .ic').forEach(e => e.style.cssText += ';display:inline-grid;width:20px;height:20px;border-radius:50%;place-items:center;color:#fff;font-size:11px;vertical-align:-4px');
     $('#result').hidden = false;
     SND.win();
   }
@@ -483,7 +495,7 @@
     $('#plist').innerHTML = Array.from({ length: lob.n }, (_, i) => {
       const st = STYLES[lob.styles[i]], human = i < lob.h;
       const nm = human ? lob.names[i] : `AI ${++ai}`;
-      return `<div class="prow"><button class="sw" data-sw="${i}" style="background:${st.c}" title="${st.name} (눌러서 바꾸기)">${st.ic}</button>` +
+      return `<div class="prow"><button class="sw" data-sw="${i}" title="${st.name} (눌러서 바꾸기)">${dieIcon(lob.styles[i])}</button>` +
         `<input data-nm="${i}" maxlength="8" value="${esc(nm)}" ${human ? '' : 'disabled'} aria-label="닉네임"><span class="who">${human ? '사람' : '🤖'}</span></div>`;
     }).join('');
     $('#capSeg').querySelectorAll('button').forEach(b => b.classList.toggle('sel', +b.dataset.cap === lob.cap));
@@ -527,7 +539,7 @@
     const s = E.newGame(M, { preset: lob.preset, cap: lob.cap, players });
     begin(s);
     // 차례 순서 보여 주기 (4.1)
-    const list = s.players.map((p, i) => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><b style="width:2.2em">${i + 1}번</b><span style="width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:12px;background:${STYLES[p.style].c}">${STYLES[p.style].ic}</span><span style="font-weight:700">${esc(p.name)}</span>${p.bonus ? `<small style="color:#8a96a3;margin-left:auto">후공 보정 주사위 +${p.bonus}</small>` : ''}</div>`).join('');
+    const list = s.players.map((p, i) => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><b style="width:2.2em">${i + 1}번</b><span class="dic">${dieIcon(p.style)}</span><span style="font-weight:700">${esc(p.name)}</span>${p.bonus ? `<small style="color:#8a96a3;margin-left:auto">후공 보정 주사위 +${p.bonus}</small>` : ''}</div>`).join('');
     await askConfirm(`<div style="font-size:18px;margin-bottom:6px">🎲 차례 순서</div>${list}`, '시작!', '');
     advance();
   };
