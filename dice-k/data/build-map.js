@@ -42,11 +42,15 @@ if (new Set(feats.map(f => f.id)).size !== 161) throw new Error('id 중복');
 
 // ---------- 2. 투영 (메르카토르, 지도 단위 1000 x ...) ----------
 const fc = { type: 'FeatureCollection', features: feats };
-const proj = d3.geoMercator().fitWidth(1000, fc);
+// 경도·위도 범위로 맞춤 (d3는 고리 방향이 반대인 다각형을 '지구 전체'로 봐서 fc로 맞추면 지도가 점처럼 작아짐)
+let lo0 = Infinity, la0 = Infinity, lo1 = -Infinity, la1 = -Infinity;
+feats.forEach(f => (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates).flat(2).forEach(([x, y]) => { lo0 = Math.min(lo0, x); lo1 = Math.max(lo1, x); la0 = Math.min(la0, y); la1 = Math.max(la1, y); }));
+const proj = d3.geoMercator().fitWidth(1000, { type: 'MultiPoint', coordinates: [[lo0, la0], [lo1, la1]] });
 const P = ([x, y]) => proj([x, y]);
 
 // ---------- 3. 위상 만들기 → 인접 추출 ----------
-const topo = topology({ c: fc }, 1e6);
+// 주의: topology()는 넣은 좌표를 그 자리에서 바꿔 버리므로 복사본으로 만든다
+const topo = topology({ c: JSON.parse(JSON.stringify(fc)) }, 1e6);
 const objs = topo.objects.c.geometries;
 // 각 arc의 실제 길이(km) — 꼭짓점만 닿는 경우를 거르기 위해
 const arcsAbs = tc.feature(topo, { type: 'MultiLineString', arcs: topo.arcs.map((_, i) => [i]) }).geometry.coordinates;
@@ -86,7 +90,7 @@ const SEA = [   // [칸 A, 칸 B, 뱃길이 휘는 기준점(바다 위) 경도�
 
 // ---------- 5. 단순화 → 칸별 SVG 경로 ----------
 const simp = ts.presimplify(topo);
-const sTopo = ts.simplify(simp, 2.5e-7);   // 화면용으로 꼭짓점 줄이기 (위상 유지)
+const sTopo = ts.simplify(simp, 4e-6);   // 한반도 색칠 앱과 같은 정도로 꼭짓점 줄이기 (위상 유지)
 const r1 = v => Math.round(v * 10) / 10;
 const pathOf = geom => {
   const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
@@ -154,7 +158,7 @@ const provLabels = Object.values(provs).filter(p => !['서울', '부산', '대�
 
 const pack = {
   id: 'kr161', name: '대한민국 시·군 (전남·광주 통합 전)', source: '한반도 색칠 웹앱 지도 자료(GADM 기반, 2026년 4월 기준)에서 복사·가공',
-  width: 1000, height: Math.ceil(d3.geoPath(proj).bounds(fc)[1][1]),
+  width: 1000, height: Math.ceil(proj([lo0, la0])[1]),
   regions: { capital: '수도권', chungcheong: '충청권', gangwon: '강원권', honam: '호남권', yeongnam: '영남권', jeju: '제주권' },
   cells, adjacency: adjacency.map(([i, j]) => [i, j]), links, provLabels,
   provLines: lineD(provMesh),

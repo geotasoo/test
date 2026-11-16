@@ -244,7 +244,7 @@
     gProvNames.style.display = z < 1.4 && set.labels && !hot.size ? '' : 'none';
     gNames.querySelectorAll('.cname').forEach(t => {
       const i = +t.dataset.i, c = M.cells[G.cells[i]];
-      const fits = c.room * k >= c.label.length * 6.2 + 3;
+      const fits = c.room * k >= Math.max(c.label.length * 6.2 + 3, 16);   // 이름(위)과 숫자 배지(아래)가 칸 안에 들어갈 때
       const show = hot.has(i) || (set.labels && (z >= 3 || fits) && !(hot.size && z < 1.4));
       t.style.display = show ? '' : 'none';
       t.setAttribute('class', 'cname sc' + (hot.has(i) ? ' hot' : '') + (tg.has(i) ? ' tgt' : ''));
