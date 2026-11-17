@@ -31,6 +31,14 @@ for (const f of R.features) {
     (groups[key] = groups[key] || []).push(l);
   }
 }
+// 하구 이음: HydroRIVERS가 넓은 하구에서 일찍 끝나는 강을 국가하천 하천망도(물길 면)의 가운데를 따라 바다까지 이은 선
+// (data/river-mouths.json — 한강·임진강·낙동강·서낙동강 등, 선생님 확인을 거친 구간)
+const MOUTH = JSON.parse(fs.readFileSync(process.env.MOUTHS || '/home/claude/test/koreamap/data/river-mouths.json'));
+const ENDS = {}; for (const f of R.features) { const p = f.properties; if (!ENDS[p.MAIN_RIV] || p.UPLAND_SKM > ENDS[p.MAIN_RIV].UPLAND_SKM) ENDS[p.MAIN_RIV] = p; }
+for (const [rid, v] of Object.entries(MOUTH)) {
+  const up = ENDS[rid] ? ENDS[rid].UPLAND_SKM : 1000, w = up >= 10000 ? 3 : up >= 2000 ? 2 : 1;
+  for (const l of v.lines) { const z = zoneOf(l, +rid); const key = 'm' + z + w; (groups[key] = groups[key] || []).push(l); }
+}
 const objs = {};
 for (const [k, ls] of Object.entries(groups)) objs[k] = { type: 'Feature', geometry: { type: 'MultiLineString', coordinates: ls } };
 let topo0 = ts.topology(objs, 1e5);

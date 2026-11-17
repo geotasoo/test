@@ -471,7 +471,7 @@
   function needRivers() {
     if (rivTopo || rivLoading || S.rivers === 'off') return;
     rivLoading = true;
-    fetch('data/rivers.json?v=4').then(r => r.json()).then(t => { rivTopo = t; requestDraw(); })
+    fetch('data/rivers.json?v=5').then(r => r.json()).then(t => { rivTopo = t; requestDraw(); })
       .catch(() => showToast('하천 자료를 불러오지 못했어요')).finally(() => { rivLoading = false; });
   }
   // 키: 단계(m 주요 · d 지류) + 구역(s 남측 · n 북측 · o 주변 나라) + 굵기(1~3, 지류 0)
@@ -498,7 +498,7 @@
   function syncRivers() {
     document.querySelectorAll('#riverSeg [data-riv]').forEach(b => b.classList.toggle('sel', b.dataset.riv === S.rivers));
     const ri = $('#rivW'); if (ri) { ri.value = S.rivW; $('#rivWOut').textContent = (+S.rivW).toFixed(1); ri.closest('.row').classList.toggle('off', S.rivers === 'off'); }
-    const c = $('#rivCredit'); if (c) c.textContent = S.rivers !== 'off' ? ' · 하천: HydroRIVERS (Lehner & Grill 2013)' : '';
+    const c = $('#rivCredit'); if (c) c.textContent = S.rivers !== 'off' ? ' · 하천: HydroRIVERS (Lehner & Grill 2013) · 하구 일부: 국가하천 하천망도' : '';
     needRivers();
   }
   $('#rivW').addEventListener('input', e => { S.rivW = +e.target.value; $('#rivWOut').textContent = S.rivW.toFixed(1); requestDraw(); saveSoon(); });
