@@ -359,7 +359,7 @@
   // ───────── 한반도 데이터 ─────────
   // sg 시군(165) · sd 시도(16, 시군을 합친 것) · nk 북측 · nb 주변 나라 · sk 남측 전체(합친 것)
   let topoK = null, sgF = [], sdF = [], nkF = null, nbF = [], skF = null, sdMesh, sgMesh, nbBorderMesh, nbCoastMesh;
-  const NB_LABEL = { 'nb:CHN': [122.6, 41.6], 'nb:JPN': [133.2, 34.9], 'nb:RUS': [132.2, 44.0] };
+  const NB_LABEL = { 'nb:CHN': [122.6, 41.6], 'nb:JPN': [133.2, 34.9], 'nb:RUS': [131.9, 42.9] };
   // 보일 시도 (null = 전체)
   const sdOn = name => !S.lakes.sel || S.lakes.sel.includes(name);
   const UL = 'sg:경상북도:울릉', hideUL = () => false;   // (예전: 울릉군 통째로 빼기) 지금은 상자로 옮긴 섬만 바다색으로 덮어요
@@ -521,9 +521,12 @@
     ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingQuality = 'high';
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);   // 옅게 할 때 흰 바탕이 비쳐요
     ctx.globalAlpha = 0.12 + 0.88 * Math.pow((S.bgAlpha ?? 80) / 100, 0.75);   // 50 → 약 0.64
+    const WR = B.elev ? nbWinRect() : null;   // 고도는 주변 지역 안만 받아서 그려요
+    if (WR) { ctx.beginPath(); ctx.rect(WR.x0, WR.y0, WR.x1 - WR.x0, WR.y1 - WR.y0); ctx.clip(); }
     for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
-      const wx = ((tx % n) + n) % n, im = tileImg(B.url(z, wx, ty), B.elev && { z, y: ty });
       const px = X0 + tx * tile, py = Y0 + ty * tile;
+      if (WR && (px + tile < WR.x0 || px > WR.x1 || py + tile < WR.y0 || py > WR.y1)) continue;
+      const wx = ((tx % n) + n) % n, im = tileImg(B.url(z, wx, ty), B.elev && { z, y: ty });
       const ok = o => o && (B.elev ? o.cv : o.complete && o.naturalWidth) ? (B.elev ? o.cv : o) : null;
       if (ok(im)) ctx.drawImage(ok(im), px, py, tile + 0.5, tile + 0.5);
       else {   // 아직 안 온 타일은 한 단계 위(큰) 타일을 늘려서 임시로
@@ -553,6 +556,7 @@
     ctx.save(); ctx.strokeStyle = col; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     for (const z of zones) {
       if (z === 's' && S.lakes.sel && landShape) { ctx.save(); ctx.clip(landShape); }
+      if (z === 'o') { ctx.save(); ctx.clip(nbWin()); }   // 주변 하천은 주변 지역 안만
       const keys = (S.rivers === 'all' ? ['d' + z + '0'] : []).concat(['m' + z + '1', 'm' + z + '2', 'm' + z + '3']);
       for (const k of keys) {
         if (!rivTopo.objects[k]) continue;
@@ -560,6 +564,7 @@
         ctx.stroke(shared('riv:' + k, () => topojson.feature(rivTopo, rivTopo.objects[k])));
       }
       if (z === 's' && S.lakes.sel && landShape) ctx.restore();
+      if (z === 'o') ctx.restore();
     }
     ctx.restore();
   }
@@ -672,6 +677,16 @@
     return SH.merc[name] || (SH.merc[name] = makeShape(geo()));
   }
   const shared = sharedShape;
+  // 주변 지역 범위(경위도): 주변 나라·주변 하천·고도 타일은 이 안에서만 그려요 (화면 밖은 받지도 그리지도 않아요)
+  const NB_WIN = { lon: [119, 136], lat: [32, 43.5] };
+  const nbWinGeo = () => ({ type: 'Polygon', coordinates: [[[NB_WIN.lon[0], NB_WIN.lat[0]], [NB_WIN.lon[1], NB_WIN.lat[0]], [NB_WIN.lon[1], NB_WIN.lat[1]], [NB_WIN.lon[0], NB_WIN.lat[1]], [NB_WIN.lon[0], NB_WIN.lat[0]]]] });
+  const nbWin = () => shared('nbwin', nbWinGeo);
+  const inNbWin = (lo, la) => lo >= NB_WIN.lon[0] && lo <= NB_WIN.lon[1] && la >= NB_WIN.lat[0] && la <= NB_WIN.lat[1];
+  // 주변 지역 범위의 화면 사각형(CSS 픽셀) — 메르카토르 기준
+  function nbWinRect() {
+    const x = lo => W / 2 + (lo - lon0) * RAD * s, y = la => cy - s * merc(Math.max(-85, Math.min(85, la)));
+    return { x0: x(NB_WIN.lon[0]), x1: x(NB_WIN.lon[1]), y0: y(NB_WIN.lat[1]), y1: y(NB_WIN.lat[0]) };
+  }
   const SPHERE = { type: 'Sphere' };
 
   function setWorldTransform(shift = 0) {
@@ -721,8 +736,10 @@
         if (f.kind === 'sd') c = c || S.colors.get('sk');
         if (!c && (f.kind === 'sg' || bgOn)) continue;
         ctx.fillStyle = fillFor(ctx, c || S.land, dpr * s);
+        if (f.kind === 'nb') { ctx.save(); ctx.clip(nbWin()); }
         ctx.fill(f.id === 'sd:경상북도' && hideUL() ? shared('gbNoUL:' + S.era, () => ({ type: 'MultiPolygon',
           coordinates: (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates).filter(pg => d3.geoCentroid({ type: 'Polygon', coordinates: pg })[0] < 130.5) })) : shapeOf(f));
+        if (f.kind === 'nb') ctx.restore();
       }
       ctx.globalAlpha = 1;
       const lightL = bgOn && S.bg === 'sat', LC = lightL ? '#FFFFFF' : '#1a1a1a', LC2 = lightL ? 'rgba(255,255,255,.8)' : '#8c8c8c', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
@@ -735,9 +752,11 @@
       // 4) 해안선·둘레, 시도·시군 경계
       ctx.lineWidth = lw * px; ctx.strokeStyle = LC;
       if (S.show.nb && !S.lakes.sel) {
+        ctx.save(); ctx.clip(nbWin());
         ctx.stroke(shared('nbcoast', () => nbCoastMesh));
         ctx.lineWidth = lw * 0.9 * px; ctx.setLineDash([3.2 * px * Math.max(1, lw), 2.2 * px * Math.max(1, lw)]);
         ctx.stroke(shared('nbborder', () => nbBorderMesh)); ctx.setLineDash([]);
+        ctx.restore();
         ctx.lineWidth = lw * px;
       }
       const nkOn = S.show.nk && !S.lakes.sel;
@@ -1110,7 +1129,7 @@
       ctx.fillStyle = color; ctx.fillText(text, p[0], p[1]);
     };
     if (S.show.names) for (const f of sdF) if (featOn(f)) put(f, z < 1.6 ? f.properties.s : f.properties.ko, 13, 700, '#1d2733');
-    if (S.show.names && S.show.nb && !S.lakes.sel) for (const f of nbF) put(f, f.properties.ko, 13, 700, '#5b6776');
+    if (S.show.names && S.show.nb && !S.lakes.sel) for (const f of nbF) if (inNbWin(f.properties.lx, f.properties.ly)) put(f, f.properties.ko, 13, 700, '#5b6776');
     if (S.show.sgnames) for (const f of sgF) if (featOn(f)) put(f, f.properties.ko, 11, 500, '#33404d');
   }
 
