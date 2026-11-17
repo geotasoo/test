@@ -25,10 +25,10 @@
     { name: '파랑 단계', colors: ['#DCEBFA', '#A9CDF0', '#6AA6DE', '#2F78C2', '#164A8A'] },
     { name: '빨강 단계', colors: ['#FDE2D6', '#F9B193', '#F27A55', '#D9412B', '#A01B17'] },
     { name: '초록 단계', colors: ['#E3F2D9', '#B5DDA0', '#7CC16A', '#3F9441', '#1D5E28'] },
-    { name: '노랑-갈색', colors: ['#FFF3C4', '#FAD776', '#F2B134', '#C98320', '#8A5A12'] },
+    { name: '노랑 단계', colors: ['#FFF3C4', '#FAD776', '#F2B134', '#C98320', '#8A5A12'] },
   ];
   const LAND_COLORS = ['#FFFFFF', '#F7F3EA', '#EEF1F4', '#E6E6E6'];
-  const OCEAN_COLORS = ['#FFFFFF', '#E3E3E3', '#D2E9F7', '#B4DAF2'];   // 흰색 · 시험지 회색 · 하늘색(흑백 인쇄 시 시험지 회색) · 조금 진한 하늘색
+  const OCEAN_COLORS = ['#FFFFFF', '#E3E3E3', '#D6F1FF', '#B4DAF2'];   // 흰색 · 시험지 회색 · 하늘색(흑백 인쇄 시 시험지 회색) · 조금 진한 하늘색
 
   // ───────── 상태 ─────────
   const S = {
@@ -37,7 +37,7 @@
     palette: 0,
     tool: 'paint',          // 'paint' | 'erase'
     land: '#FFFFFF',
-    ocean: '#D2E9F7',       // 하늘색 (흑백으로 인쇄하면 시험지 배경 회색)
+    ocean: '#D6F1FF',       // 밝은 하늘색 (RGB 214, 241, 255)
     line: 1.0,
     borderDash: true,       // 국경선 점선(기본) / 실선
     show: { borders: true, kp: false, names: false, tiny: false, grid: false, equator: true, lakes: true, scale: true, seas: true },
@@ -45,7 +45,7 @@
     seas: { sel: ['태평양', '대서양', '인도양', '북극해', '지중해', '동해'] },   // 켜 둔 바다 이름
     lakes: { sel: WM_PLACES.LAKES.filter(l => l.on).map(l => l.ko), all: false },   // 켜 둔 주요 호수
     points: [],             // 찍은 점 { id, lon, lat, city(목록 도시면 이름), label, off(라벨을 옮겼으면 [dx, dy]) }
-    pstyle: { color: '#1A1A1A', shape: 'circle', size: 6, outline: true, font: 10 },   // 모든 점 공통 모양 (font: 라벨 글자 크기)
+    pstyle: { color: '#1A1A1A', shape: 'circle', size: 6, outline: false, font: 10 },   // 모든 점 공통 모양 (font: 라벨 글자 크기)
     fill: null,             // 'alpha' | 'hangulp' | 'hangul' 이면 순서대로 라벨 자동
     regions: [],            // 색칠한 나라 라벨 { id, label, off }
     rfill: null,            // 색칠 라벨 자동 순서
@@ -61,20 +61,23 @@
   };
   const undoStack = [], redoStack = [];
   // 빗금 칠: S.colors 에 'hatch' 로 저장
+  // 단계 팔레트에서는 그 색 빗금: 'hatch:#색' (기본 'hatch' 는 검은 빗금)
   const HATCH = 'hatch';
-  const cssFill = c => c === HATCH ? 'repeating-linear-gradient(135deg, #2b2b2b 0 1.3px, #fff 1.3px 5px)' : c;
+  const isHatch = c => typeof c === 'string' && (c === HATCH || c.startsWith('hatch:'));
+  const hatchColor = c => c === HATCH ? '#1a1a1a' : c.slice(6);
+  const cssFill = c => isHatch(c) ? `repeating-linear-gradient(135deg, ${hatchColor(c)} 0 1.3px, #fff 1.3px 5px)` : c;
   const hatchTiles = new Map();
   // m: 지금 캔버스에서 그리는 단위 1이 장치 픽셀 몇 개인지 (빗금 간격을 화면 기준 6px로 고정)
   function fillFor(g, c, m, dd) {
-    if (c !== HATCH) return c;
-    const d = dd || Math.max(1, Math.round(dpr * 2) / 2), T = Math.round(6 * d);
-    let tile = hatchTiles.get(T);
+    if (!isHatch(c)) return c;
+    const d = dd || Math.max(1, Math.round(dpr * 2) / 2), T = Math.round(6 * d), hc = hatchColor(c);
+    let tile = hatchTiles.get(T + hc);
     if (!tile) {
       tile = document.createElement('canvas'); tile.width = tile.height = T;
       const t = tile.getContext('2d'); t.fillStyle = '#fff'; t.fillRect(0, 0, T, T);
-      t.strokeStyle = '#1a1a1a'; t.lineWidth = 1.2 * d; t.lineCap = 'square';
+      t.strokeStyle = hc; t.lineWidth = 1.2 * d; t.lineCap = 'square';
       for (let i = -1; i <= 1; i++) { t.beginPath(); t.moveTo(i * T, T); t.lineTo(i * T + T, 0); t.stroke(); }
-      hatchTiles.set(T, tile);
+      hatchTiles.set(T + hc, tile);
     }
     const pat = g.createPattern(tile, 'repeat');
     pat.setTransform(new DOMMatrix().scale(1 / m));
@@ -218,8 +221,9 @@
       if (sideOpen) dockH = Math.max(0, st.bottom - $('#side').getBoundingClientRect().top);
       else if (!hidden) dockH = Math.max(0, st.bottom - $('#dock').getBoundingClientRect().top);
     } else {
-      if (!hidden && !document.body.classList.contains('point-mode')) left = $('#dock').getBoundingClientRect().right - st.left;
+      if (!hidden && !document.body.classList.contains('point-mode')) right = st.right - $('#dock').getBoundingClientRect().left;   // 색칠하기 패널도 오른쪽
       if (sideOpen) right = $('#side').offsetWidth;
+      stage.style.setProperty('--frame-r', right + 'px');   // 도형찍기 빨간 테두리: 패널을 뺀 지도만 감싸요
     }
     stage.style.setProperty('--dock-h', dockH + 'px');
     const top = Math.max(0, $('#controls').getBoundingClientRect().bottom - st.top) + 8;
@@ -229,6 +233,7 @@
     const fitW = W - left - 16 - (isPhone() ? 0 : 54);   // 오른쪽 확대 버튼 자리 (오른쪽 패널은 지도 위에 겹쳐 열림)
     sMinE = Math.min(fitW / bw, (bot - top) / bh);
     eeFit = { cx: left + 8 + fitW / 2, cy: (top + bot) / 2, h: bot - top };
+    stage.style.setProperty('--frame-b', dockH + 'px');
     area = { top, bot, left, right, line: H - dockH - 10 };
     sMin = isEE() ? sMinE : sMinM;
   }
@@ -1017,9 +1022,10 @@
   }
   function renderSwatches() {
     const el = $('#swatches'); el.innerHTML = '';
-    [...PALETTES[S.palette].colors, HATCH].forEach((c, i) => {
+    const pal = PALETTES[S.palette].colors, hatch = S.palette >= 2 ? 'hatch:' + pal[pal.length - 1] : HATCH;   // 단계 팔레트: 가장 진한 색 빗금
+    [...pal, hatch].forEach((c, i) => {
       const b = document.createElement('button');
-      b.className = 'swatch'; b.style.background = cssFill(c); b.dataset.c = c; b.title = c === HATCH ? '빗금' : c;
+      b.className = 'swatch'; b.style.background = cssFill(c); b.dataset.c = c; b.title = isHatch(c) ? '빗금' : c;
       if (i < 9) b.innerHTML = `<kbd>${i + 1}</kbd>`;
       b.onclick = () => selectColor(c);
       el.appendChild(b);
@@ -1128,6 +1134,7 @@
   // ───────── 팔레트 접기 ─────────
   function syncDock() {
     document.body.classList.toggle('dock-hidden', !!S.dockHidden);
+    document.body.classList.toggle('side-open', !!sideName || !S.dockHidden);   // 오른쪽 패널 자리 (확대 버튼 등을 비켜요)
     if (!S.dockHidden) openLayers(false);
     $('#colorBtn .dot').style.background = S.tool === 'erase' ? '#fff' : cssFill(S.current);
     $('#colorBtn').classList.toggle('on', !S.dockHidden && !pointMode);
@@ -1136,7 +1143,7 @@
   $('#dockHide').addEventListener('click', () => { S.dockHidden = true; syncDock(); saveSoon(); });
   $('#colorBtn').addEventListener('click', e => {
     e.stopPropagation();
-    if (pointMode) { openSide(null); S.dockHidden = false; }      // 점찍기 중이면 색칠하기로 바꿈
+    if (sideName) { openSide(null); S.dockHidden = false; }      // 다른 오른쪽 패널이 열려 있으면 색칠하기로 바꿈
     else S.dockHidden = !S.dockHidden;
     syncDock(); saveSoon();
   });
@@ -1275,7 +1282,7 @@
 
   // ───────── 점찍기 ─────────
   let pointMode = false, selPoint = null, ptab = 'cities';
-  const PCOLORS = ['#1A1A1A', '#7F7F7F', '#FFFFFF', '#E63946', '#F4A261', '#F9C74F', '#2A9D8F', '#277DA1', '#7B61FF', '#E56BCF'];
+  const PCOLORS = ['#1A1A1A', '#7F7F7F', '#FFFFFF', '#E63946', '#F4A261', '#F9C74F'];   // 6색 + 원하는 색 = 한 줄
   const SEQ = ['alpha', 'hangulp', 'hangul'];
   const HANGUL = ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카', '타', '파', '하'];
   const seqLabel = (mode, i) => {
@@ -1462,7 +1469,7 @@
   }));
 
   // ───────── 범례 ─────────
-  const lum = c => { const g2 = gray(c); return g2 === c && c === HATCH ? -1 : parseInt(g2.slice(1, 3), 16); };
+  const lum = c => isHatch(c) ? -1 : parseInt(gray(c).slice(1, 3), 16);
   // 지금 지도에 쓰인 항목 (사용자가 정한 순서 → 새 항목은 기본 순서로 뒤에)
   function legendKeys(kind) {
     const L = S.legend[kind];
@@ -1600,10 +1607,11 @@
   function openSide(name) {
     if (name === sideName) name = null;
     sideName = name;
+    if (name && !S.dockHidden) { S.dockHidden = true; document.body.classList.add('dock-hidden'); }   // 오른쪽 패널은 하나만
     side.hidden = !name;
     side.querySelectorAll('section').forEach(sec => sec.classList.toggle('on', sec.dataset.panel === name));
     document.querySelectorAll('.pill.tp, #legendBtn').forEach(b => b.classList.toggle('on', b.dataset.side === name));
-    document.body.classList.toggle('side-open', !!name);
+    document.body.classList.toggle('side-open', !!name || !S.dockHidden);
     pointMode = name === 'points';
     document.body.classList.toggle('label-mode', name === 'labels');
     if (!pointMode) selPoint = null;
@@ -1809,7 +1817,6 @@
       b.onclick = () => setStyle({ shape: sh });
       ps.appendChild(b);
     }
-    $('#pShapeHint').textContent = '다음에 찍을 도형의 모양 · 색 (이미 찍은 도형은 목록에서 바꿔요)';
     $('#pSize').value = st.size; $('#pSizeOut').textContent = st.size;
         setShapeDot($('#styDot'));
     $('#pOutline').checked = !!st.outline;
@@ -1924,6 +1931,7 @@
 
   // ───────── 이미지로 저장 ─────────
   const gray = c => {
+    if (typeof c === 'string' && c.startsWith('hatch:')) return 'hatch:' + gray(c.slice(6));   // 색 빗금 → 회색 빗금
     const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})/i.exec(c || ''); if (!m) return c;
     const v = Math.round(0.299 * parseInt(m[1], 16) + 0.587 * parseInt(m[2], 16) + 0.114 * parseInt(m[3], 16));
     const h = v.toString(16).padStart(2, '0'); return '#' + h + h + h;
@@ -2220,6 +2228,7 @@
   renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI();
   initPanels();
   document.body.classList.toggle('dock-hidden', !!S.dockHidden);
+  document.body.classList.toggle('side-open', !S.dockHidden);
   lineInput.value = S.line; lineOut.textContent = S.line.toFixed(1);
   window.addEventListener('resize', () => { resize(); requestDraw(); });
   resize();

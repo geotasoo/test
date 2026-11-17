@@ -647,3 +647,37 @@ body.selecting, body.selecting * { user-select: none; -webkit-user-select: none;
 .jump:hover { background: #FFE27A; }
 .jump .short { display: none; }
 @media (max-width: 719px) { .jump { height: 30px; padding: 0 11px; font-size: 12.5px; margin-right: 4px; } .jump .long { display: none; } .jump .short { display: inline; } }
+
+/* 상단 아이콘 버튼: 글자 없이, 마우스를 올리면 이름이 보여요 */
+.actions .btn[data-tip] { position: relative; padding: 0 9px; }
+.actions .btn[data-tip]::after { content: attr(data-tip); position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); padding: 5px 9px; border-radius: 7px; background: #1d2733; color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s; z-index: 50; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+.actions .btn[data-tip]:hover::after, .actions .btn[data-tip]:focus-visible::after { opacity: 1; }
+.actions .btn[data-tip]:last-child::after { left: auto; right: 0; transform: none; }
+
+/* 색칠하기 패널도 오른쪽 (도형찍기·라벨 패널과 같은 자리·같은 모양) */
+.dock-head .dock-done { height: 30px; padding: 0 12px; font-size: 13px; }
+@media (min-width: 720px) {
+  .dock-wrap { left: auto; right: 0; top: 0; bottom: 0; width: 320px; max-height: none; z-index: 5; gap: 0; }
+  .dock-wrap .dock { height: 100%; max-height: none; border-radius: 0; box-shadow: -8px 0 24px rgba(20,40,70,.06); border-left: 1px solid var(--line); padding: 0 16px 16px; gap: 14px; }
+  .dock-head { margin: 0 -16px; padding: 12px 12px 10px 16px; border-bottom: 1px solid var(--line); }
+  .dock-head .dock-title { font-size: 16px; }
+  .dock-head .sbtn.mini { height: 30px; padding: 0 10px; font-size: 12.5px; }
+  .swatches { grid-template-columns: repeat(6, 1fr); }
+}
+
+.brand-icon { width: 36px; height: 29px; margin: 0 -3px; display: block; flex: none; }
+@media (max-width: 719px) { .brand-icon { width: 30px; height: 24px; } }
+.title-flag { width: 30px; height: 24px; vertical-align: -6px; margin-right: 2px; }
+
+/* 쌍둥이 앱으로 가는 깃발 알약 (새 창) */
+.jump.jump-flag { gap: 7px; padding-left: 10px; }
+.jump.jump-flag img { width: 28px; height: 23px; display: block; margin: -2px 0; }
+
+/* 도형찍기 중: 패널을 뺀 지도 영역만 빨간 테두리로 감싸요 (네 변 모두) */
+body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0; right: var(--frame-r, 0px); bottom: var(--frame-b, 0px); border: 3px solid rgba(214,69,61,.75); pointer-events: none; z-index: 4; }
+.mode-banner { max-width: calc(100% - var(--frame-r, 0px) - 24px); }
+.mode-banner span { overflow: hidden; text-overflow: ellipsis; }
+
+/* 쌍둥이 앱 링크: 깃발만 */
+.jump.jump-flag.icon-only { padding: 0 9px; gap: 0; }
+.jump.jump-flag.icon-only img { width: 32px; height: 26px; }

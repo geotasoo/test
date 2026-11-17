@@ -4,7 +4,7 @@
   --shadow: 0 6px 24px rgba(20,40,70,.16);
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; height: 100%; overflow: hidden; font-family: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; color: var(--ink); background: #D2E9F7; }
+html, body { margin: 0; height: 100%; overflow: hidden; font-family: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; color: var(--ink); background: #D6F1FF; }
 button { font: inherit; cursor: pointer; }
 svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 [hidden] { display: none !important; }

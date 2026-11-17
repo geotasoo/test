@@ -7,7 +7,7 @@
   const HOME_LON = 150, LAT_TOP = 84, LAT_BOT = -60, MAX_ZOOM = 40, MIN_ZOOM = 0.5;
   const GAME_SEC = 60, MAX_WRONG = 3, PASSES = 3;
   const CONTS = ['아시아', '유럽', '아프리카', '북아메리카', '남아메리카', '오세아니아'];
-  const COL = { target: '#FFD84D', land: '#FFFFFF', ocean: '#D2E9F7', ok: '#86d3a2', ng: '#f19a93', ps: '#f8c983', flash: '#e8615a', hover: '#f3f6f9' };
+  const COL = { target: '#FFD84D', land: '#FFFFFF', ocean: '#D6F1FF', ok: '#86d3a2', ng: '#f19a93', ps: '#f8c983', flash: '#e8615a', hover: '#f3f6f9' };
   const merc = lat => Math.log(Math.tan(Math.PI / 4 + Math.max(-85, Math.min(85, lat)) * RAD / 2));
   const MERC_SPAN = merc(LAT_TOP) - merc(LAT_BOT);
   const STORE = 'worldgame.v1';
