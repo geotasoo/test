@@ -471,7 +471,7 @@
   function needRivers() {
     if (rivTopo || rivLoading || S.rivers === 'off') return;
     rivLoading = true;
-    fetch('data/rivers.json?v=3').then(r => r.json()).then(t => { rivTopo = t; requestDraw(); })
+    fetch('data/rivers.json?v=4').then(r => r.json()).then(t => { rivTopo = t; requestDraw(); })
       .catch(() => showToast('하천 자료를 불러오지 못했어요')).finally(() => { rivLoading = false; });
   }
   // 키: 단계(m 주요 · d 지류) + 구역(s 남측 · n 북측 · o 주변 나라) + 굵기(1~3, 지류 0)
