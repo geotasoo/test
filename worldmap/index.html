@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117c">
+<link rel="stylesheet" href="style.css?v=20261117d">
 </head>
 <body>
 <header class="topbar">
@@ -75,6 +75,10 @@
     <div class="row"><label class="sw"><input type="checkbox" data-layer="grid"><span></span>경위선</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="equator"><span></span>적도</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="scale"><span></span>축척</label></div>
+    <div class="row"><span class="rlabel">경계선 색</span>
+      <div class="mini-seg" id="lcSeg" title="배경 지도를 켰을 때만 흰색으로 그려요 (위성 배경에서 잘 보여요 · 저장할 때는 검정)"><button data-lc="dark">검정</button><button data-lc="light">흰색</button></div></div>
+    <div class="row"><span class="rlabel">배경 지도</span>
+      <div class="mini-seg" id="bgSeg"><button data-bg="off">끄기</button><button data-bg="osm">일반</button><button data-bg="sat">위성</button><button data-bg="topo">지형</button></div></div>
   </div>
 
   <!-- 오른쪽 위: 확대·축소 -->
@@ -329,12 +333,12 @@
   <div id="toast" role="status"><span></span><button hidden>되돌리기</button></div>
 
   <!-- 아래: 왼쪽 도법·출처, 오른쪽 축척 (축척은 지도 그림에 그려요) -->
-  <div class="credit"><b id="projName"></b><span class="src"> · 지도 데이터: Natural Earth · @geotasoo</span></div>
+  <div class="credit"><b id="projName"></b><span class="src"> · 지도 데이터: Natural Earth · @geotasoo</span><span class="src" id="bgCredit"></span></div>
 </main>
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117c"></script>
-<script src="app.js?v=20261117c"></script>
+<script src="data/places.js?v=20261117d"></script>
+<script src="app.js?v=20261117d"></script>
 </body>
 </html>

@@ -615,7 +615,7 @@
           coordinates: (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates).filter(pg => d3.geoCentroid({ type: 'Polygon', coordinates: pg })[0] < 130.5) })) : shapeOf(f));
       }
       ctx.globalAlpha = 1;
-      const lightL = S.lineLight && !EXP, LC = lightL ? '#FFFFFF' : '#1a1a1a', LC2 = lightL ? 'rgba(255,255,255,.8)' : '#8c8c8c', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
+      const lightL = S.lineLight && bgOn && !EXP, LC = lightL ? '#FFFFFF' : '#1a1a1a', LC2 = lightL ? 'rgba(255,255,255,.8)' : '#8c8c8c', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
       // 3) 경위선·적도
       if (S.show.grid) {
         ctx.lineWidth = 0.6 * px; ctx.strokeStyle = LG;   /* 경위선은 가는 실선 (국경 점선과 구별) */

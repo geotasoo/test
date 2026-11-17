@@ -759,3 +759,11 @@ body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0
   #layersBtn > span::after { content: '설정'; font-size: 12.5px; }
 }
 @media (max-width: 360px) { #layersBtn > span { display: none; } }
+
+/* 저장 창 '넣기' 칩: 창이 좁으면 다음 줄로 (가로 스크롤 생기지 않게) */
+.ex-put-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.ex-lrow { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.ex-lplace { flex-wrap: wrap; }
+.ex-opts { min-width: 0; }
+.ex-row .chk.ex-chip { min-width: 0; }
+.ex-body { overflow-x: hidden; }

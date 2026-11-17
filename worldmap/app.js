@@ -41,6 +41,8 @@
     line: 1.0,
     borderDash: true,       // 국경선 점선(기본) / 실선
     show: { borders: true, kp: false, names: false, tiny: false, grid: false, equator: true, lakes: true, scale: true, seas: true },
+    bg: 'off',              // 배경 지도: 'off' | 'osm' | 'sat' | 'topo' (메르카토르에서만, 화면에서만)
+    lineLight: false,       // 경계선 색: 검정 / 흰색 (위성 배경용, 저장은 검정)
     dockHidden: true,       // 처음엔 색칠하기 패널을 접어 둠
     seas: { sel: ['태평양', '대서양', '인도양', '북극해', '지중해', '동해'] },   // 켜 둔 바다 이름
     lakes: { sel: WM_PLACES.LAKES.filter(l => l.on).map(l => l.ko), all: false },   // 켜 둔 주요 호수
@@ -275,6 +277,7 @@
     requestDraw(); saveSoon();
   }
   function syncProjUI() {
+    if (typeof syncBg === 'function') syncBg();
     document.querySelectorAll('#projSeg button').forEach(b => {
       const on = b.dataset.proj === S.proj;
       b.classList.toggle('sel', on); b.setAttribute('aria-pressed', String(on));
@@ -439,6 +442,49 @@
   const shared = sharedShape;
   const SPHERE = { type: 'Sphere' };
 
+  // ───────── 배경 지도 (인터넷 지도 그림, 화면에서만) ─────────
+  const BG = {
+    osm: { url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`, max: 19, credit: '배경: © OpenStreetMap 기여자' },
+    sat: { url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`, max: 18, credit: '배경: Esri, Maxar, Earthstar Geographics' },
+    topo: { url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${z}/${y}/${x}`, max: 18, credit: '배경: Esri, HERE, Garmin, © OpenStreetMap 기여자' },
+  };
+  const tileCache = new Map();
+  function tileImg(src) {
+    let im = tileCache.get(src);
+    if (!im) {
+      im = new Image(); im.decoding = 'async';
+      im.onload = () => requestDraw(); im.onerror = () => { im.bad = true; };
+      im.src = src; tileCache.set(src, im);
+      if (tileCache.size > 600) tileCache.delete(tileCache.keys().next().value);
+    }
+    return im;
+  }
+  function drawBackground() {
+    const B = BG[S.bg]; if (!B || EXP || isEE()) return false;
+    const worldPx = 2 * Math.PI * s;                               // 지도 한 바퀴의 화면 폭
+    const z = Math.max(1, Math.min(B.max, Math.round(Math.log2(worldPx / 256))));
+    const n = 1 << z, tile = worldPx / n;                          // 타일 한 장의 화면 크기
+    const X0 = W / 2 - (lon0 * RAD + Math.PI) * s, Y0 = cy - Math.PI * s;   // 웹 메르카토르 왼쪽 위 (180°W, 85°N)
+    const x0 = Math.floor(-X0 / tile), x1 = Math.floor((W - X0) / tile), y0 = Math.max(0, Math.floor(-Y0 / tile)), y1 = Math.min(n - 1, Math.floor((H - Y0) / tile));
+    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingQuality = 'high';
+    for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
+      const wx = ((tx % n) + n) % n, im = tileImg(B.url(z, wx, ty));
+      const px = X0 + tx * tile, py = Y0 + ty * tile;
+      if (im.complete && im.naturalWidth) ctx.drawImage(im, px, py, tile + 0.5, tile + 0.5);
+      else {   // 아직 안 온 타일은 한 단계 위(큰) 타일을 늘려서 임시로
+        const pz = z - 1, pim = tileCache.get(B.url(pz, wx >> 1, ty >> 1));
+        if (pim && pim.complete && pim.naturalWidth) ctx.drawImage(pim, (wx & 1) * 128, (ty & 1) * 128, 128, 128, px, py, tile + 0.5, tile + 0.5);
+      }
+    }
+    ctx.restore();
+    return true;
+  }
+  function syncBg() {
+    document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.classList.toggle('sel', b.dataset.bg === S.bg));
+    const bs = $('#bgSeg'); if (bs) { bs.classList.toggle('locked', isEE()); bs.title = isEE() ? '이퀄 어스에서는 배경 지도를 쓸 수 없어요 (메르카토르로 바꾸면 쓸 수 있어요)' : '인터넷 지도를 밑에 깔아요 (화면에서만, 저장에는 안 들어가요)'; }
+    const c = BG[S.bg]; $('#bgCredit').textContent = c && !isEE() ? ' · ' + c.credit : '';
+    document.querySelectorAll('#lcSeg [data-lc]').forEach(b => b.classList.toggle('sel', (b.dataset.lc === 'light') === !!S.lineLight));
+  }
   function setWorldTransform(shift = 0) {
     if (isEE()) { ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ex, dpr * ey); return; }
     // 화면 왼쪽 끝의 기준 x가 [-π, π) 안에 오도록 지도 벌을 고름
@@ -463,6 +509,8 @@
     const step = gridStep();
     const gridShape = S.show.grid ? shared('grid' + step, () => graticules[step]) : null, equatorShape = shared('equator', () => equator);
     // 많이 축소하면 지도 한 바퀴가 화면보다 좁아져요 → 옆으로 이어 붙여 빈 곳 없이 (도형 하나에 두 바퀴가 들어 있음)
+    const bgOn = drawBackground();   // 배경 지도 (메르카토르에서만)
+    const lightL = S.lineLight && bgOn && !EXP, LC = lightL ? '#FFFFFF' : '#1a1a1a', LB = lightL ? 'rgba(255,255,255,.9)' : '#2b2b2b', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
     const reps = isEE() ? 1 : Math.max(1, Math.ceil((W / s + TAU) / (2 * TAU)));   // 화면 왼쪽 끝은 [-π, π) 안
     for (let rep = 0; rep < reps; rep++) {
       setWorldTransform(rep * 2 * TAU * s);
@@ -473,27 +521,31 @@
         ctx.fillStyle = S.ocean; ctx.fill(sp); ctx.restore();
       }
 
-      // 1) 나라 채우기
+      // 1) 나라 채우기 (배경 지도를 켜면 칠한 나라만 반투명으로)
+      if (bgOn) ctx.globalAlpha = 0.6;
       for (const f of countries) {
-        ctx.fillStyle = fillFor(ctx, S.colors.get(f.id) || S.land, dpr * s);
+        const c = S.colors.get(f.id);
+        if (!c && bgOn) continue;
+        ctx.fillStyle = fillFor(ctx, c || S.land, dpr * s);
         ctx.fill(shapeOf(f));
       }
+      ctx.globalAlpha = 1;
       // 2) 호수
       if (S.show.lakes) {
-        ctx.fillStyle = S.ocean; ctx.fill(lakeShape);
+        ctx.fillStyle = S.ocean; if (!bgOn) ctx.fill(lakeShape);
         ctx.lineWidth = lw * 0.8 * px; ctx.strokeStyle = '#333'; ctx.stroke(lakeShape);
       }
       // 3) 경위선·적도
       if (S.show.grid) {
-        ctx.lineWidth = 0.6 * px; ctx.strokeStyle = 'rgba(0,0,0,.22)';   /* 경위선은 가는 실선 (국경 점선과 구별) */
+        ctx.lineWidth = 0.6 * px; ctx.strokeStyle = LG;   /* 경위선은 가는 실선 (국경 점선과 구별) */
         ctx.stroke(gridShape); ctx.setLineDash([]);
       }
       if (S.show.equator) { ctx.lineWidth = 1.3 * px; ctx.strokeStyle = '#D62828'; ctx.stroke(equatorShape); }
       // 4) 해안선·국경선
-      ctx.lineWidth = lw * px; ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = lw * px; ctx.strokeStyle = LC;
       ctx.stroke(coastShape);
       if (S.show.borders || S.show.kp) {
-        ctx.lineWidth = lw * 0.9 * px; ctx.strokeStyle = '#2b2b2b';
+        ctx.lineWidth = lw * 0.9 * px; ctx.strokeStyle = LB;
         if (S.borderDash) ctx.setLineDash([3.2 * px * Math.max(1, lw), 2.2 * px * Math.max(1, lw)]);   // 시험지처럼 점선
         if (S.show.borders) ctx.stroke(borderShape);
         if (S.show.kp) ctx.stroke(shared('kp', () => kpMesh));
@@ -1063,6 +1115,12 @@
   document.querySelectorAll('#dashSeg button').forEach(b => b.addEventListener('click', () => {
     S.borderDash = b.dataset.dash === '1'; syncLayers(); requestDraw(); saveSoon();
   }));
+  document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.addEventListener('click', () => {
+    if (isEE()) return showToast('이퀄 어스에서는 배경 지도를 쓸 수 없어요 · 메르카토르로 바꿔 주세요');
+    S.bg = b.dataset.bg; syncBg(); requestDraw(); saveSoon();
+    if (S.bg !== 'off') showToast('배경 지도는 화면에서만 보여요. 저장할 때는 들어가지 않아요.');
+  }));
+  document.querySelectorAll('#lcSeg [data-lc]').forEach(b => b.addEventListener('click', () => { S.lineLight = b.dataset.lc === 'light'; syncBg(); requestDraw(); saveSoon(); }));
   const layersBtn = $('#layersBtn'), layersPanel = $('#layersPanel');
   function openLayers(open) {
     layersPanel.hidden = !open; layersBtn.setAttribute('aria-expanded', String(open));
@@ -1089,14 +1147,14 @@
   lineInput.addEventListener('input', () => { S.line = +lineInput.value; lineOut.textContent = S.line.toFixed(1); requestDraw(); saveSoon(); });
 
   // ───────── 초기화 (되돌리기로 되살릴 수 있게 전체 상태를 기억) ─────────
-  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'proj', 'eeLon', 'legend'];
+  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'proj', 'eeLon', 'legend', 'bg', 'lineLight'];
   const fullSnap = () => JSON.parse(JSON.stringify({ ...Object.fromEntries(KEEP.map(k => [k, S[k]])), colors: [...S.colors] }));
   function applySnap(sn) {
     const proj0 = S.proj;
     for (const k of KEEP) S[k] = JSON.parse(JSON.stringify(sn[k]));
     S.colors = new Map(sn.colors);
     if (S.proj !== proj0) { const to = S.proj; S.proj = proj0; setProjection(to, true); }
-    renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI();
+    renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI(); syncBg();
     lineInput.value = S.line; lineOut.textContent = S.line.toFixed(1);
     selPoint = null;
     if (sideName === 'points') { renderPstyle(); renderCities(); }
@@ -2190,7 +2248,7 @@
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
         line: S.line, show: S.show, dockHidden: S.dockHidden, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
         lakes: S.lakes, seas: S.seas, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
-        regions: S.regions.map(({ _lab, ...r }) => r), rfill: S.rfill, legend: S.legend, rfont: S.rfont, borderDash: S.borderDash,
+        regions: S.regions.map(({ _lab, ...r }) => r), rfill: S.rfill, legend: S.legend, rfont: S.rfont, borderDash: S.borderDash, bg: S.bg, lineLight: S.lineLight,
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
   }
@@ -2201,6 +2259,8 @@
       S.colors = new Map(d.colors || []);
       Object.assign(S, { current: d.current || S.current, palette: d.palette || 0, land: d.land || S.land, ocean: d.ocean || S.ocean, line: d.line || S.line, view: d.view || null, proj: d.proj === 'ee' ? 'ee' : 'merc', eeLon: isFinite(d.eeLon) ? d.eeLon : EE_CENTER });
       Object.assign(S.show, d.show || {});
+      if (d.bg === 'off' || BG[d.bg]) S.bg = d.bg;
+      if (typeof d.lineLight === 'boolean') S.lineLight = d.lineLight;
       S.dockHidden = !!d.dockHidden;
       if (d.seas && Array.isArray(d.seas.sel)) S.seas = { sel: d.seas.sel.filter(n => SEAS.some(x => x.n === n)) };
       if (d.lakes && Array.isArray(d.lakes.sel)) S.lakes = { sel: d.lakes.sel.filter(k => WM_PLACES.LAKES.some(l => l.ko === k)), all: !!d.lakes.all };
@@ -2225,7 +2285,7 @@
   // ───────── 시작 ─────────
   const DEFAULTS = JSON.parse(JSON.stringify({ ...S, colors: [] }));
   load();
-  renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI();
+  renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI(); syncBg();
   initPanels();
   document.body.classList.toggle('dock-hidden', !!S.dockHidden);
   document.body.classList.toggle('side-open', !S.dockHidden);
