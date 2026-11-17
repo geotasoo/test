@@ -2574,9 +2574,6 @@
     if (k === 'welcome') { const w = $('#welcome'); if (w) w.hidden = true; }
   }
   if (!guideSeen('drag')) { const h = $('#exDragHint'); if (h) h.hidden = false; }
-  if (!guideSeen('welcome')) setTimeout(() => { const w = $('#welcome'); if (w) w.hidden = false; }, 900);
-  $('#welcomeOk').addEventListener('click', () => guideDone('welcome'));
-  $('#welcomeHelp').addEventListener('click', () => { guideDone('welcome'); $('#helpDlg').hidden = false; });
   // 미리보기에서 축척·범례를 끌어 위치 정하기
   {
     const img = $('#exPreview');
