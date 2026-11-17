@@ -2375,7 +2375,9 @@
 
   // ───────── 자동 저장 ─────────
   let saveTimer;
-  function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 400); }
+  // 자동 저장은 쓰지 않아요: 새로고침(F5)하면 늘 처음 화면 (예전에 저장된 것도 지워요)
+  function saveSoon() { }
+  try { localStorage.removeItem(STORE_KEY); } catch (_) { }
   // 창을 닫거나 새로고침할 때 아직 저장 안 된 변경이 있으면 바로 저장
   window.addEventListener('pagehide', () => { if (saveTimer) { clearTimeout(saveTimer); save(); } });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && saveTimer) { clearTimeout(saveTimer); save(); } });
@@ -2392,7 +2394,7 @@
   }
   function load() {
     try {
-      const d = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+      const d = null;   // 자동 저장을 쓰지 않아요
       if (!d) return;
       S.colors = new Map(d.colors || []);
       Object.assign(S, { current: d.current || S.current, palette: d.palette || 0, land: d.land || S.land, ocean: d.ocean || S.ocean, line: d.line || S.line, view: d.view || null, proj: d.proj === 'ee' ? 'ee' : 'merc', eeLon: isFinite(d.eeLon) ? d.eeLon : EE_CENTER });
