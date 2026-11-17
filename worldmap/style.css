@@ -737,3 +737,5 @@ body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0
 .layers-panel #bgAlphaRow { padding-left: 16px; margin-top: 2px; }
 .layers-panel .row.sub-row .rlabel { min-width: 64px; }
 .layers-panel .row .inline-range { flex: 1; justify-content: flex-end; }
+.layers-panel .row.bg-row { padding-bottom: 12px; }
+.layers-panel #bgAlphaRow { margin-top: 4px; padding-bottom: 6px; }

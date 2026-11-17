@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117q">
+<link rel="stylesheet" href="style.css?v=20261117r">
 </head>
 <body>
 <header class="topbar">
@@ -62,13 +62,15 @@
   </div>
 
   <div class="panel layers-panel" id="layersPanel" hidden>
-    <div class="sec-h">지도</div>
-    <div class="row era-row"><span class="rlabel">도법</span>
-      <div class="mini-seg" id="kprojSeg"><button data-kproj="merc">메르카토르</button><button data-kproj="tm">횡축 메르카토르</button></div>
-      <span class="tipi" tabindex="0" data-tip="국토지리정보원의 지도 등 우리나라 전국 지도는 보통 UTM-K를 씁니다. UTM-K는 동경 127.5°를 가운데에 둔 횡축 메르카토르도법입니다. 일반 메르카토르도법은 위도가 높을수록 조금씩 커집니다. 제주와 백두산 근처를 비교하면 북쪽이 약 15% 크게 그려집니다. 횡축 메르카토르를 설정하면, 배경지도는 선택할 수 없습니다.">ⓘ</span></div>
-    <div class="row era-row"><span class="rlabel">전남광주</span>
-      <div class="mini-seg" id="eraSeg"><button data-era="after">통합 후</button><button data-era="before">통합 전</button></div>
-      <span class="tipi" tabindex="0" data-tip="2026년 7월 전라남도와 광주광역시가 전남광주통합특별시로 통합했어요. 통합 전 지도는 옛 교과서·기출 문제용이에요.">ⓘ</span></div>
+    <div class="row proj-row">
+      <div class="seg light" id="kprojSeg" role="group" aria-label="도법 선택" title="도법 바꾸기 (P)"><button data-kproj="merc">메르카토르</button><button data-kproj="tm">횡축 메르카토르</button></div>
+      <span class="tipi" tabindex="0" data-tip="국토지리정보원의 지도 등 우리나라 전국 지도는 보통 UTM-K를 씁니다. UTM-K는 동경 127.5°를 가운데에 둔 횡축 메르카토르도법입니다. 일반 메르카토르도법은 위도가 높을수록 조금씩 커집니다. 제주와 백두산 근처를 비교하면 북쪽이 약 15% 크게 그려집니다. 횡축 메르카토르를 설정하면, 배경지도는 선택할 수 없습니다.">ⓘ</span>
+    </div>
+    <div class="row proj-row era2">
+      <div class="seg light" id="eraSeg" role="group" aria-label="전남광주 통합 전·후"><button data-era="after">전남광주 통합 후</button><button data-era="before">전남광주 통합 전</button></div>
+      <span class="tipi" tabindex="0" data-tip="2026년 7월 전라남도와 광주광역시가 전남광주통합특별시로 통합했어요. 통합 전 지도는 옛 교과서·기출 문제용이에요.">ⓘ</span>
+    </div>
+    <div class="sec-h">그리기</div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="nk"><span></span>북측</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="dmzDash"><span></span>휴전선 점선</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="nb"><span></span>주변 나라 (중국·일본·러시아)</label></div>
@@ -386,7 +388,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117q"></script>
-<script src="app.js?v=20261117q"></script>
+<script src="data/places.js?v=20261117r"></script>
+<script src="app.js?v=20261117r"></script>
 </body>
 </html>

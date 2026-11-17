@@ -810,3 +810,13 @@ body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0
 .layers-panel .row:has(#riverSeg) .rlabel { display: none; }
 .layers-panel #riverSeg { flex: 1; display: flex; }
 .layers-panel #riverSeg button { flex: 1; }
+
+/* 도법·통합 전후: 세계지도처럼 알약 스위치 (가로 꽉 차게) */
+.layers-panel .proj-row { display: flex; align-items: center; gap: 6px; }
+.layers-panel .proj-row .seg.light { flex: 1; width: auto; }
+.layers-panel .proj-row .seg.light button { white-space: nowrap; font-size: 13px; padding: 0 6px; }
+.layers-panel .proj-row.era2 { border-bottom: 0; padding-top: 0; margin-bottom: 0; }
+.layers-panel .proj-row:not(.era2) { border-bottom: 0; margin-bottom: 0; padding-bottom: 6px; }
+.layers-panel .proj-row.era2 + .sec-h { margin-top: 8px; }
+.layers-panel .row.bg-row { padding-bottom: 12px; }
+.layers-panel #bgAlphaRow { margin-top: 4px; padding-bottom: 6px; }
