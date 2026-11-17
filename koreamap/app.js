@@ -514,7 +514,7 @@
   function drawBackground() {
     const B = BG[S.bg]; if (!B || (EXP && EXP.exam) || isTM()) return false;   // '현재 화면대로' 저장에는 배경도 넣어요
     const worldPx = 2 * Math.PI * s;                               // 지도 한 바퀴의 화면 폭
-    const z = Math.max(1, Math.min(B.max, Math.round(Math.log2(worldPx / 256)) - (B.elev ? 1 : 0)));   // 고도는 한 단계 작은 타일 (장 수 1/4)
+    const z = Math.max(1, Math.min(B.max, Math.round(Math.log2(worldPx / 256))));
     const n = 1 << z, tile = worldPx / n;                          // 타일 한 장의 화면 크기
     const X0 = W / 2 - (lon0 * RAD + Math.PI) * s, Y0 = cy - Math.PI * s;   // 웹 메르카토르 왼쪽 위 (180°W, 85°N)
     const x0 = Math.floor(-X0 / tile), x1 = Math.floor((W - X0) / tile), y0 = Math.max(0, Math.floor(-Y0 / tile)), y1 = Math.min(n - 1, Math.floor((H - Y0) / tile));
