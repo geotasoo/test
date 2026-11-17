@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117n">
+<link rel="stylesheet" href="style.css?v=20261117o">
 </head>
 <body>
 <header class="topbar">
@@ -89,8 +89,10 @@
     <div class="row"><label class="sw"><input type="checkbox" data-layer="seas"><span></span>바다 이름</label><button class="link" data-side="seas">고르기 <b id="seasCount"></b> ›</button></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="grid"><span></span>경위선</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="scale"><span></span>축척</label></div>
-    <div class="row"><span class="rlabel">배경 지도</span>
+    <div class="row bg-row"><span class="rlabel">배경 지도</span>
       <div class="mini-seg" id="bgSeg" title="인터넷 지도를 밑에 깔아요 ('현재 화면대로' 저장에만 들어가요)"><button data-bg="off">끄기</button><button data-bg="osm">일반</button><button data-bg="sat">위성</button><button data-bg="topo">지형</button><button data-bg="elev">고도</button></div></div>
+    <div class="row sub-row" id="bgAlphaRow"><span class="rlabel">진하기</span>
+      <div class="inline-range"><input type="range" id="bgAlpha" min="0" max="100" step="5" aria-label="배경 지도 진하기 (50이 기본)"><output id="bgAlphaOut"></output></div></div>
   </div>
 
   <!-- 오른쪽 위: 확대·축소 -->
@@ -379,7 +381,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117n"></script>
-<script src="app.js?v=20261117n"></script>
+<script src="data/places.js?v=20261117o"></script>
+<script src="app.js?v=20261117o"></script>
 </body>
 </html>

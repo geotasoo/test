@@ -42,6 +42,7 @@
     borderDash: true,       // 국경선 점선(기본) / 실선
     show: { borders: true, kp: false, names: false, tiny: false, grid: false, equator: true, lakes: true, scale: true, seas: true, rivers: false, rivNames: true },
     rivW: 1.0,              // 하천 굵기 (배수)
+    bgAlpha: 50,            // 배경 지도 진하기 0~100 (50 기본)
     bg: 'off',              // 배경 지도: 'off' | 'osm' | 'sat' | 'topo' (메르카토르에서만, 화면에서만)
     lineLight: false,       // 경계선 색: 검정 / 흰색 (위성 배경용, 저장은 검정)
     dockHidden: true,       // 처음엔 색칠하기 패널을 접어 둠
@@ -455,7 +456,7 @@
     let im = tileCache.get(src);
     if (!im) {
       im = new Image(); im.decoding = 'async'; im.crossOrigin = 'anonymous';   // 저장할 때 그림에 넣을 수 있게
-      im.onload = () => { if (elev) { try { im.cv = elevColor(im, elev); } catch (_) { im.bad = true; } } requestDraw(); }; im.onerror = () => { im.bad = true; };
+      im.onload = () => { if (elev) elevQueue(im, elev); else requestDraw(); }; im.onerror = () => { im.bad = true; };
       im.src = src; tileCache.set(src, im);
       if (tileCache.size > 600) tileCache.delete(tileCache.keys().next().value);
     }
@@ -477,6 +478,17 @@
     }
     return lut;
   })();
+  const elevJobs = []; let elevBusy = false;
+  function elevQueue(im, info) {   // 받은 고도 타일을 한 번에 2장씩만 색칠해요 (화면이 멈추지 않게)
+    elevJobs.push([im, info]);
+    if (elevBusy) return; elevBusy = true;
+    const run = () => {
+      for (let k = 0; k < 2 && elevJobs.length; k++) { const [m, inf] = elevJobs.shift(); try { m.cv = elevColor(m, inf); } catch (_) { m.bad = true; } }
+      requestDraw();
+      if (elevJobs.length) setTimeout(run, 0); else elevBusy = false;
+    };
+    setTimeout(run, 0);
+  }
   function elevColor(im, { z, y }) {
     const N = 256, c = document.createElement('canvas'); c.width = c.height = N;
     const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0);
@@ -515,11 +527,13 @@
   function drawBackground() {
     const B = BG[S.bg]; if (!B || (EXP && EXP.exam) || isEE()) return false;   // '현재 화면대로' 저장에는 배경도 넣어요
     const worldPx = 2 * Math.PI * s;                               // 지도 한 바퀴의 화면 폭
-    const z = Math.max(1, Math.min(B.max, Math.round(Math.log2(worldPx / 256))));
+    const z = Math.max(1, Math.min(B.max, Math.round(Math.log2(worldPx / 256)) - (B.elev ? 1 : 0)));   // 고도는 한 단계 작은 타일 (장 수 1/4)
     const n = 1 << z, tile = worldPx / n;                          // 타일 한 장의 화면 크기
     const X0 = W / 2 - (lon0 * RAD + Math.PI) * s, Y0 = cy - Math.PI * s;   // 웹 메르카토르 왼쪽 위 (180°W, 85°N)
     const x0 = Math.floor(-X0 / tile), x1 = Math.floor((W - X0) / tile), y0 = Math.max(0, Math.floor(-Y0 / tile)), y1 = Math.min(n - 1, Math.floor((H - Y0) / tile));
     ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingQuality = 'high';
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);   // 옅게 할 때 흰 바탕이 비쳐요
+    ctx.globalAlpha = 0.12 + 0.88 * Math.pow((S.bgAlpha ?? 50) / 100, 0.75);   // 50 → 약 0.64
     for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
       const wx = ((tx % n) + n) % n, im = tileImg(B.url(z, wx, ty), B.elev && { z, y: ty });
       const px = X0 + tx * tile, py = Y0 + ty * tile;
@@ -533,7 +547,9 @@
     ctx.restore();
     return true;
   }
+  $('#bgAlpha').addEventListener('input', e => { S.bgAlpha = +e.target.value; $('#bgAlphaOut').textContent = S.bgAlpha; requestDraw(); saveSoon(); });
   function syncBg() {
+    const ba = $('#bgAlpha'); if (ba) { ba.value = S.bgAlpha ?? 50; $('#bgAlphaOut').textContent = S.bgAlpha ?? 50; $('#bgAlphaRow').classList.toggle('off', S.bg === 'off'); }
     document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.classList.toggle('sel', b.dataset.bg === S.bg));
     const bs = $('#bgSeg'); if (bs) { bs.classList.toggle('locked', isEE()); bs.title = isEE() ? '이퀄 어스에서는 배경 지도를 쓸 수 없어요 (메르카토르로 바꾸면 쓸 수 있어요)' : '인터넷 지도를 밑에 깔아요 (현재 화면대로 저장할 때만 들어가요)'; }
     const c = BG[S.bg]; $('#bgCredit').textContent = c && !isEE() ? ' · ' + c.credit : '';
@@ -1260,7 +1276,7 @@
   lineInput.addEventListener('input', () => { S.line = +lineInput.value; lineOut.textContent = S.line.toFixed(1); requestDraw(); saveSoon(); });
 
   // ───────── 초기화 (되돌리기로 되살릴 수 있게 전체 상태를 기억) ─────────
-  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'proj', 'eeLon', 'legend', 'bg', 'lineLight', 'rivW'];
+  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'proj', 'eeLon', 'legend', 'bg', 'bgAlpha', 'lineLight', 'rivW'];
   const fullSnap = () => JSON.parse(JSON.stringify({ ...Object.fromEntries(KEEP.map(k => [k, S[k]])), colors: [...S.colors] }));
   function applySnap(sn) {
     const proj0 = S.proj;
@@ -2370,7 +2386,7 @@
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
         line: S.line, show: S.show, dockHidden: S.dockHidden, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
         lakes: S.lakes, seas: S.seas, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
-        regions: S.regions.map(({ _lab, ...r }) => r), rfill: S.rfill, legend: S.legend, rfont: S.rfont, borderDash: S.borderDash, bg: S.bg, lineLight: S.lineLight, rivW: S.rivW,
+        regions: S.regions.map(({ _lab, ...r }) => r), rfill: S.rfill, legend: S.legend, rfont: S.rfont, borderDash: S.borderDash, bg: S.bg, bgAlpha: S.bgAlpha, lineLight: S.lineLight, rivW: S.rivW,
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
   }
@@ -2382,6 +2398,7 @@
       Object.assign(S, { current: d.current || S.current, palette: d.palette || 0, land: d.land || S.land, ocean: d.ocean || S.ocean, line: d.line || S.line, view: d.view || null, proj: d.proj === 'ee' ? 'ee' : 'merc', eeLon: isFinite(d.eeLon) ? d.eeLon : EE_CENTER });
       Object.assign(S.show, d.show || {});
       if (d.bg === 'off' || BG[d.bg]) S.bg = d.bg;
+      if (isFinite(d.bgAlpha)) S.bgAlpha = Math.max(0, Math.min(100, +d.bgAlpha));
       if (typeof d.lineLight === 'boolean') S.lineLight = d.lineLight;
       if (isFinite(d.rivW)) S.rivW = Math.max(0.3, Math.min(4, +d.rivW));
       S.dockHidden = !!d.dockHidden;

@@ -718,3 +718,10 @@ body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0
 
 /* 아래쪽 출처 줄: 배경 지도(위성·고도) 위에서도 읽히게 */
 .credit { background: rgba(255,255,255,.78); padding: 2px 7px; border-radius: 6px; text-shadow: none; }
+
+/* 배경 지도: 이름은 위, 버튼 5개는 한 줄로 꽉 차게 */
+.row.bg-row { flex-wrap: wrap; row-gap: 6px; }
+.row.bg-row .rlabel { flex: 1 0 100%; }
+.row.bg-row #bgSeg { flex: 1 1 100%; display: flex; }
+.row.bg-row #bgSeg button { flex: 1; white-space: nowrap; padding-left: 0; padding-right: 0; }
+#bgAlphaRow.off { opacity: .4; pointer-events: none; }
