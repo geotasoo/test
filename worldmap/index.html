@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117f">
+<link rel="stylesheet" href="style.css?v=20261117g">
 </head>
 <body>
 <header class="topbar">
@@ -246,7 +246,7 @@
     <div class="export-box" role="dialog" aria-labelledby="exTitle">
       <header><h3 id="exTitle">이미지로 저장</h3><button class="close" id="exClose" title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
       <div class="ex-body">
-        <div class="ex-preview"><img id="exPreview" alt="저장될 이미지 미리보기"><div class="ex-drag-hint" id="exDragHint" hidden>✋ 미리보기에서 <b>축척·범례를 끌어</b> 옮길 수 있어요</div></div>
+        <div class="ex-preview"><img id="exPreview" alt="저장될 이미지 미리보기"></div>
         <div class="ex-opts">
           <div class="ex-row"><span>범위</span><div class="mini-seg"><button data-ex="range" data-v="full">화면 전체</button><button data-ex="range" data-v="sel">영역 선택</button></div>
             <button class="link" id="exSelAgain" hidden>다시 선택 ›</button></div>
@@ -257,7 +257,7 @@
           <div class="ex-row" id="exTickRow"><span></span><label class="chk"><input type="checkbox" id="exTick"><span>적도가 범위 안에 있으면 틀 안쪽에 0° 표시</span></label></div>
           <div class="ex-row"><span>넣기</span><label class="chk"><input type="checkbox" id="exScale"><span>축척</span></label><label class="chk" id="exLegendRow"><input type="checkbox" id="exLegend"><span>범례</span></label>
             <div class="mini-seg" id="exLplace"><button data-ex="lplace" data-v="in">지도 안</button><button data-ex="lplace" data-v="out">지도 밖</button></div></div>
-          <p class="hint ex-hint">미리보기에서 <b>축척·범례를 끌어</b> 위치를 정해요. ‘지도 밖’ 범례는 틀 둘레(위·아래·왼쪽·오른쪽)를 따라 옮겨지고 함께 저장돼요. 축척 값은 저장 범위에 맞게 자동이에요.</p>
+          <p class="hint ex-hint">✋ 미리보기에서 <b>축척·범례를 마우스로 끌어</b> 옮길 수 있어요. ‘지도 밖’ 범례는 틀 둘레를 따라 옮겨져요. 축척 값은 저장 범위에 맞게 자동으로 정해져요.</p>
           <p class="hint ex-hint" id="exSize"></p>
         </div>
       </div>
@@ -288,7 +288,7 @@
         <ul>
           <li><b>[지도 설정]</b> 맨 위에서 도법(<b>메르카토르 / 이퀄 어스</b>)을 골라요. 이퀄 어스는 나라의 넓이를 실제 비율대로 보여 줘요.</li>
           <li>국경선(점선·실선, 굵기), 남북한 경계, 나라 이름, 작은 나라 동그라미, 바다 이름, 호수, 경위선, 적도, 축척을 켜고 끌 수 있어요. 바다 이름과 호수는 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
-          <li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. <b>메르카토르</b>일 때만 쓸 수 있고, 저장할 때는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요.</li>
+          <li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. <b>메르카토르</b>일 때만 쓸 수 있고, <b>현재 화면대로</b> 저장할 때는 함께 들어가고, 시험지용에는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요.</li>
         </ul>
 
         <h4>색칠하기</h4>
@@ -366,7 +366,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117f"></script>
-<script src="app.js?v=20261117f"></script>
+<script src="data/places.js?v=20261117g"></script>
+<script src="app.js?v=20261117g"></script>
 </body>
 </html>

@@ -48,7 +48,7 @@
     lineSd: 1.0, lineSg: 0.6,   // 시도·시군 경계 굵기 (S.line 은 나라 경계·해안선)
     bg: 'off',              // 배경 지도: 'off' | 'osm' | 'sat' | 'topo' (화면에서만)
     rivers: 'off',          // 하천: 'off' 끄기 · 'major' 주요 강 · 'all' 하계망 (HydroRIVERS)
-    kproj: 'tm',            // 도법: 'tm' 횡축 메르카토르(UTM-K처럼 127.5°E 가운데, 기본) · 'merc' 메르카토르
+    kproj: 'merc',          // 도법: 'merc' 메르카토르(기본) · 'tm' 횡축 메르카토르(UTM-K처럼 127.5°E 가운데)
     lineLight: false,       // 경계선 색: false 검정 · true 흰색 (위성 배경에서 잘 보이게, 화면에서만)
     dockHidden: true,       // 처음엔 색칠하기 패널을 접어 둠
     seas: { sel: ['동해', '황해', '남해'] },   // 켜 둔 바다 이름
@@ -438,7 +438,7 @@
   function tileImg(src) {
     let im = tileCache.get(src);
     if (!im) {
-      im = new Image(); im.decoding = 'async';
+      im = new Image(); im.decoding = 'async'; im.crossOrigin = 'anonymous';   // 저장할 때 그림에 넣을 수 있게
       im.onload = () => requestDraw(); im.onerror = () => { im.bad = true; };
       im.src = src; tileCache.set(src, im);
       if (tileCache.size > 600) tileCache.delete(tileCache.keys().next().value);
@@ -446,7 +446,7 @@
     return im;
   }
   function drawBackground() {
-    const B = BG[S.bg]; if (!B || EXP || isTM()) return false;
+    const B = BG[S.bg]; if (!B || (EXP && EXP.exam) || isTM()) return false;   // '현재 화면대로' 저장에는 배경도 넣어요
     const worldPx = 2 * Math.PI * s;                               // 지도 한 바퀴의 화면 폭
     const z = Math.max(1, Math.min(B.max, Math.round(Math.log2(worldPx / 256))));
     const n = 1 << z, tile = worldPx / n;                          // 타일 한 장의 화면 크기
@@ -470,14 +470,14 @@
   function needRivers() {
     if (rivTopo || rivLoading || S.rivers === 'off') return;
     rivLoading = true;
-    fetch('data/rivers.json?v=1').then(r => r.json()).then(t => { rivTopo = t; requestDraw(); })
+    fetch('data/rivers.json?v=2').then(r => r.json()).then(t => { rivTopo = t; requestDraw(); })
       .catch(() => showToast('하천 자료를 불러오지 못했어요')).finally(() => { rivLoading = false; });
   }
   // 키: 단계(m 주요 · d 지류) + 구역(s 남측 · n 북측 · o 주변 나라) + 굵기(1~3, 지류 0)
   function drawRivers(px, southOn, nkOn, landShape) {
     if (S.rivers === 'off') return;
     if (!rivTopo) return needRivers();
-    const exam = EXP && EXP.exam, sat = !EXP && S.bg === 'sat';
+    const exam = EXP && EXP.exam, sat = !exam && S.bg === 'sat' && !isTM();
     const col = exam ? '#333333' : sat ? '#8FD3FF' : '#2F86D3';
     const zones = [southOn && 's', nkOn && 'n', S.show.nb && !S.lakes.sel && 'o'].filter(Boolean);
     const W_ = { 0: 0.45, 1: 0.8, 2: 1.15, 3: 1.6 };
@@ -515,7 +515,7 @@
   function syncKProj() {
     document.querySelectorAll('#kprojSeg [data-kproj]').forEach(b => b.classList.toggle('sel', b.dataset.kproj === S.kproj));
     const bs = $('#bgSeg'); bs.classList.toggle('locked', isTM());
-    bs.title = isTM() ? '횡축 메르카토르에서는 배경 지도를 쓸 수 없어요 (도법을 메르카토르로 바꾸면 쓸 수 있어요)' : '인터넷 지도를 밑에 깔아요 (화면에서만, 저장에는 안 들어가요)';
+    bs.title = isTM() ? '횡축 메르카토르에서는 배경 지도를 쓸 수 없어요 (도법을 메르카토르로 바꾸면 쓸 수 있어요)' : '인터넷 지도를 밑에 깔아요 (현재 화면대로 저장할 때만 들어가요)';
     document.querySelectorAll('#lcSeg [data-lc]').forEach(b => b.classList.toggle('sel', (b.dataset.lc === 'light') === !!S.lineLight));
     const pn = $('#projName'); if (pn) pn.textContent = isTM() ? '횡축 메르카토르 도법 (UTM-K 방식)' : '메르카토르 도법';
   }
@@ -650,14 +650,13 @@
           coordinates: (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates).filter(pg => d3.geoCentroid({ type: 'Polygon', coordinates: pg })[0] < 130.5) })) : shapeOf(f));
       }
       ctx.globalAlpha = 1;
-      const lightL = bgOn && S.bg === 'sat' && !EXP, LC = lightL ? '#FFFFFF' : '#1a1a1a', LC2 = lightL ? 'rgba(255,255,255,.8)' : '#8c8c8c', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
+      const lightL = bgOn && S.bg === 'sat', LC = lightL ? '#FFFFFF' : '#1a1a1a', LC2 = lightL ? 'rgba(255,255,255,.8)' : '#8c8c8c', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
       // 3) 경위선·적도
       if (S.show.grid) {
         ctx.lineWidth = 0.6 * px; ctx.strokeStyle = LG;   /* 경위선은 가는 실선 (국경 점선과 구별) */
         ctx.stroke(gridShape); ctx.setLineDash([]);
       }
 
-      drawRivers(px, southOn, S.show.nk && !S.lakes.sel, landShape);   // 하천: 땅 위, 경계선 아래
       // 4) 해안선·둘레, 시도·시군 경계
       ctx.lineWidth = lw * px; ctx.strokeStyle = LC;
       if (S.show.nb && !S.lakes.sel) {
@@ -688,6 +687,7 @@
         if (sdShape) ctx.stroke(sdShape);
         ctx.setLineDash([]);
       }
+      drawRivers(px, southOn, S.show.nk && !S.lakes.sel, landShape);   // 하천: 경계선 위에 (강을 따라가는 경계에 가려 하구까지 안 이어져 보이지 않게)
       if (isEE()) { ctx.lineWidth = 1.2 * px; ctx.strokeStyle = EXP ? '#1a1a1a' : '#7d8a99'; ctx.stroke(shared('sphere', () => SPHERE)); }
       // 저장: 상자로 옮긴 섬(울릉도·독도)은 본 지도에서 바다색으로 덮어요
       if (EXP && EXP.isl && EXP.isl.length && byId.get(UL)) {
@@ -1360,7 +1360,7 @@
   document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.addEventListener('click', () => {
     if (isTM()) return showToast('횡축 메르카토르에서는 배경 지도를 쓸 수 없어요 · 도법을 메르카토르로 바꿔 주세요');
     S.bg = b.dataset.bg; syncBg(); requestDraw(); saveSoon();
-    if (S.bg !== 'off') showToast('배경 지도는 화면에서만 보여요. 저장할 때는 들어가지 않아요.');
+    if (S.bg !== 'off') showToast('배경 지도는 \'현재 화면대로\' 저장할 때만 들어가요 (시험지용에는 안 들어가요)');
   }));
   const layersBtn = $('#layersBtn'), layersPanel = $('#layersPanel');
   function openLayers(open) {

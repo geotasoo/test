@@ -452,7 +452,7 @@
   function tileImg(src) {
     let im = tileCache.get(src);
     if (!im) {
-      im = new Image(); im.decoding = 'async';
+      im = new Image(); im.decoding = 'async'; im.crossOrigin = 'anonymous';   // 저장할 때 그림에 넣을 수 있게
       im.onload = () => requestDraw(); im.onerror = () => { im.bad = true; };
       im.src = src; tileCache.set(src, im);
       if (tileCache.size > 600) tileCache.delete(tileCache.keys().next().value);
@@ -460,7 +460,7 @@
     return im;
   }
   function drawBackground() {
-    const B = BG[S.bg]; if (!B || EXP || isEE()) return false;
+    const B = BG[S.bg]; if (!B || (EXP && EXP.exam) || isEE()) return false;   // '현재 화면대로' 저장에는 배경도 넣어요
     const worldPx = 2 * Math.PI * s;                               // 지도 한 바퀴의 화면 폭
     const z = Math.max(1, Math.min(B.max, Math.round(Math.log2(worldPx / 256))));
     const n = 1 << z, tile = worldPx / n;                          // 타일 한 장의 화면 크기
@@ -481,7 +481,7 @@
   }
   function syncBg() {
     document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.classList.toggle('sel', b.dataset.bg === S.bg));
-    const bs = $('#bgSeg'); if (bs) { bs.classList.toggle('locked', isEE()); bs.title = isEE() ? '이퀄 어스에서는 배경 지도를 쓸 수 없어요 (메르카토르로 바꾸면 쓸 수 있어요)' : '인터넷 지도를 밑에 깔아요 (화면에서만, 저장에는 안 들어가요)'; }
+    const bs = $('#bgSeg'); if (bs) { bs.classList.toggle('locked', isEE()); bs.title = isEE() ? '이퀄 어스에서는 배경 지도를 쓸 수 없어요 (메르카토르로 바꾸면 쓸 수 있어요)' : '인터넷 지도를 밑에 깔아요 (현재 화면대로 저장할 때만 들어가요)'; }
     const c = BG[S.bg]; $('#bgCredit').textContent = c && !isEE() ? ' · ' + c.credit : '';
     document.querySelectorAll('#lcSeg [data-lc]').forEach(b => b.classList.toggle('sel', (b.dataset.lc === 'light') === !!S.lineLight));
   }
@@ -510,7 +510,7 @@
     const gridShape = S.show.grid ? shared('grid' + step, () => graticules[step]) : null, equatorShape = shared('equator', () => equator);
     // 많이 축소하면 지도 한 바퀴가 화면보다 좁아져요 → 옆으로 이어 붙여 빈 곳 없이 (도형 하나에 두 바퀴가 들어 있음)
     const bgOn = drawBackground();   // 배경 지도 (메르카토르에서만)
-    const lightL = bgOn && S.bg === 'sat' && !EXP, LC = lightL ? '#FFFFFF' : '#1a1a1a', LB = lightL ? 'rgba(255,255,255,.9)' : '#2b2b2b', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
+    const lightL = bgOn && S.bg === 'sat', LC = lightL ? '#FFFFFF' : '#1a1a1a', LB = lightL ? 'rgba(255,255,255,.9)' : '#2b2b2b', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
     const reps = isEE() ? 1 : Math.max(1, Math.ceil((W / s + TAU) / (2 * TAU)));   // 화면 왼쪽 끝은 [-π, π) 안
     for (let rep = 0; rep < reps; rep++) {
       setWorldTransform(rep * 2 * TAU * s);
@@ -1118,7 +1118,7 @@
   document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.addEventListener('click', () => {
     if (isEE()) return showToast('이퀄 어스에서는 배경 지도를 쓸 수 없어요 · 메르카토르로 바꿔 주세요');
     S.bg = b.dataset.bg; syncBg(); requestDraw(); saveSoon();
-    if (S.bg !== 'off') showToast('배경 지도는 화면에서만 보여요. 저장할 때는 들어가지 않아요.');
+    if (S.bg !== 'off') showToast('배경 지도는 \'현재 화면대로\' 저장할 때만 들어가요 (시험지용에는 안 들어가요)');
   }));
   const layersBtn = $('#layersBtn'), layersPanel = $('#layersPanel');
   function openLayers(open) {

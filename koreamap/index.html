@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117f">
+<link rel="stylesheet" href="style.css?v=20261117g">
 </head>
 <body>
 <header class="topbar">
@@ -63,7 +63,7 @@
 
   <div class="panel layers-panel" id="layersPanel" hidden>
     <div class="row era-row"><span class="rlabel">도법</span>
-      <div class="mini-seg" id="kprojSeg"><button data-kproj="tm">횡축 메르카토르</button><button data-kproj="merc">메르카토르</button></div>
+      <div class="mini-seg" id="kprojSeg"><button data-kproj="merc">메르카토르</button><button data-kproj="tm">횡축 메르카토르</button></div>
       <span class="tipi" tabindex="0" data-tip="국토지리정보원의 지도 등 우리나라 전국 지도는 보통 UTM-K를 씁니다. UTM-K는 동경 127.5°를 가운데에 둔 횡축 메르카토르도법입니다. 일반 메르카토르도법은 위도가 높을수록 조금씩 커집니다. 제주와 백두산 근처를 비교하면 북쪽이 약 15% 크게 그려집니다. 횡축 메르카토르를 설정하면, 배경지도는 선택할 수 없습니다.">ⓘ</span></div>
     <div class="row era-row"><span class="rlabel">전남광주</span>
       <div class="mini-seg" id="eraSeg"><button data-era="after">통합 후</button><button data-era="before">통합 전</button></div>
@@ -87,7 +87,7 @@
     <div class="row"><label class="sw"><input type="checkbox" data-layer="grid"><span></span>경위선</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="scale"><span></span>축척</label></div>
     <div class="row"><span class="rlabel">배경 지도</span>
-      <div class="mini-seg" id="bgSeg" title="인터넷 지도를 밑에 깔아요 (화면에서만, 저장에는 안 들어가요)"><button data-bg="off">끄기</button><button data-bg="osm">일반</button><button data-bg="sat">위성</button><button data-bg="topo">지형</button></div></div>
+      <div class="mini-seg" id="bgSeg" title="인터넷 지도를 밑에 깔아요 ('현재 화면대로' 저장에만 들어가요)"><button data-bg="off">끄기</button><button data-bg="osm">일반</button><button data-bg="sat">위성</button><button data-bg="topo">지형</button></div></div>
   </div>
 
   <!-- 오른쪽 위: 확대·축소 -->
@@ -254,7 +254,7 @@
     <div class="export-box" role="dialog" aria-labelledby="exTitle">
       <header><h3 id="exTitle">이미지로 저장</h3><button class="close" id="exClose" title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
       <div class="ex-body">
-        <div class="ex-preview"><img id="exPreview" alt="저장될 이미지 미리보기"><div class="ex-drag-hint" id="exDragHint" hidden>✋ 미리보기에서 <b>축척·범례를 끌어</b> 옮길 수 있어요</div></div>
+        <div class="ex-preview"><img id="exPreview" alt="저장될 이미지 미리보기"></div>
         <div class="ex-opts">
           <div class="ex-row"><span>범위</span><div class="mini-seg"><button data-ex="range" data-v="full">화면 전체</button><button data-ex="range" data-v="sel">영역 선택</button></div>
             <button class="link" id="exSelAgain" hidden>다시 선택 ›</button></div>
@@ -274,7 +274,7 @@
               </div>
             </div>
           </div>
-          <p class="hint ex-hint">미리보기에서 <b>축척·범례를 끌어</b> 위치를 정해요. ‘지도 밖’ 범례는 틀 둘레(위·아래·왼쪽·오른쪽)를 따라 옮겨지고 함께 저장돼요. 축척 값은 저장 범위에 맞게 자동이에요.</p>
+          <p class="hint ex-hint">✋ 미리보기에서 <b>축척·범례를 마우스로 끌어</b> 옮길 수 있어요. ‘지도 밖’ 범례는 틀 둘레를 따라 옮겨져요. 축척 값은 저장 범위에 맞게 자동으로 정해져요.</p>
           <p class="hint ex-hint" id="exSize"></p>
         </div>
       </div>
@@ -306,10 +306,10 @@
         <h4>지도 설정</h4>
         <ul>
           <li><b>[지도 설정]</b> 맨 위에서 <b>도법</b>(횡축 메르카토르 / 메르카토르)과 <b>전남광주 통합 후 / 통합 전</b>을 골라요. ⓘ에 마우스를 올리면 설명이 나와요.</li>
-          <li>기본 도법은 <b>횡축 메르카토르</b>예요. 국토지리정보원 지도처럼(UTM-K) 동경 127.5°가 가운데라 모양이 시험지 지도와 비슷해요.</li>
+          <li>기본 도법은 <b>메르카토르</b>예요. <b>횡축 메르카토르</b>로 바꾸면 국토지리정보원 지도처럼(UTM-K) 동경 127.5°가 가운데라 북쪽이 덜 커져요.</li>
           <li><b>하천</b>: [끄기 | 주요 강 | 하계망]을 골라요. 주요 강은 교과서에 나오는 큰 강줄기, 하계망은 작은 지류까지 보여 줘요. 북측·주변 나라의 강은 [북측]·[주변 나라]를 켜면 함께 보여요. 저장할 때도 들어가요.</li>
           <li>북측, 휴전선 점선, 시도·시군 경계(실선·점선, 굵기), 주변 나라, 시도·시군 이름, 바다 이름, 경위선, 축척을 켜고 끌 수 있어요. 바다 이름은 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
-          <li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. 도법이 <b>메르카토르</b>일 때만 쓸 수 있고, 저장할 때는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요.</li>
+          <li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. 도법이 <b>메르카토르</b>일 때만 쓸 수 있고, <b>현재 화면대로</b> 저장할 때는 함께 들어가고, 시험지용에는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요.</li>
         </ul>
 
         <h4>색칠하기</h4>
@@ -354,7 +354,7 @@
         <h4>단축키 (PC)</h4>
         <ul class="keys">
           <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기 · <kbd>Ctrl</kbd>+<kbd>Y</kbd> 다시 하기</li>
-          <li><kbd>1</kbd>~<kbd>9</kbd> 색 고르기 · <kbd>E</kbd> 지우개 · <kbd>P</kbd> 도법 바꾸기(횡축 메르카토르 ↔ 메르카토르)</li>
+          <li><kbd>1</kbd>~<kbd>9</kbd> 색 고르기 · <kbd>E</kbd> 지우개 · <kbd>P</kbd> 도법 바꾸기(메르카토르 ↔ 횡축 메르카토르)</li>
           <li><kbd>+</kbd> <kbd>−</kbd> 확대·축소 · 방향키 이동 · <kbd>Delete</kbd> 고른 도형 지우기</li>
         </ul>
         <p class="help-foot">한반도 지도 색칠하고 도형찍기 3.0 (20261117) · 지도 데이터: GADM · Natural Earth · @geotasoo</p>
@@ -387,7 +387,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117f"></script>
-<script src="app.js?v=20261117f"></script>
+<script src="data/places.js?v=20261117g"></script>
+<script src="app.js?v=20261117g"></script>
 </body>
 </html>
