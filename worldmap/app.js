@@ -40,7 +40,7 @@
     ocean: '#D6F1FF',       // 밝은 하늘색 (RGB 214, 241, 255)
     line: 1.0,
     borderDash: true,       // 국경선 점선(기본) / 실선
-    show: { borders: true, kp: false, names: false, tiny: false, grid: false, equator: true, lakes: true, scale: true, seas: true, rivers: false },
+    show: { borders: true, kp: false, names: false, tiny: false, grid: false, equator: true, lakes: true, scale: true, seas: true, rivers: false, rivNames: true },
     rivW: 1.0,              // 하천 굵기 (배수)
     bg: 'off',              // 배경 지도: 'off' | 'osm' | 'sat' | 'topo' (메르카토르에서만, 화면에서만)
     lineLight: false,       // 경계선 색: 검정 / 흰색 (위성 배경용, 저장은 검정)
@@ -492,7 +492,7 @@
   function needRivers() {
     if (rivTopo || rivLoading || !S.show.rivers) return;
     rivLoading = true;
-    fetch('data/rivers.json?v=1').then(r => r.json()).then(t => { rivTopo = t; ee.shared = {}; requestDraw(); })
+    fetch('data/rivers.json?v=2').then(r => r.json()).then(t => { rivTopo = t; ee.shared = {}; requestDraw(); })
       .catch(() => showToast('하천 자료를 불러오지 못했어요')).finally(() => { rivLoading = false; });
   }
   // r1 큰 강 · r2 중간 · r3 작은 강 (굵기만 다름)
@@ -634,8 +634,31 @@
     ctx.restore();
   }
 
+  // 강 이름: 강줄기를 따라 비스듬히 (크게 확대할수록 작은 강 이름도)
+  function drawRiverNames() {
+    if (!rivTopo || !rivTopo.labels) return;
+    const z = s / sMin, exam = EXP && EXP.exam, R = EXP && EXP.rect;
+    const maxR = z >= 2.6 ? 3 : z >= 1.6 ? 2 : 1;
+    ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    for (const L of rivTopo.labels) {
+      if (L.r > maxR) continue;
+      const p = proj(L.p), a = proj(L.a), b = proj(L.b); if (!p || !a || !b || !isFinite(p[0])) continue;
+      if (isEE()) { const back = proj.invert(p); if (!back || Math.abs(back[0] - L.p[0]) > 1) continue; }
+      if (R ? outRect(p) : (p[0] < -50 || p[0] > W + 50 || p[1] < -20 || p[1] > H + 20)) continue;
+      const fs = exam ? Math.round(EXP.font * 0.8) : (L.r === 1 ? 12 : 11);
+      let ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+      if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;   // 글자가 거꾸로 서지 않게
+      ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(ang); ctx.translate(0, -fs * 0.75);   // 강줄기 바로 위에
+      ctx.font = `600 ${fs}px ${LABEL_FONT}`;
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(L.n, 0, 0);
+      ctx.fillStyle = exam ? '#333' : '#1F5F9E'; ctx.fillText(L.n, 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
   function drawTextLayer() {
     if (S.show.seas) drawSeaNames();
+    if (S.show.rivers && S.show.rivNames) drawRiverNames();
     drawRegionLabels();
     drawPoints();
     if (S.show.grid && !(EXP && EXP.exam)) drawGridLabels();
@@ -1145,6 +1168,7 @@
     document.querySelector('[data-layer="borders"]').closest('.row').classList.toggle('off', !S.show.borders && !S.show.kp);
     document.querySelectorAll('#dashSeg button').forEach(b => b.classList.toggle('sel', (b.dataset.dash === '1') === !!S.borderDash));
     const ri = $('#rivW'); if (ri) { ri.value = S.rivW; $('#rivWOut').textContent = (+S.rivW).toFixed(1); ri.closest('.row').classList.toggle('off', !S.show.rivers); }
+    const rn = document.querySelector('[data-layer="rivNames"]'); if (rn) rn.closest('.row').classList.toggle('off', !S.show.rivers);
     needRivers();
   }
   $('#rivW').addEventListener('input', e => { S.rivW = +e.target.value; $('#rivWOut').textContent = S.rivW.toFixed(1); requestDraw(); saveSoon(); });

@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117k">
+<link rel="stylesheet" href="style.css?v=20261117l">
 </head>
 <body>
 <header class="topbar">
@@ -74,6 +74,7 @@
     <div class="row"><label class="sw"><input type="checkbox" data-layer="rivers"><span></span>주요 하천</label></div>
     <div class="row sub-row"><span class="rlabel">하천 굵기</span>
       <div class="inline-range"><input type="range" id="rivW" min="0.3" max="4" step="0.1" aria-label="하천 굵기"><output id="rivWOut"></output></div></div>
+    <div class="row sub-row"><label class="sw small"><input type="checkbox" data-layer="rivNames"><span></span>강 이름</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="lakes"><span></span>호수</label><button class="link" data-side="lakes">고르기 <b id="lakesCount"></b> ›</button></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="grid"><span></span>경위선</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="equator"><span></span>적도</label></div>
@@ -290,7 +291,7 @@
         <h4>지도 설정</h4>
         <ul>
           <li><b>[지도 설정]</b> 맨 위에서 도법(<b>메르카토르 / 이퀄 어스</b>)을 골라요. 이퀄 어스는 나라의 넓이를 실제 비율대로 보여 줘요.</li>
-          <li>국경선(점선·실선, 굵기), 남북한 경계, 나라 이름, 작은 나라 동그라미, 바다 이름, <b>주요 하천</b>(굵기 조절), 호수, 경위선, 적도, 축척을 켜고 끌 수 있어요. 바다 이름과 호수는 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
+          <li>국경선(점선·실선, 굵기), 남북한 경계, 나라 이름, 작은 나라 동그라미, 바다 이름, <b>주요 하천</b>(굵기 조절, 강 이름 — 확대할수록 작은 강 이름도 보여요), 호수, 경위선, 적도, 축척을 켜고 끌 수 있어요. 바다 이름과 호수는 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
           <li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. <b>메르카토르</b>일 때만 쓸 수 있고, <b>현재 화면대로</b> 저장할 때는 함께 들어가고, 시험지용에는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요.</li>
         </ul>
 
@@ -369,7 +370,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117k"></script>
-<script src="app.js?v=20261117k"></script>
+<script src="data/places.js?v=20261117l"></script>
+<script src="app.js?v=20261117l"></script>
 </body>
 </html>
