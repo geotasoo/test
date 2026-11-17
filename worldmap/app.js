@@ -40,7 +40,8 @@
     ocean: '#D6F1FF',       // 밝은 하늘색 (RGB 214, 241, 255)
     line: 1.0,
     borderDash: true,       // 국경선 점선(기본) / 실선
-    show: { borders: true, kp: false, names: false, tiny: false, grid: false, equator: true, lakes: true, scale: true, seas: true },
+    show: { borders: true, kp: false, names: false, tiny: false, grid: false, equator: true, lakes: true, scale: true, seas: true, rivers: false },
+    rivW: 1.0,              // 하천 굵기 (배수)
     bg: 'off',              // 배경 지도: 'off' | 'osm' | 'sat' | 'topo' (메르카토르에서만, 화면에서만)
     lineLight: false,       // 경계선 색: 검정 / 흰색 (위성 배경용, 저장은 검정)
     dockHidden: true,       // 처음엔 색칠하기 패널을 접어 둠
@@ -485,6 +486,29 @@
     const c = BG[S.bg]; $('#bgCredit').textContent = c && !isEE() ? ' · ' + c.credit : '';
     document.querySelectorAll('#lcSeg [data-lc]').forEach(b => b.classList.toggle('sel', (b.dataset.lc === 'light') === !!S.lineLight));
   }
+  // ───────── 주요 하천 (Natural Earth 1:50m, 처음 켤 때 불러와요) ─────────
+  let rivTopo = null, rivLoading = false;
+  const rivFeat = {};
+  function needRivers() {
+    if (rivTopo || rivLoading || !S.show.rivers) return;
+    rivLoading = true;
+    fetch('data/rivers.json?v=1').then(r => r.json()).then(t => { rivTopo = t; ee.shared = {}; requestDraw(); })
+      .catch(() => showToast('하천 자료를 불러오지 못했어요')).finally(() => { rivLoading = false; });
+  }
+  // r1 큰 강 · r2 중간 · r3 작은 강 (굵기만 다름)
+  function drawRivers(px) {
+    if (!S.show.rivers) return;
+    if (!rivTopo) return needRivers();
+    const exam = EXP && EXP.exam;
+    ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = exam ? '#333333' : (S.bg === 'sat' && !isEE()) ? '#8FD3FF' : '#2F86D3';
+    for (const [k, w] of [['r3', 0.6], ['r2', 0.9], ['r1', 1.3]]) {
+      if (!rivTopo.objects[k]) continue;
+      ctx.lineWidth = w * (S.rivW || 1) * px;
+      ctx.stroke(shared('riv:' + k, () => topojson.feature(rivTopo, rivTopo.objects[k])));
+    }
+    ctx.restore();
+  }
   function setWorldTransform(shift = 0) {
     if (isEE()) { ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ex, dpr * ey); return; }
     // 화면 왼쪽 끝의 기준 x가 [-π, π) 안에 오도록 지도 벌을 고름
@@ -551,6 +575,7 @@
         if (S.show.kp) ctx.stroke(shared('kp', () => kpMesh));
         ctx.setLineDash([]);
       }
+      drawRivers(px);   // 하천: 국경선 위에 (강을 따라가는 국경에 가리지 않게)
       if (isEE()) { ctx.lineWidth = 1.2 * px; ctx.strokeStyle = EXP ? '#1a1a1a' : '#7d8a99'; ctx.stroke(shared('sphere', () => SPHERE)); }
       // 6) 마우스를 올린 나라 강조
       if (hoverId && byId.has(hoverId) && !isEE()) {
@@ -643,6 +668,14 @@
       ctx.lineWidth = lw * 0.9; ctx.strokeStyle = '#2b2b2b';
       if (S.borderDash) ctx.setLineDash([3.2 * Math.max(1, lw), 2.2 * Math.max(1, lw)]);
       ctx.stroke(); ctx.setLineDash([]);
+    }
+    if (S.show.rivers && rivTopo) {   // 하천 (움직이는 동안에도)
+      ctx.strokeStyle = S.bg === 'sat' ? '#8FD3FF' : '#2F86D3';
+      for (const [k, w] of [['r3', 0.6], ['r2', 0.9], ['r1', 1.3]]) {
+        if (!rivTopo.objects[k]) continue;
+        const f = rivFeat[k] || (rivFeat[k] = topojson.feature(rivTopo, rivTopo.objects[k]));
+        ctx.beginPath(); g(f); ctx.lineWidth = w * (S.rivW || 1); ctx.stroke();
+      }
     }
     ctx.beginPath(); g(SPHERE); ctx.lineWidth = 1.2; ctx.strokeStyle = '#7d8a99'; ctx.stroke();
   }
@@ -1111,7 +1144,10 @@
     $('#lineWidth').closest('.row').classList.toggle('off', !S.show.borders && !S.show.kp);
     document.querySelector('[data-layer="borders"]').closest('.row').classList.toggle('off', !S.show.borders && !S.show.kp);
     document.querySelectorAll('#dashSeg button').forEach(b => b.classList.toggle('sel', (b.dataset.dash === '1') === !!S.borderDash));
+    const ri = $('#rivW'); if (ri) { ri.value = S.rivW; $('#rivWOut').textContent = (+S.rivW).toFixed(1); ri.closest('.row').classList.toggle('off', !S.show.rivers); }
+    needRivers();
   }
+  $('#rivW').addEventListener('input', e => { S.rivW = +e.target.value; $('#rivWOut').textContent = S.rivW.toFixed(1); requestDraw(); saveSoon(); });
   document.querySelectorAll('#dashSeg button').forEach(b => b.addEventListener('click', () => {
     S.borderDash = b.dataset.dash === '1'; syncLayers(); requestDraw(); saveSoon();
   }));
@@ -1146,7 +1182,7 @@
   lineInput.addEventListener('input', () => { S.line = +lineInput.value; lineOut.textContent = S.line.toFixed(1); requestDraw(); saveSoon(); });
 
   // ───────── 초기화 (되돌리기로 되살릴 수 있게 전체 상태를 기억) ─────────
-  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'proj', 'eeLon', 'legend', 'bg', 'lineLight'];
+  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'proj', 'eeLon', 'legend', 'bg', 'lineLight', 'rivW'];
   const fullSnap = () => JSON.parse(JSON.stringify({ ...Object.fromEntries(KEEP.map(k => [k, S[k]])), colors: [...S.colors] }));
   function applySnap(sn) {
     const proj0 = S.proj;
@@ -2259,7 +2295,7 @@
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
         line: S.line, show: S.show, dockHidden: S.dockHidden, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
         lakes: S.lakes, seas: S.seas, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
-        regions: S.regions.map(({ _lab, ...r }) => r), rfill: S.rfill, legend: S.legend, rfont: S.rfont, borderDash: S.borderDash, bg: S.bg, lineLight: S.lineLight,
+        regions: S.regions.map(({ _lab, ...r }) => r), rfill: S.rfill, legend: S.legend, rfont: S.rfont, borderDash: S.borderDash, bg: S.bg, lineLight: S.lineLight, rivW: S.rivW,
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
   }
@@ -2272,6 +2308,7 @@
       Object.assign(S.show, d.show || {});
       if (d.bg === 'off' || BG[d.bg]) S.bg = d.bg;
       if (typeof d.lineLight === 'boolean') S.lineLight = d.lineLight;
+      if (isFinite(d.rivW)) S.rivW = Math.max(0.3, Math.min(4, +d.rivW));
       S.dockHidden = !!d.dockHidden;
       if (d.seas && Array.isArray(d.seas.sel)) S.seas = { sel: d.seas.sel.filter(n => SEAS.some(x => x.n === n)) };
       if (d.lakes && Array.isArray(d.lakes.sel)) S.lakes = { sel: d.lakes.sel.filter(k => WM_PLACES.LAKES.some(l => l.ko === k)), all: !!d.lakes.all };
