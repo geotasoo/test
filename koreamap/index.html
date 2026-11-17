@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117e">
+<link rel="stylesheet" href="style.css?v=20261117f">
 </head>
 <body>
 <header class="topbar">
@@ -78,6 +78,8 @@
       <div class="inline-range"><input type="range" id="lineSd" min="0.2" max="4" step="0.1" aria-label="시도 경계 굵기"><output id="lineSdOut"></output></div></div>
     <div class="row sub-row"><span class="rlabel">시군 경계</span>
       <div class="inline-range"><input type="range" id="lineSg" min="0.2" max="4" step="0.1" aria-label="시군 경계 굵기"><output id="lineSgOut"></output></div></div>
+    <div class="row"><span class="rlabel">하천</span>
+      <div class="mini-seg" id="riverSeg" title="하천 자료: HydroRIVERS (북측 강은 [북측], 주변 나라 강은 [주변 나라]를 켜면 함께 보여요)"><button data-riv="off">끄기</button><button data-riv="major">주요 강</button><button data-riv="all">하계망</button></div></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="nb"><span></span>주변 나라 (중국·일본·러시아)</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="names"><span></span>시도 이름</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="sgnames"><span></span>시군 이름</label></div>
@@ -305,6 +307,7 @@
         <ul>
           <li><b>[지도 설정]</b> 맨 위에서 <b>도법</b>(횡축 메르카토르 / 메르카토르)과 <b>전남광주 통합 후 / 통합 전</b>을 골라요. ⓘ에 마우스를 올리면 설명이 나와요.</li>
           <li>기본 도법은 <b>횡축 메르카토르</b>예요. 국토지리정보원 지도처럼(UTM-K) 동경 127.5°가 가운데라 모양이 시험지 지도와 비슷해요.</li>
+          <li><b>하천</b>: [끄기 | 주요 강 | 하계망]을 골라요. 주요 강은 교과서에 나오는 큰 강줄기, 하계망은 작은 지류까지 보여 줘요. 북측·주변 나라의 강은 [북측]·[주변 나라]를 켜면 함께 보여요. 저장할 때도 들어가요.</li>
           <li>북측, 휴전선 점선, 시도·시군 경계(실선·점선, 굵기), 주변 나라, 시도·시군 이름, 바다 이름, 경위선, 축척을 켜고 끌 수 있어요. 바다 이름은 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
           <li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. 도법이 <b>메르카토르</b>일 때만 쓸 수 있고, 저장할 때는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요.</li>
         </ul>
@@ -379,12 +382,12 @@
   <div id="toast" role="status"><span></span><button hidden>되돌리기</button></div>
 
   <!-- 아래: 왼쪽 도법·출처, 오른쪽 축척 (축척은 지도 그림에 그려요) -->
-  <div class="credit"><b id="projName"></b><span class="src"> · 지도 데이터: GADM · Natural Earth · @geotasoo</span><span class="src" id="bgCredit"></span></div>
+  <div class="credit"><b id="projName"></b><span class="src"> · 지도 데이터: GADM · Natural Earth · @geotasoo</span><span class="src" id="rivCredit"></span><span class="src" id="bgCredit"></span></div>
 </main>
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117e"></script>
-<script src="app.js?v=20261117e"></script>
+<script src="data/places.js?v=20261117f"></script>
+<script src="app.js?v=20261117f"></script>
 </body>
 </html>
