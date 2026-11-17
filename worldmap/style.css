@@ -681,3 +681,16 @@ body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0
 /* 쌍둥이 앱 링크: 깃발만 */
 .jump.jump-flag.icon-only { padding: 0 9px; gap: 0; }
 .jump.jump-flag.icon-only img { width: 32px; height: 26px; }
+
+/* ===== 휴대폰 화면 정리 ===== */
+@media (max-width: 719px) {
+  .brand-text { display: none; }                     /* 제목은 깃발만 (버튼과 겹치지 않게) */
+  .jump { height: 32px; padding: 0 8px; margin-right: 2px; box-shadow: 0 2px 0 #c9a520; }
+  .jump .short { display: none; }                    /* 게임 알약도 🎮 만 */
+  .jump.jump-flag.icon-only { padding: 0 6px; }
+  .jump.jump-flag.icon-only img { width: 28px; height: 22px; }
+  body.dock-hidden:not(.side-open) #toast { top: auto; bottom: 64px; }   /* 알림은 아래쪽 (지도 가운데를 가리지 않게) */
+  #layersBtn > span { display: inline; font-size: 0; }
+  #layersBtn > span::after { content: '설정'; font-size: 12.5px; }
+}
+@media (max-width: 360px) { #layersBtn > span { display: none; } }

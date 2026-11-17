@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117b">
+<link rel="stylesheet" href="style.css?v=20261117c">
 </head>
 <body>
 <header class="topbar">
@@ -62,11 +62,16 @@
   </div>
 
   <div class="panel layers-panel" id="layersPanel" hidden>
+    <div class="row era-row"><span class="rlabel">도법</span>
+      <div class="mini-seg" id="kprojSeg"><button data-kproj="tm">횡축 메르카토르</button><button data-kproj="merc">메르카토르</button></div>
+      <span class="tipi" tabindex="0" data-tip="국토지리정보원의 지도 등 우리나라 전국 지도는 보통 UTM-K를 씁니다. UTM-K는 동경 127.5°를 가운데에 둔 횡축 메르카토르도법입니다. 일반 메르카토르도법은 위도가 높을수록 조금씩 커집니다. 제주와 백두산 근처를 비교하면 북쪽이 약 15% 크게 그려집니다. 횡축 메르카토르를 설정하면, 배경지도는 선택할 수 없습니다.">ⓘ</span></div>
     <div class="row era-row"><span class="rlabel">전남광주</span>
       <div class="mini-seg" id="eraSeg"><button data-era="after">통합 후</button><button data-era="before">통합 전</button></div>
       <span class="tipi" tabindex="0" data-tip="2026년 7월 전라남도와 광주광역시가 전남광주통합특별시로 통합했어요. 통합 전 지도는 옛 교과서·기출 문제용이에요.">ⓘ</span></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="nk"><span></span>북측</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="dmzDash"><span></span>휴전선 점선</label></div>
+    <div class="row"><span class="rlabel">경계선 색</span>
+      <div class="mini-seg" id="lcSeg" title="위성 배경에서는 흰색이 잘 보여요 (저장할 때는 검정)"><button data-lc="dark">검정</button><button data-lc="light">흰색</button></div></div>
     <div class="row"><span class="rlabel">시도·시군 경계</span>
       <div class="mini-seg" id="dashSeg" title="시도·시군 경계"><button data-dash="0">실선</button><button data-dash="1">점선</button></div></div>
     <div class="row sub-row"><span class="rlabel">나라 경계</span>
@@ -286,7 +291,7 @@
         <ul>
           <li><b>이동</b>: 지도를 끌어요. <b>확대·축소</b>: 마우스 휠 또는 오른쪽 위 <b>+ / −</b> (폰은 두 손가락).</li>
           <li>+ 와 − 사이 숫자는 <b>확대 정도</b>예요. 숫자를 눌러 직접 입력할 수 있어요.</li>
-          <li><b>[지도 설정]</b>에서 <b>전남광주 통합 후 / 통합 전</b> 지도를 골라요. ⓘ에 마우스를 올리면 설명이 나와요.</li><li><b>칠하는 단위</b>(남측 없음 / 남측 / 시도 / 시군)를 고르면, 그만큼 경계가 그려지고 누를 때 그 단위로 칠해져요. 단위는 한 번에 하나만 쓰고, 바꾸면 다른 단위로 칠한 색은 지워져요(되돌리기 가능).</li><li>작은 지역은 근처를 눌러도 잡히고, 폰에서는 꾹 누르고 있으면 이름이 먼저 떠요.</li><li>시도·시군 경계(실선·점선), 나라 경계·시도 경계·시군 경계 굵기, 북측, 휴전선 점선, 주변 나라, 시도·시군 이름, 바다 이름, 경위선, 축척을 켜고 끌 수 있어요. 위쪽 <b>시도 고르기</b>로 일부 시도만 그릴 수도 있어요.</li><li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. 저장할 때는 들어가지 않아요.</li>
+          <li><b>[지도 설정]</b>에서 <b>전남광주 통합 후 / 통합 전</b> 지도를 골라요. ⓘ에 마우스를 올리면 설명이 나와요.</li><li><b>칠하는 단위</b>(남측 없음 / 남측 / 시도 / 시군)를 고르면, 그만큼 경계가 그려지고 누를 때 그 단위로 칠해져요. 단위는 한 번에 하나만 쓰고, 바꾸면 다른 단위로 칠한 색은 지워져요(되돌리기 가능).</li><li>작은 지역은 근처를 눌러도 잡히고, 폰에서는 꾹 누르고 있으면 이름이 먼저 떠요.</li><li>시도·시군 경계(실선·점선), 나라 경계·시도 경계·시군 경계 굵기, 북측, 휴전선 점선, 주변 나라, 시도·시군 이름, 바다 이름, 경위선, 축척을 켜고 끌 수 있어요. 위쪽 <b>시도 고르기</b>로 일부 시도만 그릴 수도 있어요.</li><li><b>도법</b>: 기본은 <b>횡축 메르카토르</b>(UTM-K처럼 동경 127.5°가 가운데)예요. [지도 설정]에서 메르카토르로 바꿀 수 있어요.</li><li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. 저장할 때는 들어가지 않아요. 도법이 메르카토르일 때만 쓸 수 있고, 위성 배경에서는 <b>경계선 색</b>을 흰색으로 바꾸면 잘 보여요.</li>
           <li>바다 이름은 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
         </ul>
 
@@ -348,7 +353,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117b"></script>
-<script src="app.js?v=20261117b"></script>
+<script src="data/places.js?v=20261117c"></script>
+<script src="app.js?v=20261117c"></script>
 </body>
 </html>

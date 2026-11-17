@@ -47,6 +47,8 @@
     era: 'after',           // 행정구역: 'after' 전남광주 통합 후 · 'before' 통합 전
     lineSd: 1.0, lineSg: 0.6,   // 시도·시군 경계 굵기 (S.line 은 나라 경계·해안선)
     bg: 'off',              // 배경 지도: 'off' | 'osm' | 'sat' | 'topo' (화면에서만)
+    kproj: 'tm',            // 도법: 'tm' 횡축 메르카토르(UTM-K처럼 127.5°E 가운데, 기본) · 'merc' 메르카토르
+    lineLight: false,       // 경계선 색: false 검정 · true 흰색 (위성 배경에서 잘 보이게, 화면에서만)
     dockHidden: true,       // 처음엔 색칠하기 패널을 접어 둠
     seas: { sel: ['동해', '황해', '남해'] },   // 켜 둔 바다 이름
     lakes: { sel: null, all: false },   // (한반도 앱) 보일 시도: null 이면 전체
@@ -123,12 +125,28 @@
   const eeG = lat => eeFlat([1, Math.max(-89, Math.min(89, lat))])[0] / RAD;
   const normLon = l => ((l % 360) + 540) % 360 - 180;
   let proj = projM;
+  // 횡축 메르카토르 (UTM-K처럼 동경 127.5°가 가운데). 기준 좌표 = 축척 1, 원점 0
+  const tmBase = d3.geoTransverseMercator().rotate([-127.5, 0]).scale(1).translate([0, 0]).precision(0.0003);
+  const projT = d3.geoTransverseMercator().rotate([-127.5, 0]).precision(0.3);
+  const isTM = () => S.kproj === 'tm';
+  // 기준 좌표 (축척 1): 메르카토르 [경도 라디안, -merc] · 횡축 메르카토르 [x, y]. lon0 은 가운데의 기준 x ÷ RAD
+  const uv = (lon, lat) => isTM() ? tmBase([lon, lat]) : [lon * RAD, -merc(Math.max(-85, Math.min(85, lat)))];
+  const uvInv = (x, y) => isTM() ? tmBase.invert([x, y]) : [x / RAD, Math.atan(Math.sinh(-y)) / RAD];
+  function boxUV(b) {   // 경위도 상자 → 기준 좌표 상자 [w, h, 가운데 x, 가운데 y]
+    const xs = [], ys = [];
+    for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) {
+      const q = uv(b[0][0] + (b[1][0] - b[0][0]) * i / 4, b[0][1] + (b[1][1] - b[0][1]) * j / 4); xs.push(q[0]); ys.push(q[1]);
+    }
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    return [x1 - x0, y1 - y0, (x0 + x1) / 2, (y0 + y1) / 2];
+  }
   const isEE = () => S.proj === 'ee';
   const merc = lat => Math.log(Math.tan(Math.PI / 4 + lat * RAD / 2));
   const MERC_SPAN = merc(LAT_TOP) - merc(LAT_BOT);
 
   function applyProj() {
     if (isEE()) { proj = projE.rotate([-S.eeLon, 0]).scale(s).translate([ex, ey]); }
+    else if (isTM()) { proj = projT.scale(s).translate([W / 2 - s * lon0 * RAD, cy]); }
     else { proj = projM.rotate([-lon0, 0]).scale(s).translate([W / 2, cy]); }
   }
   const MIN_ZOOM = 0.5;   // 꽉 찬 화면보다 더 축소 가능 (남극까지 한눈에)
@@ -147,8 +165,8 @@
       else ey = Math.min(top - s * y0, Math.max(bot - s * y1, ey));
     } else {
       // 한반도 둘레(117~139°E, 29~47°N) 밖으로는 멀리 가지 않게
-      lon0 = Math.max(117, Math.min(139, lon0));
-      const yTop = H / 2 + s * merc(47), yBot = H / 2 + s * merc(29);   // 가운데가 이 위도 사이
+      lon0 = Math.max(uv(117, 38)[0] / RAD, Math.min(uv(139, 38)[0] / RAD, lon0));
+      const yTop = H / 2 - s * uv(127.5, 47)[1], yBot = H / 2 - s * uv(127.5, 29)[1];   // 가운데가 이 위도 사이
       cy = Math.min(yTop, Math.max(yBot, cy));
     }
     applyProj();
@@ -199,7 +217,7 @@
   function setView(lon, lat, z, animate) {
     // 메르카토르 전용
     const ts = Math.max(sMinM, Math.min(sMinM * MAX_ZOOM, sMinM * z));
-    const target = { lon, s: ts, cy: H / 2 + ts * merc(lat) };
+    const q = uv(lon, lat), target = { lon: q[0] / RAD, s: ts, cy: H / 2 - ts * q[1] };
     if (animate) return animateTo(target);
     lon0 = target.lon; s = target.s; cy = target.cy; clampView(); requestDraw(); saveSoon();
   }
@@ -212,7 +230,8 @@
   }
   function goHome() { setView(HOME_LON, HOME_LAT, 1, true); }
   function currentView() {
-    return { lon: +lon0.toFixed(3), lat: +((Math.atan(Math.sinh((cy - H / 2) / s)) / RAD)).toFixed(3), z: +(s / sMinM).toFixed(4) };
+    const ll = uvInv(lon0 * RAD, (H / 2 - cy) / s);
+    return { lon: +ll[0].toFixed(3), lat: +ll[1].toFixed(3), z: +(s / sMinM).toFixed(4) };
   }
 
   const isPhone = () => window.matchMedia('(max-width: 719px)').matches;
@@ -242,7 +261,7 @@
     stage.style.setProperty('--frame-b', dockH + 'px');
     area = { top, bot, left, right, line: H - dockH - 10 };
     // 한반도(KBOX)가 지도 영역에 꼭 들어오는 축척 = 확대 1
-    const kw = (KBOX[1][0] - KBOX[0][0]) * RAD, kh = merc(KBOX[1][1]) - merc(KBOX[0][1]);
+    const [kw, kh] = boxUV(KBOX);
     sMinM = Math.min((W - left - 16 - (isPhone() ? 0 : 60)) / kw, (bot - top) / kh);
     sMin = isEE() ? sMinE : sMinM;
   }
@@ -426,7 +445,7 @@
     return im;
   }
   function drawBackground() {
-    const B = BG[S.bg]; if (!B || EXP) return false;
+    const B = BG[S.bg]; if (!B || EXP || isTM()) return false;
     const worldPx = 2 * Math.PI * s;                               // 지도 한 바퀴의 화면 폭
     const z = Math.max(1, Math.min(B.max, Math.round(Math.log2(worldPx / 256))));
     const n = 1 << z, tile = worldPx / n;                          // 타일 한 장의 화면 크기
@@ -445,6 +464,27 @@
     ctx.restore();
     return true;
   }
+  // 도법: 횡축 메르카토르 ↔ 메르카토르 (화면 가운데·확대 정도는 그대로)
+  function setKProj(mode, quiet) {
+    if (mode === S.kproj) return;
+    const v = W ? currentView() : null;
+    S.kproj = mode;
+    SH.merc = {};
+    for (const f of [...countries, skF].filter(Boolean)) { delete f.shape; delete f.outlineM; }
+    if (isTM() && S.bg !== 'off') { S.bg = 'off'; if (!quiet) showToast('횡축 메르카토르에서는 배경 지도를 쓸 수 없어서 껐어요'); }
+    hoverId = null; hideTip();
+    if (W) { computeFits(); sMin = sMinM; if (v) setView(v.lon, v.lat, v.z, false); }
+    syncBg(); syncKProj(); requestDraw(); saveSoon();
+  }
+  function syncKProj() {
+    document.querySelectorAll('#kprojSeg [data-kproj]').forEach(b => b.classList.toggle('sel', b.dataset.kproj === S.kproj));
+    const bs = $('#bgSeg'); bs.classList.toggle('locked', isTM());
+    bs.title = isTM() ? '횡축 메르카토르에서는 배경 지도를 쓸 수 없어요 (도법을 메르카토르로 바꾸면 쓸 수 있어요)' : '인터넷 지도를 밑에 깔아요 (화면에서만, 저장에는 안 들어가요)';
+    document.querySelectorAll('#lcSeg [data-lc]').forEach(b => b.classList.toggle('sel', (b.dataset.lc === 'light') === !!S.lineLight));
+    const pn = $('#projName'); if (pn) pn.textContent = isTM() ? '횡축 메르카토르 도법 (UTM-K 방식)' : '메르카토르 도법';
+  }
+  document.querySelectorAll('#kprojSeg [data-kproj]').forEach(b => b.addEventListener('click', () => setKProj(b.dataset.kproj)));
+  document.querySelectorAll('#lcSeg [data-lc]').forEach(b => b.addEventListener('click', () => { S.lineLight = b.dataset.lc === 'light'; syncKProj(); requestDraw(); saveSoon(); }));
   function syncBg() {
     document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.classList.toggle('sel', b.dataset.bg === S.bg));
     const c = BG[S.bg]; $('#bgCredit').textContent = c ? ' · ' + c.credit : '';
@@ -460,6 +500,7 @@
   const TAU = 2 * Math.PI;
   function makeShape(geo) {
     const p2 = new Path2D();
+    if (isTM()) { d3.geoPath(tmBase, p2)(geo); return p2; }   // 횡축 메르카토르: 곡선(경위선)도 매끈하게
     // 원본 데이터가 이미 180°에서 잘려 있으므로, 구면 자르기 없이 평면으로 바로 옮겨요.
     for (const dx of [0]) {   // 한반도는 지도를 돌리지 않아서 한 벌만
       const flat = d3.geoTransform({
@@ -574,14 +615,15 @@
           coordinates: (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates).filter(pg => d3.geoCentroid({ type: 'Polygon', coordinates: pg })[0] < 130.5) })) : shapeOf(f));
       }
       ctx.globalAlpha = 1;
+      const lightL = S.lineLight && !EXP, LC = lightL ? '#FFFFFF' : '#1a1a1a', LC2 = lightL ? 'rgba(255,255,255,.8)' : '#8c8c8c', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
       // 3) 경위선·적도
       if (S.show.grid) {
-        ctx.lineWidth = 0.6 * px; ctx.strokeStyle = 'rgba(0,0,0,.22)';   /* 경위선은 가는 실선 (국경 점선과 구별) */
+        ctx.lineWidth = 0.6 * px; ctx.strokeStyle = LG;   /* 경위선은 가는 실선 (국경 점선과 구별) */
         ctx.stroke(gridShape); ctx.setLineDash([]);
       }
 
       // 4) 해안선·둘레, 시도·시군 경계
-      ctx.lineWidth = lw * px; ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = lw * px; ctx.strokeStyle = LC;
       if (S.show.nb && !S.lakes.sel) {
         ctx.stroke(shared('nbcoast', () => nbCoastMesh));
         ctx.lineWidth = lw * 0.9 * px; ctx.setLineDash([3.2 * px * Math.max(1, lw), 2.2 * px * Math.max(1, lw)]);
@@ -599,12 +641,12 @@
       }
       if (sdShape || sgShape) {
         if (sgShape) {   // 시군 경계: 회색으로 흐리게
-          ctx.strokeStyle = '#8c8c8c';
+          ctx.strokeStyle = LC2;
           const w = S.lineSg; ctx.lineWidth = w * px;
           if (S.borderDash) ctx.setLineDash([2.6 * px * Math.max(1, w), 1.9 * px * Math.max(1, w)]);
           ctx.stroke(sgShape); ctx.setLineDash([]);
         }
-        ctx.strokeStyle = '#1a1a1a';
+        ctx.strokeStyle = LC;
         const w = S.lineSd; ctx.lineWidth = w * px;
         if (S.borderDash) ctx.setLineDash([3.2 * px * Math.max(1, w), 2.2 * px * Math.max(1, w)]);   // 시험지처럼 점선
         if (sdShape) ctx.stroke(sdShape);
@@ -724,7 +766,7 @@
     const z = s / sMin;
     for (const f of S.show.tiny ? tiny : []) {
       const p = proj(f.label); if (!p || p[0] < -10 || p[0] > W + 10 || p[1] < -10 || p[1] > H + 10) continue;
-      const k = isEE() ? 1 : 1 / Math.cos(f.label[1] * RAD);   // 메르카토르는 고위도일수록 커 보임
+      const k = isEE() || isTM() ? 1 : 1 / Math.cos(f.label[1] * RAD);   // 메르카토르는 고위도일수록 커 보임
       if (Math.sqrt(f.area) * s * k > 6) continue;
       const r = Math.max(2.6, Math.min(4.5, 2.2 + z * 0.15));
       ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 2 * Math.PI);
@@ -768,6 +810,17 @@
     ctx.textAlign = align; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.strokeText(t, x, y);
     ctx.fillStyle = color; ctx.fillText(t, x, y);
   }
+  // 횡축 메르카토르: 위선 lat 이 화면 x 와 만나는 y / 경선 lon 이 화면 y 와 만나는 x (반으로 나눠 찾기)
+  function yAtX(lat, x) {
+    let a = 60, b = 200;
+    for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (proj([m, lat])[0] < x) a = m; else b = m; }
+    return proj([(a + b) / 2, lat])[1];
+  }
+  function xAtY(lon, y) {
+    let a = -10, b = 80;   // 위도: 아래로 갈수록 y 가 커져요
+    for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (proj([lon, m])[1] > y) a = m; else b = m; }
+    const p = proj([lon, (a + b) / 2]); return Math.abs(p[1] - y) < 2 ? p[0] : null;
+  }
   function drawGridLabels() {
     const step = gridStep(), top = area.top + 6, bot = area.bot - 8;   // 아래쪽 축척·출처와 겹치지 않게
     ctx.font = `600 11px ${FONT}`; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
@@ -781,6 +834,9 @@
         const wL = ctx.measureText(fmtLat(lat)).width;
         L = L[0] - 5 - wL < 4 ? [Math.max(4, L[0]) + 4, L[1], 'left'] : [L[0] - 5, L[1], 'right'];
         R = R[0] + 5 + wL > W - 4 ? [Math.min(W - 4, R[0]) - 4, R[1], 'right'] : [R[0] + 5, R[1], 'left'];
+      } else if (isTM()) {
+        const xl = area.left + 6, xr = W - (area.right || 0) - 6;
+        L = [xl, yAtX(lat, xl), 'left']; R = [xr, yAtX(lat, xr), 'right'];
       } else {
         const y = proj([lon0, lat])[1];
         L = [area.left + 6, y, 'left']; R = [W - (area.right || 0) - 6, y, 'right'];
@@ -790,13 +846,14 @@
       if (!isEE() || Math.abs(R[0] - L[0]) > 80) haloText(fmtLat(lat), R[0], R[1], R[2], col);
     }
     // 경도: 적도를 따라 (적도가 화면 밖이면 화면 가장자리에)
-    const eq = proj([isEE() ? S.eeLon : lon0, 0]);
+    const eq = proj([isEE() ? S.eeLon : isTM() ? 127.5 : lon0, 0]);
     const y = Math.max(top + 4, Math.min(bot - 4, eq[1] + 11));
     let lastX = -1e9;
     const lons = [];
     for (let lon = -180; lon < 180; lon += step) lons.push(lon);
     const pts = lons.map(lon => {
       if (isEE() && Math.abs(normLon(lon - S.eeLon)) > 179) return null;
+      if (isTM()) { if (lon < 90 || lon > 170) return null; const x = xAtY(lon, y); return x != null && x > 14 && x < W - 14 ? [lon, x] : null; }
       const p = proj([lon, 0]); return p && p[0] > 14 && p[0] < W - 14 ? [lon, p[0]] : null;
     }).filter(Boolean).sort((a, b) => a[1] - b[1]);
     for (const [lon, x] of pts) {
@@ -902,7 +959,7 @@
 
   let hitDokdo = false;
   // 독도: 울릉도(지름 약 10km)의 1/4 크기 → 반지름 약 1.25km. 축소하면 사라지지 않게 가장 작은 점으로
-  const pxPerKm = () => s / (6371 * (isEE() ? 1 : Math.cos(DOKDO[1] * RAD)));
+  const pxPerKm = () => s / (6371 * (isEE() || isTM() ? 1 : Math.cos(DOKDO[1] * RAD)));
   const dokdoVisible = () => false;     // 한반도 지도에는 독도가 그려져 있어요
   const dokdoR = () => Math.max(1.2, 1.25 * pxPerKm());
   function hitTest(px, py, tolerance) {
@@ -1265,6 +1322,7 @@
     if (!quiet) showToast(msg + (gone.length ? ` · 이 지도에 없는 ${gone.length}곳의 색은 지웠어요` : ''), gone.length > 0, 3600);
   }
   document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.addEventListener('click', () => {
+    if (isTM()) return showToast('횡축 메르카토르에서는 배경 지도를 쓸 수 없어요 · 도법을 메르카토르로 바꿔 주세요');
     S.bg = b.dataset.bg; syncBg(); requestDraw(); saveSoon();
     if (S.bg !== 'off') showToast('배경 지도는 화면에서만 보여요. 저장할 때는 들어가지 않아요.');
   }));
@@ -1305,14 +1363,15 @@
   lineInput.addEventListener('input', () => { S.line = +lineInput.value; lineOut.textContent = S.line.toFixed(1); requestDraw(); saveSoon(); });
 
   // ───────── 초기화 (되돌리기로 되살릴 수 있게 전체 상태를 기억) ─────────
-  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'unit', 'bg', 'lineSd', 'lineSg', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'legend'];
+  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'unit', 'kproj', 'bg', 'lineLight', 'lineSd', 'lineSg', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'legend'];
   const fullSnap = () => JSON.parse(JSON.stringify({ ...Object.fromEntries(KEEP.map(k => [k, S[k]])), colors: [...S.colors] }));
   function applySnap(sn) {
-    const proj0 = S.proj;
-    for (const k of KEEP) S[k] = JSON.parse(JSON.stringify(sn[k]));
+    const proj0 = S.proj, kp0 = S.kproj;
+    for (const k of KEEP) if (sn[k] !== undefined) S[k] = JSON.parse(JSON.stringify(sn[k]));
+    if (S.kproj !== kp0) { const to = S.kproj; S.kproj = kp0; setKProj(to, true); }
     S.colors = new Map(sn.colors);
     if (S.proj !== proj0) { const to = S.proj; S.proj = proj0; setProjection(to, true); }
-    renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI(); syncUnit(); syncBg(); syncLines();
+    renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI(); syncUnit(); syncBg(); syncLines(); syncKProj();
     lineInput.value = S.line; lineOut.textContent = S.line.toFixed(1);
     selPoint = null;
     if (sideName === 'points') { renderPstyle(); renderCities(); }
@@ -1948,12 +2007,11 @@
     const fs = S.lakes.sel ? sdF.filter(f => sdOn(f.properties.ko)) : null;
     if (!fs || !fs.length) return goHome();
     const b = d3.geoBounds({ type: 'FeatureCollection', features: fs });
-    const kw = (b[1][0] - b[0][0]) * RAD, kh = merc(b[1][1]) - merc(b[0][1]);
+    const [kw, kh, ux, uy] = boxUV(b);
     const L = area.left + 10, R = W - (area.right || 0) - (isPhone() ? 10 : 64);   // 왼쪽 팔레트·오른쪽 패널을 피해서
     const fitS = Math.min(Math.min((R - L) / kw, (area.bot - area.top - 20) / kh) * 0.92, sMinM * MAX_ZOOM);
-    const lat = Math.atan(Math.sinh((merc(b[0][1]) + merc(b[1][1])) / 2)) / RAD;
     const fx = (L + R) / 2;
-    const target = { lon: (b[0][0] + b[1][0]) / 2 - (fx - W / 2) / fitS / RAD, s: fitS, cy: (area.top + area.bot) / 2 + fitS * merc(lat) };
+    const target = { lon: ux / RAD - (fx - W / 2) / fitS / RAD, s: fitS, cy: (area.top + area.bot) / 2 - fitS * uy };
     animateTo(target);
   }
   $('#lakesNone').addEventListener('click', () => { S.lakes.sel = []; lakesChanged(); });
@@ -2228,7 +2286,7 @@
       dpr = k;
       A = mk(); ctx = A.getContext('2d'); EXP = { exam, phase: 'map', rect, font: examFont, isl: byId.get(UL) ? [EX.insetU && '울릉도', EX.insetD && '독도'].filter(Boolean) : [] }; draw();
       B = mk(); ctx = B.getContext('2d'); EXP.phase = 'over'; draw();
-      const e = proj([isEE() ? S.eeLon : lon0, 0]); if (e) eqY = e[1];
+      const e = proj([isEE() ? S.eeLon : isTM() ? 127.5 : lon0, 0]); if (e) eqY = e[1];
       mp = metersPerPx(rect.x + rect.w / 2, rect.y + rect.h / 2);
     } finally {
       ctx = keep.ctx; dpr = keep.dpr; hoverId = keep.hoverId; fade = keep.fade; area = keep.area;
@@ -2244,7 +2302,8 @@
   // 울릉도·독도 상자: 본 지도와 같은 축척, 같은 위도에 맞춰 틀 오른쪽 바깥에 따로따로 붙여요 (시험지처럼)
   function insetBoxes(Ly, fw, fh, fs, lw2) {
     if (!byId.get(UL) || !Ly.view) return [];
-    const k = Ly.k, sc = Ly.view.s * k, pr = d3.geoMercator().rotate([-Ly.view.lon0, 0]).scale(sc).translate([0, Ly.view.cy * k]);
+    const k = Ly.k, sc = Ly.view.s * k, pr = isTM() ? d3.geoTransverseMercator().rotate([-127.5, 0]).scale(sc).translate([-sc * Ly.view.lon0 * RAD, Ly.view.cy * k])
+      : d3.geoMercator().rotate([-Ly.view.lon0, 0]).scale(sc).translate([0, Ly.view.cy * k]);
     const pad = Math.max(fs * 0.45, 6 * k), out = [];
     for (const name of [EX.insetU && '울릉도', EX.insetD && '독도'].filter(Boolean)) {
       const geo = islandGeo(name); if (!geo.coordinates.length) continue;
@@ -2488,7 +2547,7 @@
       localStorage.setItem(STORE_KEY, JSON.stringify({
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
         line: S.line, show: S.show, dockHidden: S.dockHidden, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
-        lakes: S.lakes, seas: S.seas, unit: S.unit, bg: S.bg, era: S.era, lineSd: S.lineSd, lineSg: S.lineSg, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
+        lakes: S.lakes, seas: S.seas, unit: S.unit, bg: S.bg, kproj: S.kproj, lineLight: S.lineLight, era: S.era, lineSd: S.lineSd, lineSg: S.lineSg, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
         regions: S.regions.map(({ _lab, ...r }) => r), rfill: S.rfill, legend: S.legend, rfont: S.rfont, borderDash: S.borderDash,
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
@@ -2507,6 +2566,9 @@
       if (d.era === 'before') S.era = 'before';
       if (isFinite(d.lineSd)) S.lineSd = d.lineSd; if (isFinite(d.lineSg)) S.lineSg = d.lineSg;
       if (d.bg && (d.bg === 'off' || BG[d.bg])) S.bg = d.bg;
+      if (d.kproj === 'tm' || d.kproj === 'merc') S.kproj = d.kproj;
+      if (typeof d.lineLight === 'boolean') S.lineLight = d.lineLight;
+      if (S.kproj === 'tm') S.bg = 'off';
       if (Array.isArray(d.points)) S.points = d.points.filter(p => isFinite(p.lon) && isFinite(p.lat))
         .map(p => ({ id: p.id, lon: p.lon, lat: p.lat, city: p.city || null, label: p.label || '', off: Array.isArray(p.off) ? p.off : null, guide: p.guide !== false, shape: SHAPE_IDS.includes(p.shape) ? p.shape : 'circle', color: /^#[0-9a-f]{6}$/i.test(p.color || '') ? p.color : (d.pstyle && d.pstyle.color) || '#1A1A1A' }));
       // 시안 5까지 따로 고르던 도시는 점으로 옮김
@@ -2528,7 +2590,7 @@
   // ───────── 시작 ─────────
   const DEFAULTS = JSON.parse(JSON.stringify({ ...S, colors: [] }));
   load();
-  renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI(); syncUnit(); syncBg(); syncEra(); syncLines();
+  renderTabs(); renderSwatches(); renderMiniSwatches(); syncLayers(); syncProjUI(); syncUnit(); syncBg(); syncEra(); syncLines(); syncKProj();
   initPanels();
   document.body.classList.toggle('dock-hidden', !!S.dockHidden);
   document.body.classList.toggle('side-open', !S.dockHidden);
