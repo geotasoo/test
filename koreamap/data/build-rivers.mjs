@@ -31,6 +31,27 @@ for (const f of R.features) {
     (groups[key] = groups[key] || []).push(l);
   }
 }
+// HydroRIVERS는 넓은 하구(조간대)를 바다로 보고 강이 일찍 끝나요 → 교과서 지도처럼 바다까지 이어 줘요 (하구 경로)
+const EXT = {
+  40423228: [[126.73, 37.68], [126.68, 37.76], [126.60, 37.75], [126.52, 37.76]],   // 한강 → 오두산(임진강 합류) → 강화 북쪽
+  40505530: [[128.99, 35.17], [128.965, 35.12], [128.95, 35.075]],                  // 낙동강 → 하굿둑 → 바다
+  40515775: [[126.49, 34.86], [126.45, 34.79]],                                     // 영산강 → 영산강 하굿둑
+  40479690: [[126.75, 35.93], [126.70, 35.925]],                                    // 만경강 → 새만금
+  40485071: [[126.71, 35.79]],                                                       // 동진강
+  40449356: [[126.86, 36.88]],                                                       // 삽교천
+  40443183: [[126.90, 36.93]],                                                       // 안성천
+  40475481: [[126.756, 36.011]],                                                     // 금강
+  40476409: [[129.396, 36.018]],                                                     // 형산강
+  40513639: [[127.77, 34.967]],                                                      // 섬진강
+  40391614: [[125.42, 38.73], [125.30, 38.72], [125.22, 38.71]],                    // 대동강 → 남포
+};
+for (const [rid, pts] of Object.entries(EXT)) {
+  let b = null; for (const f of R.features) if (String(f.properties.MAIN_RIV) === rid && (!b || f.properties.UPLAND_SKM > b.properties.UPLAND_SKM)) b = f;
+  if (!b) continue;
+  const c = b.geometry.type === 'LineString' ? b.geometry.coordinates : b.geometry.coordinates.at(-1);
+  const up = b.properties.UPLAND_SKM, w = up >= 10000 ? 3 : up >= 2000 ? 2 : 1, z = zoneOf(c, b.properties.MAIN_RIV);
+  const key = 'm' + z + w; (groups[key] = groups[key] || []).push([c.at(-1), ...pts]);
+}
 const objs = {};
 for (const [k, ls] of Object.entries(groups)) objs[k] = { type: 'Feature', geometry: { type: 'MultiLineString', coordinates: ls } };
 let topo0 = ts.topology(objs, 1e5);

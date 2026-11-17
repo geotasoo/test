@@ -47,6 +47,7 @@
     era: 'after',           // 행정구역: 'after' 전남광주 통합 후 · 'before' 통합 전
     lineSd: 1.0, lineSg: 0.6,   // 시도·시군 경계 굵기 (S.line 은 나라 경계·해안선)
     bg: 'off',              // 배경 지도: 'off' | 'osm' | 'sat' | 'topo' (화면에서만)
+    rivW: 1.0,              // 하천 굵기 (배수)
     rivers: 'off',          // 하천: 'off' 끄기 · 'major' 주요 강 · 'all' 하계망 (HydroRIVERS)
     kproj: 'merc',          // 도법: 'merc' 메르카토르(기본) · 'tm' 횡축 메르카토르(UTM-K처럼 127.5°E 가운데)
     lineLight: false,       // 경계선 색: false 검정 · true 흰색 (위성 배경에서 잘 보이게, 화면에서만)
@@ -470,7 +471,7 @@
   function needRivers() {
     if (rivTopo || rivLoading || S.rivers === 'off') return;
     rivLoading = true;
-    fetch('data/rivers.json?v=2').then(r => r.json()).then(t => { rivTopo = t; requestDraw(); })
+    fetch('data/rivers.json?v=3').then(r => r.json()).then(t => { rivTopo = t; requestDraw(); })
       .catch(() => showToast('하천 자료를 불러오지 못했어요')).finally(() => { rivLoading = false; });
   }
   // 키: 단계(m 주요 · d 지류) + 구역(s 남측 · n 북측 · o 주변 나라) + 굵기(1~3, 지류 0)
@@ -487,7 +488,7 @@
       const keys = (S.rivers === 'all' ? ['d' + z + '0'] : []).concat(['m' + z + '1', 'm' + z + '2', 'm' + z + '3']);
       for (const k of keys) {
         if (!rivTopo.objects[k]) continue;
-        ctx.lineWidth = W_[k[2]] * (exam ? 0.85 : 1) * px;
+        ctx.lineWidth = W_[k[2]] * (exam ? 0.85 : 1) * (S.rivW || 1) * px;
         ctx.stroke(shared('riv:' + k, () => topojson.feature(rivTopo, rivTopo.objects[k])));
       }
       if (z === 's' && S.lakes.sel && landShape) ctx.restore();
@@ -496,9 +497,11 @@
   }
   function syncRivers() {
     document.querySelectorAll('#riverSeg [data-riv]').forEach(b => b.classList.toggle('sel', b.dataset.riv === S.rivers));
+    const ri = $('#rivW'); if (ri) { ri.value = S.rivW; $('#rivWOut').textContent = (+S.rivW).toFixed(1); ri.closest('.row').classList.toggle('off', S.rivers === 'off'); }
     const c = $('#rivCredit'); if (c) c.textContent = S.rivers !== 'off' ? ' · 하천: HydroRIVERS (Lehner & Grill 2013)' : '';
     needRivers();
   }
+  $('#rivW').addEventListener('input', e => { S.rivW = +e.target.value; $('#rivWOut').textContent = S.rivW.toFixed(1); requestDraw(); saveSoon(); });
   document.querySelectorAll('#riverSeg [data-riv]').forEach(b => b.addEventListener('click', () => { S.rivers = b.dataset.riv; syncRivers(); requestDraw(); saveSoon(); }));
   // 도법: 횡축 메르카토르 ↔ 메르카토르 (화면 가운데·확대 정도는 그대로)
   function setKProj(mode, quiet) {
@@ -1399,7 +1402,7 @@
   lineInput.addEventListener('input', () => { S.line = +lineInput.value; lineOut.textContent = S.line.toFixed(1); requestDraw(); saveSoon(); });
 
   // ───────── 초기화 (되돌리기로 되살릴 수 있게 전체 상태를 기억) ─────────
-  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'unit', 'kproj', 'bg', 'lineLight', 'rivers', 'lineSd', 'lineSg', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'legend'];
+  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'unit', 'kproj', 'bg', 'lineLight', 'rivers', 'rivW', 'lineSd', 'lineSg', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'legend'];
   const fullSnap = () => JSON.parse(JSON.stringify({ ...Object.fromEntries(KEEP.map(k => [k, S[k]])), colors: [...S.colors] }));
   function applySnap(sn) {
     const proj0 = S.proj, kp0 = S.kproj;
@@ -2596,7 +2599,7 @@
       localStorage.setItem(STORE_KEY, JSON.stringify({
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
         line: S.line, show: S.show, dockHidden: S.dockHidden, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
-        lakes: S.lakes, seas: S.seas, unit: S.unit, bg: S.bg, rivers: S.rivers, kproj: S.kproj, lineLight: S.lineLight, era: S.era, lineSd: S.lineSd, lineSg: S.lineSg, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
+        lakes: S.lakes, seas: S.seas, unit: S.unit, bg: S.bg, rivers: S.rivers, rivW: S.rivW, kproj: S.kproj, lineLight: S.lineLight, era: S.era, lineSd: S.lineSd, lineSg: S.lineSg, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
         regions: S.regions.map(({ _lab, ...r }) => r), rfill: S.rfill, legend: S.legend, rfont: S.rfont, borderDash: S.borderDash,
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
@@ -2617,6 +2620,7 @@
       if (d.bg && (d.bg === 'off' || BG[d.bg])) S.bg = d.bg;
       if (d.kproj === 'tm' || d.kproj === 'merc') S.kproj = d.kproj;
       if (['off', 'major', 'all'].includes(d.rivers)) S.rivers = d.rivers;
+      if (isFinite(d.rivW)) S.rivW = Math.max(0.3, Math.min(4, +d.rivW));
       if (typeof d.lineLight === 'boolean') S.lineLight = d.lineLight;
       if (S.kproj === 'tm') S.bg = 'off';
       if (Array.isArray(d.points)) S.points = d.points.filter(p => isFinite(p.lon) && isFinite(p.lat))

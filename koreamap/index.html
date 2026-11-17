@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117g">
+<link rel="stylesheet" href="style.css?v=20261117h">
 </head>
 <body>
 <header class="topbar">
@@ -80,6 +80,8 @@
       <div class="inline-range"><input type="range" id="lineSg" min="0.2" max="4" step="0.1" aria-label="시군 경계 굵기"><output id="lineSgOut"></output></div></div>
     <div class="row"><span class="rlabel">하천</span>
       <div class="mini-seg" id="riverSeg" title="하천 자료: HydroRIVERS (북측 강은 [북측], 주변 나라 강은 [주변 나라]를 켜면 함께 보여요)"><button data-riv="off">끄기</button><button data-riv="major">주요 강</button><button data-riv="all">하계망</button></div></div>
+    <div class="row sub-row"><span class="rlabel">하천 굵기</span>
+      <div class="inline-range"><input type="range" id="rivW" min="0.3" max="4" step="0.1" aria-label="하천 굵기"><output id="rivWOut"></output></div></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="nb"><span></span>주변 나라 (중국·일본·러시아)</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="names"><span></span>시도 이름</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="sgnames"><span></span>시군 이름</label></div>
@@ -387,7 +389,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117g"></script>
-<script src="app.js?v=20261117g"></script>
+<script src="data/places.js?v=20261117h"></script>
+<script src="app.js?v=20261117h"></script>
 </body>
 </html>
