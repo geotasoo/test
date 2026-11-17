@@ -739,3 +739,7 @@ body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0
 .layers-panel .row .inline-range { flex: 1; justify-content: flex-end; }
 .layers-panel .row.bg-row { padding-bottom: 12px; }
 .layers-panel #bgAlphaRow { margin-top: 4px; padding-bottom: 6px; }
+
+/* 대기 반영: 한 줄에 두 항목 */
+.layers-panel .row.pair { justify-content: flex-start; }
+.layers-panel .row.pair > .sw { flex: 1 1 0; min-width: 0; }
