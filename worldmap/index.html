@@ -8,19 +8,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261117b">
 </head>
 <body>
 <header class="topbar">
   <div class="brand" id="brand" role="button" tabindex="0" title="처음 상태로 (초기화)">
-    <img class="brand-emoji brand-icon" src="icon.svg" alt="" aria-hidden="true">
+    <img class="brand-emoji brand-icon" src="icon.svg" width="36" height="29" alt="" aria-hidden="true">
     <div class="brand-text">
       <h1>세계지도 색칠하고 도형찍기</h1>
       <div class="sub-line"><span class="ver">v3.0 (20261117)</span><span class="pc-note" title="휴대폰·태블릿에서도 쓸 수 있지만, 시험지용 지도를 만들 때는 큰 화면이 편해요">PC에서 사용을 권합니다</span></div>
     </div>
   </div>
   <div class="actions">
-    <a class="jump jump-flag icon-only" href="../koreamap/" target="_blank" rel="noopener" title="한반도 지도 색칠하고 도형찍기 (새 창)"><img src="icon-korea.svg" alt="" aria-hidden="true"></a>
+    <a class="jump jump-flag icon-only" href="../koreamap/" target="_blank" rel="noopener" title="한반도 지도 색칠하고 도형찍기 (새 창)"><img src="icon-korea.svg" width="32" height="26" alt="" aria-hidden="true"></a>
     <a class="jump" href="../worldgame/" title="세계지도에서 나라찾기 게임으로 이동">🎮 <span class="long">나라찾기 게임</span><span class="short">게임</span></a>
     <button class="btn" id="undo" data-tip="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled>
       <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
@@ -265,7 +265,7 @@
   <!-- 도움말: 내용은 여기서 바로 고치면 돼요 -->
   <div class="confirm" id="helpDlg" hidden>
     <div class="export-box help-box" role="dialog" aria-labelledby="helpTitle">
-      <header><h3 id="helpTitle"><img class="title-flag" src="icon.svg" alt="" aria-hidden="true"> 도움말</h3><button class="close" id="helpClose" title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+      <header><h3 id="helpTitle"><img class="title-flag" src="icon.svg" width="30" height="24" alt="" aria-hidden="true"> 도움말</h3><button class="close" id="helpClose" title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
       <div class="help-body">
 
         <h4>지도 보기</h4>
@@ -334,7 +334,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js"></script>
-<script src="app.js"></script>
+<script src="data/places.js?v=20261117b"></script>
+<script src="app.js?v=20261117b"></script>
 </body>
 </html>
