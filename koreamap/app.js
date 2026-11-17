@@ -16,8 +16,8 @@
   const RAD = Math.PI / 180;
   const EE_CENTER = 150;         // 이퀄 어스 지도의 처음 가운데 경선 (좌우로 끌면 바뀜)
   const PROJ_INFO = {
-    merc: { name: '메르카토르 도법', note: '방향과 모양이 정확해 항해에 쓰여요. 극으로 갈수록 넓이가 크게 보여요.' },
-    ee: { name: '이퀄 어스 도법', note: '나라의 넓이를 실제 비율대로 보여줘요. 2026년 UN 총회가 사용을 권고했어요.' },
+    merc: { name: '메르카토르 도법', note: '방향과 모양이 정확해 항해에 쓰입니다. 극으로 갈수록 넓이가 크게 보입니다.' },
+    ee: { name: '이퀄 어스 도법', note: '나라의 넓이를 실제 비율대로 보여 줍니다. 2026년 UN 총회가 사용을 권고했습니다.' },
   };
 
   // 기본(시험지 회색): 흰색 · 1 · 3 · 5 · 7 단계 회색 (+ 빗금)
@@ -540,7 +540,7 @@
     if (rivTopo || rivLoading || S.rivers === 'off') return;
     rivLoading = true;
     fetch('data/rivers.json?v=5').then(r => r.json()).then(t => { rivTopo = t; rivLabelPts = null; requestDraw(); })
-      .catch(() => showToast('하천 자료를 불러오지 못했어요')).finally(() => { rivLoading = false; });
+      .catch(() => showToast('하천 자료를 불러오지 못했습니다')).finally(() => { rivLoading = false; });
   }
   // 키: 단계(m 주요 · d 지류) + 구역(s 남측 · n 북측 · o 주변 나라) + 굵기(1~3, 지류 0)
   function drawRivers(px, southOn, nkOn, landShape) {
@@ -580,7 +580,7 @@
     S.kproj = mode;
     SH.merc = {};
     for (const f of [...countries, skF].filter(Boolean)) { delete f.shape; delete f.outlineM; }
-    if (isTM() && S.bg !== 'off') { S.bg = 'off'; if (!quiet) showToast('횡축 메르카토르에서는 배경 지도를 쓸 수 없어서 껐어요'); }
+    if (isTM() && S.bg !== 'off') { S.bg = 'off'; if (!quiet) showToast('횡축 메르카토르에서는 배경 지도를 쓸 수 없어서 껐습니다'); }
     hoverId = null; hideTip();
     if (W) { computeFits(); sMin = sMinM; if (v) setView(v.lon, v.lat, v.z, false); }
     syncBg(); syncKProj(); requestDraw(); saveSoon();
@@ -588,7 +588,7 @@
   function syncKProj() {
     document.querySelectorAll('#kprojSeg [data-kproj]').forEach(b => b.classList.toggle('sel', b.dataset.kproj === S.kproj));
     const bs = $('#bgSeg'); bs.classList.toggle('locked', isTM());
-    bs.title = isTM() ? '횡축 메르카토르에서는 배경 지도를 쓸 수 없어요 (도법을 메르카토르로 바꾸면 쓸 수 있어요)' : '인터넷 지도를 밑에 깔아요 (현재 화면대로 저장할 때만 들어가요)';
+    bs.title = isTM() ? '횡축 메르카토르에서는 배경 지도를 쓸 수 없습니다 (도법을 메르카토르로 바꾸면 쓸 수 있습니다)' : '인터넷 지도를 밑에 깝니다 (현재 화면대로 저장할 때만 들어갑니다)';
     document.querySelectorAll('#lcSeg [data-lc]').forEach(b => b.classList.toggle('sel', (b.dataset.lc === 'light') === !!S.lineLight));
     const pn = $('#projName'); if (pn) pn.textContent = isTM() ? '횡축 메르카토르 도법 (UTM-K 방식)' : '메르카토르 도법';
   }
@@ -1182,13 +1182,13 @@
     const a = undoStack.pop(); if (!a) return;
     if (a.undo) a.undo();
     else for (const [id, before] of a.changes) before ? S.colors.set(id, before) : S.colors.delete(id);
-    redoStack.push(a); afterChange(); if (sideName === 'points') renderCities(); showToast(`되돌렸어요: ${a.label}`);
+    redoStack.push(a); afterChange(); if (sideName === 'points') renderCities(); showToast(`되돌렸습니다: ${a.label}`);
   }
   function redo() {
     const a = redoStack.pop(); if (!a) return;
     if (a.redo) a.redo();
     else for (const [id, , after] of a.changes) after ? S.colors.set(id, after) : S.colors.delete(id);
-    undoStack.push(a); afterChange(); if (sideName === 'points') renderCities(); showToast(`다시 했어요: ${a.label}`);
+    undoStack.push(a); afterChange(); if (sideName === 'points') renderCities(); showToast(`다시 했습니다: ${a.label}`);
   }
   function afterChange() {
     $('#undo').disabled = !undoStack.length;
@@ -1228,12 +1228,12 @@
     let after;
     if (S.tool === 'erase') after = null;
     else after = (before && before.toLowerCase() === S.current.toLowerCase()) ? null : S.current;
-    if (before === after) { showToast(`${name}: 칠해진 색이 없어요`); return; }
+    if (before === after) { showToast(`${name}: 칠해진 색이 없습니다`); return; }
     commit([[id, before, after]], name);
     if (after && S.dockHidden && !firstPaintTold) {   // 색칠하기 패널을 안 열고 처음 칠했을 때: 무슨 색인지 알려 줘요
       firstPaintTold = true;
       const cn = colorName(after);
-      showToast(`${name}${josa(name, '을', '를')} ${cn}${josa(cn, '으로', '로', true)} 칠했어요 · 다른 색은 [색칠하기]에서 골라요`, true, 4200);
+      showToast(`${name}${josa(name, '을', '를')} ${cn}${josa(cn, '으로', '로', true)} 칠했습니다 · 다른 색은 [색칠하기]에서 고릅니다`, true, 4200);
       $('#colorBtn').classList.add('nudge'); setTimeout(() => $('#colorBtn').classList.remove('nudge'), 2400);
       return;
     }
@@ -1330,7 +1330,7 @@
       } else {
         const f = hitTest(tap.x, tap.y, tap.type === 'mouse' ? 7 : 16);
         if (f) { missCount = 0; paint(f); }
-        else if (++missCount >= 2 && !zoomHinted && s / sMin < 2) { zoomHinted = true; showToast('작은 지역은 확대하면 누르기 쉬워요 (마우스 휠·두 손가락)', false, 3200); }
+        else if (++missCount >= 2 && !zoomHinted && s / sMin < 2) { zoomHinted = true; showToast('작은 지역은 확대하면 누르기 쉽습니다 (마우스 휠·두 손가락)', false, 3200); }
       }
     }
     if (pointers.size < 2) pinch = null;
@@ -1368,7 +1368,7 @@
   }
   function hideTip() { tip.style.display = 'none'; }
   function showTip(f, x, y) {   // 폰에서 누르고 있을 때: 손가락 위에 이름
-    tip.innerHTML = `${f.properties.ko}<small>${f.kind === 'sg' ? f.properties.sd : f.kind === 'sd' ? '시도' : ''} · 떼면 칠해요</small>`;
+    tip.innerHTML = `${f.properties.ko}<small>${f.kind === 'sg' ? f.properties.sd : f.kind === 'sd' ? '시도' : ''} · 떼면 칠합니다</small>`;
     tip.style.display = 'block';
     const tw = tip.offsetWidth;
     tip.style.left = Math.max(8, Math.min(W - tw - 8, x - tw / 2)) + 'px'; tip.style.top = Math.max(8, y - 20) + 'px';
@@ -1449,8 +1449,8 @@
     const after = fullSnap();
     commitAction({ label: '칠하는 단위 바꿈', undo: () => applySnap(before), redo: () => applySnap(after) });
     syncUnit(); afterChange(); requestDraw(); saveSoon();
-    const name = { none: '남측을 그리지 않아요', sk: '남측 전체를 한 번에 칠해요', sd: '시도 단위로 칠해요', sg: '시군 단위로 칠해요' }[u];
-    showToast(gone.length ? `${name} · 다른 단위로 칠한 ${gone.length}곳은 지웠어요` : name, gone.length > 0, gone.length ? 3600 : 0);
+    const name = { none: '남측을 그리지 않습니다', sk: '남측 전체를 한 번에 칠합니다', sd: '시도 단위로 칠합니다', sg: '시군 단위로 칠합니다' }[u];
+    showToast(gone.length ? `${name} · 다른 단위로 칠한 ${gone.length}곳은 지웠습니다` : name, gone.length > 0, gone.length ? 3600 : 0);
   }));
   function syncEra() { document.querySelectorAll('#eraSeg [data-era]').forEach(b => b.classList.toggle('sel', b.dataset.era === S.era)); }
   document.querySelectorAll('#eraSeg [data-era]').forEach(b => b.addEventListener('click', () => setEra(b.dataset.era)));
@@ -1480,12 +1480,12 @@
     if (sideName === 'points') renderCities();
     updateCounts();
     const msg = era === 'before' ? '전남·광주 통합 전 지도 (광주광역시·전라남도)' : '전남광주통합특별시 지도 (광주권의 구 표시)';
-    if (!quiet) showToast(msg + (gone.length ? ` · 이 지도에 없는 ${gone.length}곳의 색은 지웠어요` : ''), gone.length > 0, 3600);
+    if (!quiet) showToast(msg + (gone.length ? ` · 이 지도에 없는 ${gone.length}곳의 색은 지웠습니다` : ''), gone.length > 0, 3600);
   }
   document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.addEventListener('click', () => {
-    if (isTM()) return showToast('횡축 메르카토르에서는 배경 지도를 쓸 수 없어요 · 도법을 메르카토르로 바꿔 주세요');
+    if (isTM()) return showToast('횡축 메르카토르에서는 배경 지도를 쓸 수 없습니다 · 도법을 메르카토르로 바꿔 주십시오');
     S.bg = b.dataset.bg; syncBg(); requestDraw(); saveSoon();
-    if (S.bg !== 'off') showToast('배경 지도는 \'현재 화면대로\' 저장할 때만 들어가요 (시험지용에는 안 들어가요)');
+    if (S.bg !== 'off') showToast('배경 지도는 \'현재 화면대로\' 저장할 때만 들어갑니다 (시험지용에는 안 들어갑니다)');
   }));
   const layersBtn = $('#layersBtn'), layersPanel = $('#layersPanel');
   function openLayers(open) {
@@ -1554,7 +1554,7 @@
     S.dockHidden = DEFAULTS.dockHidden; syncDock(); syncSelection();
     if (S.era !== DEFAULTS.era) setEra(DEFAULTS.era, true, true);
     goHome();
-    showToast('처음 상태로 돌렸어요 · 되돌리기로 되살릴 수 있어요', true);
+    showToast('처음 상태로 돌렸습니다 · 되돌리기로 되살릴 수 있습니다', true);
   }
   const askReset = () => resetAll();   // 확인 창 없이 바로 초기화 (되돌리기로 되살릴 수 있어요)
   $('#resetBtn').addEventListener('click', askReset);
@@ -1589,10 +1589,10 @@
   $('#undo').addEventListener('click', undo);
   $('#redo').addEventListener('click', redo);
   $('#clear').addEventListener('click', () => {
-    if (!S.colors.size) return showToast('지울 색이 없어요');
+    if (!S.colors.size) return showToast('지울 색이 없습니다');
     const changes = [...S.colors].map(([id, c]) => [id, c, null]);
     commit(changes, '모두 지우기');
-    showToast(`${changes.length}개 지역의 색을 지웠어요`, true);
+    showToast(`${changes.length}개 지역의 색을 지웠습니다`, true);
   });
   // 확대 비율 (처음 화면 = 100%)
   const ZREF = 1000 / (2 * Math.PI);
@@ -1766,11 +1766,11 @@
   const newId = () => 'p' + (++pid);
   function addPoint(x, y) {
     const ll = toLonLat(x, y);
-    if (!ll) return showToast('지도 바깥에는 도형을 찍을 수 없어요');
+    if (!ll) return showToast('지도 바깥에는 도형을 찍을 수 없습니다');
     let pt;
     pointsAction('도형 찍음', () => { pt = { id: newId(), lon: ll[0], lat: ll[1], city: null, label: '', off: null, shape: S.pstyle.shape, color: S.pstyle.color }; S.points.push(pt); relabel(); });
     selPoint = pt.id; renderCities(); renderPoints();
-    showToast(`도형 찍음${pt.label ? ' (' + pt.label + ')' : ''} · 라벨은 ‘라벨·범례’에서 넣어요`, true);
+    showToast(`도형 찍음${pt.label ? ' (' + pt.label + ')' : ''} · 라벨은 ‘라벨·범례’에서 넣습니다`, true);
   }
   function deletePoint(id) {
     const pt = S.points.find(p => p.id === id); if (!pt) return;
@@ -1862,7 +1862,7 @@
     const list = $('#regionList');
     if ((list.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') || dragRow) return;
     list.innerHTML = '';
-    if (!S.regions.length) { list.innerHTML = '<div class="empty">아직 칠한 지역이 없어요.<br>지역을 칠하면 여기에 차례대로 나와요.</div>'; return; }
+    if (!S.regions.length) { list.innerHTML = '<div class="empty">아직 칠한 지역이 없습니다.<br>지역을 칠하면 여기에 차례대로 나옵니다.</div>'; return; }
     for (const r of S.regions) {
       const f = byId.get(r.id); if (!f) continue;
       const row = document.createElement('div'); row.className = 'prow-item'; row.dataset.id = r.id;
@@ -1897,7 +1897,7 @@
   }
   document.querySelectorAll('[data-rfill]').forEach(b => b.addEventListener('click', () => {
     const mode = b.dataset.rfill;
-    if (!S.regions.length) return showToast('먼저 지역을 칠해 주세요');
+    if (!S.regions.length) return showToast('먼저 지역을 칠해 주십시오');
     const names = { alpha: 'A B C', hangulp: '(가)(나)(다)', hangul: '가 나 다', name: '지역 이름', clear: '지우기' };
     regionsAction(`라벨 ${names[mode]}`, () => {
       if (SEQ.includes(mode)) { S.rfill = mode; relabelRegions(); }
@@ -2005,7 +2005,7 @@
       const list = box.querySelector('.plist');
       if (list.contains(document.activeElement) && document.activeElement.tagName === 'INPUT' || dragRow) continue;
       list.innerHTML = '';
-      if (!items.length) { list.innerHTML = `<div class="empty">${kind === 'fill' ? '칠한 지역이 없어요.<br>색칠하면 쓴 색마다 한 줄씩 생겨요.' : '찍은 도형이 없어요.<br>도형을 찍으면 쓴 모양마다 한 줄씩 생겨요.'}</div>`; continue; }
+      if (!items.length) { list.innerHTML = `<div class="empty">${kind === 'fill' ? '칠한 지역이 없습니다.<br>색칠하면 쓴 색마다 한 줄씩 생깁니다.' : '찍은 도형이 없습니다.<br>도형을 찍으면 쓴 모양마다 한 줄씩 생깁니다.'}</div>`; continue; }
       for (const it of items) {
         const row = document.createElement('div'); row.className = 'prow-item' + (it.on ? '' : ' off'); row.dataset.id = it.key;
         const sym = kind === 'fill' ? `<span class="rsw" style="background:${cssFill(it.key)}"></span>`
@@ -2155,12 +2155,12 @@
     }
     const n = S.lakes.sel ? S.lakes.sel.length : sdF.length, sum = $('#lakesSummary');
     sum.className = 'note' + (n ? '' : ' muted');
-    sum.textContent = !S.lakes.sel ? `✓ 시도 ${sdF.length}개 모두 표시 중` : n ? `✓ 시도 ${n}개만 표시 중 (북측·주변 나라는 숨겨요)` : '표시 중인 시도가 없어요';
+    sum.textContent = !S.lakes.sel ? `✓ 시도 ${sdF.length}개 모두 표시 중` : n ? `✓ 시도 ${n}개만 표시 중 (북측·주변 나라는 숨깁니다)` : '표시 중인 시도가 없습니다';
   }
   function lakesChanged() {
     if (S.lakes.sel && S.lakes.sel.length === sdF.length) S.lakes.sel = null;
     clearTimeout(lakesChanged.t);
-    lakesChanged.t = setTimeout(() => { if (S.lakes.sel && S.lakes.sel.length) showToast('고른 시도만 보여요 · 북측·주변 나라는 잠시 숨겨요 ([전체 선택]으로 되돌려요)', false, 3200); }, 500);
+    lakesChanged.t = setTimeout(() => { if (S.lakes.sel && S.lakes.sel.length) showToast('고른 시도만 보입니다 · 북측·주변 나라는 잠시 숨깁니다 ([전체 선택]으로 되돌립니다)', false, 3200); }, 500);
     renderLakes(); updateCounts(); requestDraw(); saveSoon();
     fitSelection();
   }
@@ -2194,8 +2194,8 @@
     }
     const sum = $('#seasSummary');
     sum.className = 'note' + (S.seas.sel.length ? '' : ' muted');
-    sum.textContent = !S.show.seas ? '‘지도 설정’에서 바다 이름이 꺼져 있어요. 고르면 다시 켜져요.'
-      : S.seas.sel.length ? `✓ 바다 이름 ${S.seas.sel.length}개 표시 중` : '표시 중인 바다 이름이 없어요';
+    sum.textContent = !S.show.seas ? '‘지도 설정’에서 바다 이름이 꺼져 있습니다. 고르면 다시 켜집니다.'
+      : S.seas.sel.length ? `✓ 바다 이름 ${S.seas.sel.length}개 표시 중` : '표시 중인 바다 이름이 없습니다';
   }
   function seasChanged() {
     if (!S.show.seas) { S.show.seas = true; syncLayers(); }
@@ -2228,7 +2228,7 @@
         } else {
           const add = all.filter(c => !chosen.has(c.name)).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
           pointsAction(`${cont} 도시 ${add.length}개 추가`, () => { for (const c of add) S.points.push({ id: newId(), lon: c.lon, lat: c.lat, city: c.name, label: c.name, off: null, shape: S.pstyle.shape, color: S.pstyle.color }); relabel(); });
-          showToast(`${cont} 도시 ${add.length}개를 더했어요`, true);
+          showToast(`${cont} 도시 ${add.length}개를 더했습니다`, true);
         }
       };
       const cl = g.querySelector('.clist');
@@ -2248,7 +2248,7 @@
       g.innerHTML = `<div class="ghead"><button class="gtoggle"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>직접 찍은 곳 <small>${S.points.filter(p => !p.city).length}</small></button></div><div class="clist"></div>`;
       g.querySelector('.gtoggle').onclick = () => { closedGroups.has('free') ? closedGroups.delete('free') : closedGroups.add('free'); renderCities(); };
       const cl = g.querySelector('.clist');
-      if (!free.length) cl.innerHTML = '<div class="hint" style="padding:6px 22px">아직 없어요. 지도를 눌러 찍어 보세요.</div>';
+      if (!free.length) cl.innerHTML = '<div class="hint" style="padding:6px 22px">아직 없습니다. 지도를 눌러 찍어 보십시오.</div>';
       for (const pt of free) {
         const lab = document.createElement('label'); lab.className = 'chk';
         lab.innerHTML = `<input type="checkbox" checked><span></span><small>${fmtLL(pt.lon, pt.lat)}</small>`;
@@ -2258,7 +2258,7 @@
       }
       box.appendChild(g); shown += free.length || 1;
     }
-    if (!shown) box.innerHTML = `<div class="empty">‘${q.replace(/</g, '&lt;')}’ 도시가 목록에 없어요.<br>지도를 눌러 직접 찍을 수 있어요.</div>`;
+    if (!shown) box.innerHTML = `<div class="empty">‘${q.replace(/</g, '&lt;')}’ 도시가 목록에 없습니다.<br>지도를 눌러 직접 찍을 수 있습니다.</div>`;
   }
   $('#citySearch').addEventListener('input', renderCities);
 
@@ -2314,7 +2314,7 @@
     const list = $('#pointList');
     if ((list.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') || dragRow) return;   // 라벨을 고치거나 끄는 중이면 다시 그리지 않음
     list.innerHTML = '';
-    if (!S.points.length) { list.innerHTML = '<div class="empty">아직 찍은 도형이 없어요.<br>[도형찍기]에서 도시를 고르거나 지도를 눌러 찍어요.</div>'; return; }
+    if (!S.points.length) { list.innerHTML = '<div class="empty">아직 찍은 도형이 없습니다.<br>[도형찍기]에서 도시를 고르거나 지도를 눌러 찍습니다.</div>'; return; }
     const st = S.pstyle, key = st.shape + st.color + st.outline;
     if (key !== symKey) {
       const c = document.createElement('canvas'); c.width = c.height = 44; const g = c.getContext('2d'); g.scale(2, 2);
@@ -2385,7 +2385,7 @@
   }
   document.querySelectorAll('[data-fill]').forEach(b => b.addEventListener('click', () => {
     const mode = b.dataset.fill;
-    if (!S.points.length) return showToast('먼저 도형을 찍거나 도시를 골라요');
+    if (!S.points.length) return showToast('먼저 도형을 찍거나 도시를 고릅니다');
     const names = { alpha: 'A B C', hangulp: '(가)(나)(다)', hangul: '가 나 다', city: '도시 이름', clear: '지우기' };
     pointsAction(`라벨 ${names[mode]}`, () => {
       if (SEQ.includes(mode)) { S.fill = mode; relabel(); }
@@ -2396,7 +2396,7 @@
   $('#pointsClear').addEventListener('click', () => {
     const n = S.points.length; if (!n) return;
     pointsAction('도형 모두 삭제', () => { S.points = []; });
-    selPoint = null; showToast(`도형 ${n}개를 지웠어요`, true);
+    selPoint = null; showToast(`도형 ${n}개를 지웠습니다`, true);
   });
 
   function initPanels() {
@@ -2571,7 +2571,7 @@
     $('#exTick').checked = EX.tick; $('#exScale').checked = EX.scale; $('#exLegend').checked = EX.legend; $('#exInsetU').checked = EX.insetU; $('#exInsetD').checked = EX.insetD;
     const hasLegend = S.legend.show && legendModel(exam).length > 0;
     $('#exLegendWrap').hidden = !hasLegend; $('#exLplace').hidden = false;   // 범례를 끄면 흐리게만 (자리 그대로)
-    $('#exStyleHint').textContent = exam ? '시험지용: 흑백·사각형 틀, 경위선·지역 이름 없음. B4 용지 2단 편집에서 지도를 약 10cm 폭으로 넣었을 때 글자가 9pt가 되도록 자동 조정해요.' : '지금 화면에 보이는 색·라벨·경위선 숫자 그대로';
+    $('#exStyleHint').textContent = exam ? '시험지용: 흑백·사각형 틀, 경위선·지역 이름 없음. B4 용지 2단 편집에서 지도를 약 10cm 폭으로 넣었을 때 글자가 9pt가 되도록 자동 조정합니다.' : '지금 화면에 보이는 색·라벨·경위선 숫자 그대로';
     const r = EX.range === 'sel' && EX.rect ? EX.rect : fullRect();
     $('#exSize').textContent = `${Math.round(r.w * EX.k)} × ${Math.round(r.h * EX.k)} 픽셀 · PNG 인쇄용`;
     if (!relayer && preview) return showPreview();
@@ -2658,12 +2658,12 @@
     const c = await renderExport(EX.k);
     const type = EX.fmt === 'jpg' ? 'image/jpeg' : 'image/png';
     c.toBlob(blob => {
-      if (!blob) return showToast('이미지를 만들지 못했어요');
+      if (!blob) return showToast('이미지를 만들지 못했습니다');
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = fileName();
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 4000);
-      showToast('저장했어요 · 안 받아지면 미리보기를 오른쪽 클릭(폰은 길게 눌러) 저장하세요', false, 4200);
+      showToast('저장했습니다 · 안 받아지면 미리보기를 오른쪽 클릭(폰은 길게 눌러) 저장하십시오', false, 4200);
     }, type, 0.92);
   });
   $('#exCopy').addEventListener('click', async () => {
@@ -2671,8 +2671,8 @@
       const c = await renderExport(EX.k);
       const blob = await new Promise(r => c.toBlob(r, 'image/png'));
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      showToast('복사했어요 · 한글·PPT에 붙여 넣으세요');
-    } catch (_) { showToast('이 환경에서는 복사가 안 돼요 · 미리보기를 오른쪽 클릭해 복사하세요', false, 3600); }
+      showToast('복사했습니다 · 한글·PPT에 붙여 넣으십시오');
+    } catch (_) { showToast('이 환경에서는 복사가 안 됩니다 · 미리보기를 오른쪽 클릭해 복사하십시오', false, 3600); }
   });
 
   // 영역 선택: 지도 위에 사각형을 끌어서
@@ -2701,7 +2701,7 @@
     });
     selLayer.addEventListener('pointerup', e => {
       if (!st) return; const r = box(st, rel(e)); st = null;
-      if (r.w < 30 || r.h < 30) { selBox.hidden = true; return showToast('조금 더 크게 끌어 주세요'); }
+      if (r.w < 30 || r.h < 30) { selBox.hidden = true; return showToast('조금 더 크게 끌어 주십시오'); }
       endSelect(r);
     });
   }
@@ -2778,9 +2778,9 @@
     $('#loading').remove();
     afterChange();
     if (S.lakes.sel) setTimeout(fitSelection, 50);
-    if (S.colors.size) showToast(`지난번 작업을 불러왔어요 (${S.colors.size}개 지역)`);
+    if (S.colors.size) showToast(`지난번 작업을 불러왔습니다 (${S.colors.size}개 지역)`);
     else if (isPhone()) showToast('PC에서 사용을 권합니다', false, 3000);
-  }).catch(() => { $('#loading').textContent = '지도를 불러오지 못했어요. 새로고침해 주세요.'; });
+  }).catch(() => { $('#loading').textContent = '지도를 불러오지 못했습니다. 새로고침해 주십시오.'; });
 
   // 테스트용
   window.__map = { byId, rlabelPos: id => { const o = rlabelBoxes.find(x => x.r.id === id); return o && [(o.box[0] + o.box[2]) / 2, (o.box[1] + o.box[3]) / 2]; }, S, hitTest, paint: id => paint(byId.get(id)), proj: () => proj, view: currentView, setProjection, openSide };
