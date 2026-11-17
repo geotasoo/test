@@ -484,7 +484,6 @@
     const pn = $('#projName'); if (pn) pn.textContent = isTM() ? '횡축 메르카토르 도법 (UTM-K 방식)' : '메르카토르 도법';
   }
   document.querySelectorAll('#kprojSeg [data-kproj]').forEach(b => b.addEventListener('click', () => setKProj(b.dataset.kproj)));
-  document.querySelectorAll('#lcSeg [data-lc]').forEach(b => b.addEventListener('click', () => { S.lineLight = b.dataset.lc === 'light'; syncKProj(); requestDraw(); saveSoon(); }));
   function syncBg() {
     document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.classList.toggle('sel', b.dataset.bg === S.bg));
     const c = BG[S.bg]; $('#bgCredit').textContent = c ? ' · ' + c.credit : '';
@@ -615,7 +614,7 @@
           coordinates: (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates).filter(pg => d3.geoCentroid({ type: 'Polygon', coordinates: pg })[0] < 130.5) })) : shapeOf(f));
       }
       ctx.globalAlpha = 1;
-      const lightL = S.lineLight && bgOn && !EXP, LC = lightL ? '#FFFFFF' : '#1a1a1a', LC2 = lightL ? 'rgba(255,255,255,.8)' : '#8c8c8c', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
+      const lightL = bgOn && S.bg === 'sat' && !EXP, LC = lightL ? '#FFFFFF' : '#1a1a1a', LC2 = lightL ? 'rgba(255,255,255,.8)' : '#8c8c8c', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
       // 3) 경위선·적도
       if (S.show.grid) {
         ctx.lineWidth = 0.6 * px; ctx.strokeStyle = LG;   /* 경위선은 가는 실선 (국경 점선과 구별) */
@@ -1470,6 +1469,7 @@
     else if (pointMode && (e.key === 'Delete' || e.key === 'Backspace') && selPoint) { e.preventDefault(); deletePoint(selPoint); }
     else if (e.key === 'Escape' && pointMode && selPoint) { selPoint = null; renderPoints(); requestDraw(); }
     // (한반도 앱은 도법이 하나라 P 키를 쓰지 않아요)
+    else if (!mod && e.key.toLowerCase() === 'p') { setKProj(isTM() ? 'merc' : 'tm'); }
     else if (!mod && e.key.toLowerCase() === 'e') { S.tool = S.tool === 'erase' ? 'paint' : 'erase'; syncSelection(); }
     else if (!mod && /^[1-9]$/.test(e.key)) {
       const c = PALETTES[S.palette].colors[+e.key - 1]; if (c) selectColor(c);
@@ -2419,6 +2419,18 @@
       showPreview();
     }, 60);
   }
+  // ───────── 처음 쓰는 사람 안내 (한 번 보고 나면 다시 안 나와요) ─────────
+  const GUIDE_KEY = STORE_KEY + '.guide';
+  const guideSeen = k => { try { return (JSON.parse(localStorage.getItem(GUIDE_KEY) || '{}'))[k]; } catch (_) { return false; } };
+  function guideDone(k) {
+    try { const g = JSON.parse(localStorage.getItem(GUIDE_KEY) || '{}'); g[k] = 1; localStorage.setItem(GUIDE_KEY, JSON.stringify(g)); } catch (_) { /* 저장 못 해도 괜찮아요 */ }
+    if (k === 'drag') { const h = $('#exDragHint'); if (h) h.hidden = true; }
+    if (k === 'welcome') { const w = $('#welcome'); if (w) w.hidden = true; }
+  }
+  if (!guideSeen('drag')) { const h = $('#exDragHint'); if (h) h.hidden = false; }
+  if (!guideSeen('welcome')) setTimeout(() => { const w = $('#welcome'); if (w) w.hidden = false; }, 900);
+  $('#welcomeOk').addEventListener('click', () => guideDone('welcome'));
+  $('#welcomeHelp').addEventListener('click', () => { guideDone('welcome'); $('#helpDlg').hidden = false; });
   // 미리보기에서 축척·범례를 끌어 위치 정하기
   {
     const img = $('#exPreview');
@@ -2430,7 +2442,7 @@
       for (const key of ['legend', 'scale']) {
         const bx = preview.boxes[key];
         if (bx && x >= bx[0] - 6 && x <= bx[0] + bx[2] + 6 && y >= bx[1] - 6 && y <= bx[1] + bx[3] + 6) {
-          drag = { key, start: [x, y], box: [...bx], map: { ...preview.map } }; img.setPointerCapture(e.pointerId); e.preventDefault(); img.classList.add('dragging'); return;
+          drag = { key, start: [x, y], box: [...bx], map: { ...preview.map } }; img.setPointerCapture(e.pointerId); e.preventDefault(); img.classList.add('dragging'); guideDone('drag'); return;
         }
       }
     });

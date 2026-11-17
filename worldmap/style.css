@@ -699,3 +699,19 @@ body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0
 #bgSeg.locked { opacity: .4; }
 #bgSeg.locked button { cursor: not-allowed; }
 .ex-body { overflow-x: hidden; } .ex-opts { min-width: 0; }
+
+/* 처음 온 사람 안내 카드 */
+.welcome { position: fixed; z-index: 15; left: 16px; bottom: 40px; width: 340px; max-width: calc(100vw - 32px); background: #fff; border-radius: 14px; box-shadow: 0 10px 34px rgba(20,40,70,.22); padding: 16px 18px 14px; border-top: 4px solid #FFD84D; }
+.welcome h3 { margin: 0 0 8px; font-size: 15px; }
+.welcome ol { margin: 0 0 12px; padding-left: 20px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+.welcome ol li + li { margin-top: 4px; }
+.welcome-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.welcome-actions .sbtn { height: 32px; padding: 0 14px; font-size: 13px; }
+@media (max-width: 719px) { .welcome { left: 10px; right: 10px; width: auto; bottom: 16px; } }
+/* 저장 미리보기: 끌어 옮길 수 있다는 안내 (한 번 끌면 사라져요) */
+.ex-preview { position: relative; }
+.ex-drag-hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); padding: 6px 12px; border-radius: 99px; background: rgba(29,39,51,.9); color: #fff; font-size: 12.5px; white-space: nowrap; pointer-events: none; animation: hintPulse 1.6s ease-in-out infinite; }
+.ex-drag-hint[hidden] { display: none; }
+@keyframes hintPulse { 0%, 100% { opacity: 1; } 50% { opacity: .65; } }
+
+.help-steps { margin: 0 0 4px; padding-left: 22px; line-height: 1.7; background: #FFF8DC; border-radius: 10px; padding: 8px 12px 8px 30px; }

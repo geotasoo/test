@@ -510,7 +510,7 @@
     const gridShape = S.show.grid ? shared('grid' + step, () => graticules[step]) : null, equatorShape = shared('equator', () => equator);
     // 많이 축소하면 지도 한 바퀴가 화면보다 좁아져요 → 옆으로 이어 붙여 빈 곳 없이 (도형 하나에 두 바퀴가 들어 있음)
     const bgOn = drawBackground();   // 배경 지도 (메르카토르에서만)
-    const lightL = S.lineLight && bgOn && !EXP, LC = lightL ? '#FFFFFF' : '#1a1a1a', LB = lightL ? 'rgba(255,255,255,.9)' : '#2b2b2b', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
+    const lightL = bgOn && S.bg === 'sat' && !EXP, LC = lightL ? '#FFFFFF' : '#1a1a1a', LB = lightL ? 'rgba(255,255,255,.9)' : '#2b2b2b', LG = lightL ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.22)';
     const reps = isEE() ? 1 : Math.max(1, Math.ceil((W / s + TAU) / (2 * TAU)));   // 화면 왼쪽 끝은 [-π, π) 안
     for (let rep = 0; rep < reps; rep++) {
       setWorldTransform(rep * 2 * TAU * s);
@@ -1120,7 +1120,6 @@
     S.bg = b.dataset.bg; syncBg(); requestDraw(); saveSoon();
     if (S.bg !== 'off') showToast('배경 지도는 화면에서만 보여요. 저장할 때는 들어가지 않아요.');
   }));
-  document.querySelectorAll('#lcSeg [data-lc]').forEach(b => b.addEventListener('click', () => { S.lineLight = b.dataset.lc === 'light'; syncBg(); requestDraw(); saveSoon(); }));
   const layersBtn = $('#layersBtn'), layersPanel = $('#layersPanel');
   function openLayers(open) {
     layersPanel.hidden = !open; layersBtn.setAttribute('aria-expanded', String(open));
@@ -2121,6 +2120,18 @@
       showPreview();
     }, 60);
   }
+  // ───────── 처음 쓰는 사람 안내 (한 번 보고 나면 다시 안 나와요) ─────────
+  const GUIDE_KEY = STORE_KEY + '.guide';
+  const guideSeen = k => { try { return (JSON.parse(localStorage.getItem(GUIDE_KEY) || '{}'))[k]; } catch (_) { return false; } };
+  function guideDone(k) {
+    try { const g = JSON.parse(localStorage.getItem(GUIDE_KEY) || '{}'); g[k] = 1; localStorage.setItem(GUIDE_KEY, JSON.stringify(g)); } catch (_) { /* 저장 못 해도 괜찮아요 */ }
+    if (k === 'drag') { const h = $('#exDragHint'); if (h) h.hidden = true; }
+    if (k === 'welcome') { const w = $('#welcome'); if (w) w.hidden = true; }
+  }
+  if (!guideSeen('drag')) { const h = $('#exDragHint'); if (h) h.hidden = false; }
+  if (!guideSeen('welcome')) setTimeout(() => { const w = $('#welcome'); if (w) w.hidden = false; }, 900);
+  $('#welcomeOk').addEventListener('click', () => guideDone('welcome'));
+  $('#welcomeHelp').addEventListener('click', () => { guideDone('welcome'); $('#helpDlg').hidden = false; });
   // 미리보기에서 축척·범례를 끌어 위치 정하기
   {
     const img = $('#exPreview');
@@ -2132,7 +2143,7 @@
       for (const key of ['legend', 'scale']) {
         const bx = preview.boxes[key];
         if (bx && x >= bx[0] - 6 && x <= bx[0] + bx[2] + 6 && y >= bx[1] - 6 && y <= bx[1] + bx[3] + 6) {
-          drag = { key, start: [x, y], box: [...bx], map: { ...preview.map } }; img.setPointerCapture(e.pointerId); e.preventDefault(); img.classList.add('dragging'); return;
+          drag = { key, start: [x, y], box: [...bx], map: { ...preview.map } }; img.setPointerCapture(e.pointerId); e.preventDefault(); img.classList.add('dragging'); guideDone('drag'); return;
         }
       }
     });

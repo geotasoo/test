@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117d">
+<link rel="stylesheet" href="style.css?v=20261117e">
 </head>
 <body>
 <header class="topbar">
@@ -70,8 +70,6 @@
       <span class="tipi" tabindex="0" data-tip="2026년 7월 전라남도와 광주광역시가 전남광주통합특별시로 통합했어요. 통합 전 지도는 옛 교과서·기출 문제용이에요.">ⓘ</span></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="nk"><span></span>북측</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="dmzDash"><span></span>휴전선 점선</label></div>
-    <div class="row"><span class="rlabel">경계선 색</span>
-      <div class="mini-seg" id="lcSeg" title="배경 지도를 켰을 때만 흰색으로 그려요 (위성 배경에서 잘 보여요 · 저장할 때는 검정)"><button data-lc="dark">검정</button><button data-lc="light">흰색</button></div></div>
     <div class="row"><span class="rlabel">시도·시군 경계</span>
       <div class="mini-seg" id="dashSeg" title="시도·시군 경계"><button data-dash="0">실선</button><button data-dash="1">점선</button></div></div>
     <div class="row sub-row"><span class="rlabel">나라 경계</span>
@@ -254,7 +252,7 @@
     <div class="export-box" role="dialog" aria-labelledby="exTitle">
       <header><h3 id="exTitle">이미지로 저장</h3><button class="close" id="exClose" title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
       <div class="ex-body">
-        <div class="ex-preview"><img id="exPreview" alt="저장될 이미지 미리보기"></div>
+        <div class="ex-preview"><img id="exPreview" alt="저장될 이미지 미리보기"><div class="ex-drag-hint" id="exDragHint" hidden>✋ 미리보기에서 <b>축척·범례를 끌어</b> 옮길 수 있어요</div></div>
         <div class="ex-opts">
           <div class="ex-row"><span>범위</span><div class="mini-seg"><button data-ex="range" data-v="full">화면 전체</button><button data-ex="range" data-v="sel">영역 선택</button></div>
             <button class="link" id="exSelAgain" hidden>다시 선택 ›</button></div>
@@ -287,51 +285,73 @@
       <header><h3 id="helpTitle"><img class="title-flag" src="icon.svg" width="30" height="24" alt="" aria-hidden="true"> 도움말</h3><button class="close" id="helpClose" title="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
       <div class="help-body">
 
+        <h4>처음이라면 (3단계)</h4>
+        <ol class="help-steps">
+          <li><b>[색칠하기]</b> → 색 고르기 → 지도에서 지역 누르기</li>
+          <li><b>[도형찍기]</b>로 도시 찍기 → <b>[라벨·범례]</b>에서 (가)(나)(다)·범례 붙이기</li>
+          <li><b>[저장]</b> → <b>시험지용</b> → 미리보기에서 <b>축척·범례 끌어 옮기기</b> → <b>[저장]</b> 또는 <b>[복사]</b></li>
+        </ol>
+
         <h4>지도 보기</h4>
         <ul>
           <li><b>이동</b>: 지도를 끌어요. <b>확대·축소</b>: 마우스 휠 또는 오른쪽 위 <b>+ / −</b> (폰은 두 손가락).</li>
-          <li>+ 와 − 사이 숫자는 <b>확대 정도</b>예요. 숫자를 눌러 직접 입력할 수 있어요.</li>
-          <li><b>[지도 설정]</b>에서 <b>전남광주 통합 후 / 통합 전</b> 지도를 골라요. ⓘ에 마우스를 올리면 설명이 나와요.</li><li><b>칠하는 단위</b>(남측 없음 / 남측 / 시도 / 시군)를 고르면, 그만큼 경계가 그려지고 누를 때 그 단위로 칠해져요. 단위는 한 번에 하나만 쓰고, 바꾸면 다른 단위로 칠한 색은 지워져요(되돌리기 가능).</li><li>작은 지역은 근처를 눌러도 잡히고, 폰에서는 꾹 누르고 있으면 이름이 먼저 떠요.</li><li>시도·시군 경계(실선·점선), 나라 경계·시도 경계·시군 경계 굵기, 북측, 휴전선 점선, 주변 나라, 시도·시군 이름, 바다 이름, 경위선, 축척을 켜고 끌 수 있어요. 위쪽 <b>시도 고르기</b>로 일부 시도만 그릴 수도 있어요.</li><li><b>도법</b>: 기본은 <b>횡축 메르카토르</b>(UTM-K처럼 동경 127.5°가 가운데)예요. [지도 설정]에서 메르카토르로 바꿀 수 있어요.</li><li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. 저장할 때는 들어가지 않아요. 도법이 메르카토르일 때만 쓸 수 있고, 위성 배경에서는 <b>경계선 색</b>을 흰색으로 바꾸면 잘 보여요.</li>
-          <li>바다 이름은 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
+          <li>+ 와 − 사이 숫자는 <b>확대 정도</b>예요(처음 화면 = 100). 숫자를 눌러 직접 입력할 수 있고, <b>⛶</b>을 누르면 처음 화면으로 돌아가요.</li>
+          <li>위쪽 <b>칠하는 단위</b>(남측 없음 / 남측 / 시도 / 시군)를 고르면 그만큼 경계가 그려지고, 누를 때 그 단위로 칠해져요. 단위를 바꾸면 다른 단위로 칠한 색은 지워져요(되돌리기 가능).</li>
+          <li><b>[시도 고르기]</b>로 일부 시도만 그릴 수 있어요. 고른 시도에 맞게 지도가 저절로 맞춰져요.</li>
+          <li>작은 지역은 근처를 눌러도 잡히고, 폰에서는 꾹 누르고 있으면 이름이 먼저 떠요.</li>
+        </ul>
+
+        <h4>지도 설정</h4>
+        <ul>
+          <li><b>[지도 설정]</b> 맨 위에서 <b>도법</b>(횡축 메르카토르 / 메르카토르)과 <b>전남광주 통합 후 / 통합 전</b>을 골라요. ⓘ에 마우스를 올리면 설명이 나와요.</li>
+          <li>기본 도법은 <b>횡축 메르카토르</b>예요. 국토지리정보원 지도처럼(UTM-K) 동경 127.5°가 가운데라 모양이 시험지 지도와 비슷해요.</li>
+          <li>북측, 휴전선 점선, 시도·시군 경계(실선·점선, 굵기), 주변 나라, 시도·시군 이름, 바다 이름, 경위선, 축척을 켜고 끌 수 있어요. 바다 이름은 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
+          <li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. 도법이 <b>메르카토르</b>일 때만 쓸 수 있고, 저장할 때는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요.</li>
         </ul>
 
         <h4>색칠하기</h4>
         <ul>
-          <li>색을 고르고 지역을 누르면 칠해져요. 같은 색으로 한 번 더 누르면 지워져요.</li>
+          <li><b>[색칠하기]</b>를 누르면 오른쪽에 색칠 패널이 열려요. 색 묶음(시험지 회색·컬러·단계색)을 고르고 지역을 누르면 칠해져요. 같은 색으로 한 번 더 누르면 지워져요.</li>
+          <li>마지막 칸은 <b>빗금</b>이에요. 단계색에서는 그 색의 빗금이 돼요. <b>직접 고르기</b>로 아무 색이나 쓸 수 있어요.</li>
+          <li>패널 아래에서 바탕 <b>육지·바다 색</b>을 바꿀 수 있어요. <b>[색칠 모두 지우기]</b>는 칠한 색만 지워요.</li>
         </ul>
 
         <h4>도형찍기</h4>
         <ul>
-          <li><b>[도형찍기]</b>를 누르고 주요 도시를 검색하거나 목록에서 고르세요. 목록에 없는 곳은 지도를 눌러 직접 찍어요.</li>
-          <li>위쪽에서 색·모양(● ▲ ■ ○ △ □)을 고르면 <b>다음에 찍을 도형</b>부터 바뀌어요. 이미 찍은 도형은 [라벨·범례] → 도형 라벨 목록에서 그림을 눌러 모양을 바꿔요. 찍어 둔 도형은 끌어서 옮길 수 있어요.</li>
+          <li><b>[도형찍기]</b>를 누르면 지도에 빨간 테두리가 생겨요. 이때 지도를 누르면 그 자리에 도형이 찍혀요.</li>
+          <li>오른쪽 목록에서 고르거나 <b>검색</b>해서 찍을 수도 있어요. 묶음 옆 <b>[모두 선택]</b>으로 한꺼번에 찍어요.</li>
+          <li>위쪽에서 색·모양(● ▲ ■ ○ △ □)·크기를 고르면 <b>다음에 찍을 도형</b>부터 바뀌어요. 찍어 둔 도형은 끌어서 옮기고, <kbd>Delete</kbd>로 지워요.</li>
+          <li>다 찍었으면 <b>[완료]</b>를 눌러요.</li>
         </ul>
 
         <h4>라벨·범례</h4>
         <ul>
           <li><b>[라벨·범례]</b>에 세 탭이 있어요: <b>색칠 라벨</b>(칠한 지역) · <b>도형 라벨</b>(찍은 도형) · <b>범례</b>.</li>
           <li>라벨은 직접 쓰거나 A B C, (가)(나)(다), 가 나 다, 이름으로 한꺼번에 채우고, ⋮⋮ 손잡이로 순서를 바꿔요.</li>
-          <li>지도에서 라벨을 끌어 옮기면 <b>가이드선</b>이 생기고 해당 탭이 열려요. 목록의 가이드선 버튼으로 하나씩 끄고, ↺ 버튼으로 원래 자리로 돌려요.</li>
-          <li><b>범례</b>는 칠한 색과 도형 모양마다 한 줄씩 자동으로 생겨요. <b>세로 / 가로</b>를 고를 수 있고(가로는 칠 한 줄, 도형 한 줄), 지도에서 범례 상자를 끌어 옮겨요. 범례는 처음엔 꺼져 있어요.</li>
+          <li>지도에서 라벨을 끌어 옮기면 <b>가이드선</b>이 생겨요. 목록의 가이드선 버튼으로 하나씩 끄고, ↺ 버튼으로 원래 자리로 돌려요.</li>
+          <li><b>범례</b>는 칠한 색과 도형 모양마다 한 줄씩 자동으로 생겨요. 세로/가로를 고르고, 지도에서 범례 상자를 끌어 옮겨요.</li>
         </ul>
 
         <h4>저장하기</h4>
         <ul>
-          <li><b>[저장]</b> → 범위(화면 전체 / 영역 선택)와 스타일(시험지용 / 현재 화면대로)을 고르세요.</li>
-          <li><b>시험지용</b>: 흑백, 사각형 틀. B4 2단 편집에서 지도를 약 10cm 폭으로 넣으면 글자가 9pt가 돼요.</li>
-          <li><b>울릉도·독도 상자</b>를 켜면 시험지처럼 울릉도와 독도를 본 지도와 같은 축척·같은 위도로, 틀 오른쪽에 붙은 작은 상자 두 개에 따로 그려요.</li><li>미리보기에서 <b>축척과 범례를 끌어</b> 위치를 정해요. 범례는 <b>지도 안</b>(틀에 딱 붙일 수 있어요) 또는 <b>지도 밖</b>(틀 둘레에 붙어 함께 저장)을 고를 수 있어요.</li><li>영역 선택 시 축척과 범례 공간을 고려하여 선택하세요.</li>
+          <li><b>[저장]</b> → 범위(화면 전체 / 영역 선택)와 스타일(시험지용 / 현재 화면대로)을 고르세요. 영역 선택 때는 축척·범례 자리도 생각해서 고르세요.</li>
+          <li><b>시험지용</b>: 흑백, 사각형 틀, 바다 흰색/회색. B4 2단 편집에서 지도를 약 10cm 폭으로 넣으면 글자가 9pt가 돼요.</li>
+          <li>미리보기에서 <b>축척과 범례를 마우스로 끌어</b> 자리를 정해요. 범례는 <b>지도 안</b> 또는 <b>지도 밖</b>(틀 둘레에 붙어 함께 저장)을 고를 수 있어요.</li>
+          <li><b>울릉도 상자 · 독도 상자</b>를 켜면 시험지처럼 두 섬을 본 지도와 같은 축척·같은 위도로, 틀 오른쪽 안쪽의 작은 상자에 따로 그려요(따로 켜고 끌 수 있어요).</li>
           <li><b>[복사]</b>하면 한글·PPT에 바로 붙여 넣을 수 있어요.</li>
         </ul>
 
-        <h4>되돌리기와 초기화</h4>
+        <h4>되돌리기·자동 저장·초기화</h4>
         <ul>
-          <li>모든 작업은 <b>되돌리기(Ctrl+Z)</b>로 취소할 수 있어요. 작업은 이 브라우저에 자동 저장돼요.</li>
+          <li>모든 작업은 <b>되돌리기(Ctrl+Z)</b>로 취소할 수 있어요.</li>
+          <li>작업은 <b>이 컴퓨터의 이 브라우저</b>에 저절로 기억돼요. 다른 컴퓨터에서는 이어지지 않아요.</li>
           <li><b>제목</b>이나 <b>[초기화]</b>를 누르면 처음 상태로 돌아가요(되돌리기로 되살릴 수 있어요).</li>
         </ul>
 
         <h4>단축키 (PC)</h4>
         <ul class="keys">
           <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> 되돌리기 · <kbd>Ctrl</kbd>+<kbd>Y</kbd> 다시 하기</li>
-          <li><kbd>1</kbd>~<kbd>9</kbd> 색 고르기 · <kbd>E</kbd> 지우개 · <kbd>P</kbd> 도법 바꾸기</li>
+          <li><kbd>1</kbd>~<kbd>9</kbd> 색 고르기 · <kbd>E</kbd> 지우개 · <kbd>P</kbd> 도법 바꾸기(횡축 메르카토르 ↔ 메르카토르)</li>
           <li><kbd>+</kbd> <kbd>−</kbd> 확대·축소 · 방향키 이동 · <kbd>Delete</kbd> 고른 도형 지우기</li>
         </ul>
         <p class="help-foot">한반도 지도 색칠하고 도형찍기 3.0 (20261117) · 지도 데이터: GADM · Natural Earth · @geotasoo</p>
@@ -345,6 +365,17 @@
   </div>
 
   <div id="tip" role="status"></div>
+  <!-- 처음 온 사람 안내 (한 번만) -->
+  <div class="welcome" id="welcome" hidden role="dialog" aria-labelledby="welcomeTitle">
+    <h3 id="welcomeTitle">처음 오셨나요? 이렇게 써 보세요</h3>
+    <ol>
+      <li><b>[색칠하기]</b>를 누르고 색을 고른 뒤, 지도에서 지역을 누르면 칠해져요.</li>
+      <li><b>[도형찍기]</b>로 도시를 찍고, <b>[라벨·범례]</b>에서 (가)(나)(다)나 범례를 붙여요.</li>
+      <li><b>[저장]</b>에서 <b>시험지용</b>을 고르고, 미리보기의 <b>축척·범례를 끌어</b> 자리를 잡아요. <b>[복사]</b>하면 한글·PPT에 바로 붙여 넣어요.</li>
+    </ol>
+    <div class="welcome-actions"><button class="sbtn" id="welcomeHelp">도움말 자세히</button><button class="sbtn primary" id="welcomeOk">알겠어요</button></div>
+  </div>
+
   <div id="toast" role="status"><span></span><button hidden>되돌리기</button></div>
 
   <!-- 아래: 왼쪽 도법·출처, 오른쪽 축척 (축척은 지도 그림에 그려요) -->
@@ -353,7 +384,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117d"></script>
-<script src="app.js?v=20261117d"></script>
+<script src="data/places.js?v=20261117e"></script>
+<script src="app.js?v=20261117e"></script>
 </body>
 </html>
