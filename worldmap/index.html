@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117p">
+<link rel="stylesheet" href="style.css?v=20261117q">
 </head>
 <body>
 <header class="topbar">
@@ -63,26 +63,30 @@
         <button data-proj="ee">이퀄 어스</button>
       </div>
     </div>
+    <div class="sec-h">경계선</div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="borders"><span></span>국경선</label>
       <div class="mini-seg" id="dashSeg"><button data-dash="1">점선</button><button data-dash="0">실선</button></div></div>
     <div class="row sub-row"><span class="rlabel">선 굵기</span>
       <div class="inline-range"><input type="range" id="lineWidth" min="0.2" max="2" step="0.1" aria-label="선 굵기"><output id="lineWidthOut"></output></div></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="kp"><span></span>남북한 경계</label></div>
+    <div class="sec-h">이름·표시</div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="names"><span></span>나라 이름</label></div>
     <div class="row"><label class="sw" title="지도에서 점처럼 작은 나라를 동그라미로 표시"><input type="checkbox" data-layer="tiny"><span></span>작은 나라 동그라미</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="seas"><span></span>바다 이름</label><button class="link" data-side="seas">고르기 <b id="seasCount"></b> ›</button></div>
+    <div class="row"><label class="sw"><input type="checkbox" data-layer="grid"><span></span>경위선</label></div>
+    <div class="row"><label class="sw"><input type="checkbox" data-layer="equator"><span></span>적도</label></div>
+    <div class="row"><label class="sw"><input type="checkbox" data-layer="scale"><span></span>축척</label></div>
+    <div class="sec-h">하천·호수</div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="rivers"><span></span>주요 하천</label></div>
     <div class="row sub-row"><span class="rlabel">하천 굵기</span>
       <div class="inline-range"><input type="range" id="rivW" min="0.3" max="4" step="0.1" aria-label="하천 굵기"><output id="rivWOut"></output></div></div>
     <div class="row sub-row"><label class="sw small"><input type="checkbox" data-layer="rivNames"><span></span>강 이름</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="lakes"><span></span>호수</label><button class="link" data-side="lakes">고르기 <b id="lakesCount"></b> ›</button></div>
-    <div class="row"><label class="sw"><input type="checkbox" data-layer="grid"><span></span>경위선</label></div>
-    <div class="row"><label class="sw"><input type="checkbox" data-layer="equator"><span></span>적도</label></div>
-    <div class="row"><label class="sw"><input type="checkbox" data-layer="scale"><span></span>축척</label></div>
+    <div class="sec-h">배경 지도</div>
     <div class="row bg-row"><span class="rlabel">배경 지도</span>
       <div class="mini-seg" id="bgSeg"><button data-bg="off">끄기</button><button data-bg="osm">일반</button><button data-bg="sat">위성</button><button data-bg="topo">지형</button><button data-bg="elev">고도</button></div></div>
     <div class="row sub-row" id="bgAlphaRow"><span class="rlabel">진하기</span>
-      <div class="inline-range"><input type="range" id="bgAlpha" min="0" max="100" step="5" aria-label="배경 지도 진하기 (50이 기본)"><output id="bgAlphaOut"></output></div></div>
+      <div class="inline-range"><input type="range" id="bgAlpha" min="0" max="100" step="5" aria-label="배경 지도 진하기 (80이 기본)"><output id="bgAlphaOut"></output></div></div>
   </div>
 
   <!-- 오른쪽 위: 확대·축소 -->
@@ -361,7 +365,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117p"></script>
-<script src="app.js?v=20261117p"></script>
+<script src="data/places.js?v=20261117q"></script>
+<script src="app.js?v=20261117q"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117p">
+<link rel="stylesheet" href="style.css?v=20261117q">
 </head>
 <body>
 <header class="topbar">
@@ -62,6 +62,7 @@
   </div>
 
   <div class="panel layers-panel" id="layersPanel" hidden>
+    <div class="sec-h">지도</div>
     <div class="row era-row"><span class="rlabel">도법</span>
       <div class="mini-seg" id="kprojSeg"><button data-kproj="merc">메르카토르</button><button data-kproj="tm">횡축 메르카토르</button></div>
       <span class="tipi" tabindex="0" data-tip="국토지리정보원의 지도 등 우리나라 전국 지도는 보통 UTM-K를 씁니다. UTM-K는 동경 127.5°를 가운데에 둔 횡축 메르카토르도법입니다. 일반 메르카토르도법은 위도가 높을수록 조금씩 커집니다. 제주와 백두산 근처를 비교하면 북쪽이 약 15% 크게 그려집니다. 횡축 메르카토르를 설정하면, 배경지도는 선택할 수 없습니다.">ⓘ</span></div>
@@ -70,6 +71,8 @@
       <span class="tipi" tabindex="0" data-tip="2026년 7월 전라남도와 광주광역시가 전남광주통합특별시로 통합했어요. 통합 전 지도는 옛 교과서·기출 문제용이에요.">ⓘ</span></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="nk"><span></span>북측</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="dmzDash"><span></span>휴전선 점선</label></div>
+    <div class="row"><label class="sw"><input type="checkbox" data-layer="nb"><span></span>주변 나라 (중국·일본·러시아)</label></div>
+    <div class="sec-h">경계선</div>
     <div class="row"><span class="rlabel">시도·시군 경계</span>
       <div class="mini-seg" id="dashSeg" title="시도·시군 경계"><button data-dash="0">실선</button><button data-dash="1">점선</button></div></div>
     <div class="row sub-row"><span class="rlabel">나라 경계</span>
@@ -78,21 +81,23 @@
       <div class="inline-range"><input type="range" id="lineSd" min="0.2" max="4" step="0.1" aria-label="시도 경계 굵기"><output id="lineSdOut"></output></div></div>
     <div class="row sub-row"><span class="rlabel">시군 경계</span>
       <div class="inline-range"><input type="range" id="lineSg" min="0.2" max="4" step="0.1" aria-label="시군 경계 굵기"><output id="lineSgOut"></output></div></div>
+    <div class="sec-h">하천</div>
     <div class="row"><span class="rlabel">하천</span>
       <div class="mini-seg" id="riverSeg" title="하천 자료: HydroRIVERS (북측 강은 [북측], 주변 나라 강은 [주변 나라]를 켜면 함께 보여요)"><button data-riv="off">끄기</button><button data-riv="major">주요 강</button><button data-riv="all">하계망</button></div></div>
     <div class="row sub-row"><span class="rlabel">하천 굵기</span>
       <div class="inline-range"><input type="range" id="rivW" min="0.3" max="4" step="0.1" aria-label="하천 굵기"><output id="rivWOut"></output></div></div>
     <div class="row sub-row"><label class="sw small"><input type="checkbox" id="rivNames"><span></span>강 이름</label></div>
-    <div class="row"><label class="sw"><input type="checkbox" data-layer="nb"><span></span>주변 나라 (중국·일본·러시아)</label></div>
+    <div class="sec-h">이름·표시</div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="names"><span></span>시도 이름</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="sgnames"><span></span>시군 이름</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="seas"><span></span>바다 이름</label><button class="link" data-side="seas">고르기 <b id="seasCount"></b> ›</button></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="grid"><span></span>경위선</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="scale"><span></span>축척</label></div>
+    <div class="sec-h">배경 지도</div>
     <div class="row bg-row"><span class="rlabel">배경 지도</span>
       <div class="mini-seg" id="bgSeg" title="인터넷 지도를 밑에 깔아요 ('현재 화면대로' 저장에만 들어가요)"><button data-bg="off">끄기</button><button data-bg="osm">일반</button><button data-bg="sat">위성</button><button data-bg="topo">지형</button><button data-bg="elev">고도</button></div></div>
     <div class="row sub-row" id="bgAlphaRow"><span class="rlabel">진하기</span>
-      <div class="inline-range"><input type="range" id="bgAlpha" min="0" max="100" step="5" aria-label="배경 지도 진하기 (50이 기본)"><output id="bgAlphaOut"></output></div></div>
+      <div class="inline-range"><input type="range" id="bgAlpha" min="0" max="100" step="5" aria-label="배경 지도 진하기 (80이 기본)"><output id="bgAlphaOut"></output></div></div>
   </div>
 
   <!-- 오른쪽 위: 확대·축소 -->
@@ -381,7 +386,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117p"></script>
-<script src="app.js?v=20261117p"></script>
+<script src="data/places.js?v=20261117q"></script>
+<script src="app.js?v=20261117q"></script>
 </body>
 </html>

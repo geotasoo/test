@@ -795,3 +795,18 @@ body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0
 .row.bg-row #bgSeg { flex: 1 1 100%; display: flex; }
 .row.bg-row #bgSeg button { flex: 1; white-space: nowrap; padding-left: 0; padding-right: 0; }
 #bgAlphaRow.off { opacity: .4; pointer-events: none; }
+
+/* 지도 설정: 묶음 제목으로 나누고 간격 정리 */
+.layers-panel .sec-h { margin: 10px 16px 2px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11.5px; font-weight: 700; color: var(--ink-3); letter-spacing: .02em; }
+.layers-panel .sec-h:first-child { margin-top: 2px; padding-top: 2px; border-top: 0; }
+.layers-panel .proj-row + .sec-h { margin-top: 4px; }
+.layers-panel .row { min-height: 36px; }
+.layers-panel .row.sub-row { min-height: 32px; margin-top: 0; padding-left: 28px; }
+.layers-panel .row.bg-row { padding-top: 4px; padding-bottom: 6px; }
+.layers-panel .row.bg-row .rlabel { display: none; }
+.layers-panel #bgAlphaRow { padding-left: 16px; margin-top: 2px; }
+.layers-panel .row.sub-row .rlabel { min-width: 64px; }
+.layers-panel .row .inline-range { flex: 1; justify-content: flex-end; }
+.layers-panel .row:has(#riverSeg) .rlabel { display: none; }
+.layers-panel #riverSeg { flex: 1; display: flex; }
+.layers-panel #riverSeg button { flex: 1; }

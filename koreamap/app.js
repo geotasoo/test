@@ -46,7 +46,7 @@
     unit: 'sd',             // 경계·색칠 단위: 'none' 남측 없음(북측만) · 'sk' 남측 전체 · 'sd' 시도 · 'sg' 시군
     era: 'after',           // 행정구역: 'after' 전남광주 통합 후 · 'before' 통합 전
     lineSd: 1.0, lineSg: 0.6,   // 시도·시군 경계 굵기 (S.line 은 나라 경계·해안선)
-    bgAlpha: 50,            // 배경 지도 진하기 0~100 (50 기본)
+    bgAlpha: 80,            // 배경 지도 진하기 0~100 (80 기본)
     bg: 'off',              // 배경 지도: 'off' | 'osm' | 'sat' | 'topo' (화면에서만)
     rivW: 1.0,              // 하천 굵기 (배수)
     rivNames: true,         // 강 이름
@@ -520,7 +520,7 @@
     const x0 = Math.floor(-X0 / tile), x1 = Math.floor((W - X0) / tile), y0 = Math.max(0, Math.floor(-Y0 / tile)), y1 = Math.min(n - 1, Math.floor((H - Y0) / tile));
     ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingQuality = 'high';
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);   // 옅게 할 때 흰 바탕이 비쳐요
-    ctx.globalAlpha = 0.12 + 0.88 * Math.pow((S.bgAlpha ?? 50) / 100, 0.75);   // 50 → 약 0.64
+    ctx.globalAlpha = 0.12 + 0.88 * Math.pow((S.bgAlpha ?? 80) / 100, 0.75);   // 50 → 약 0.64
     for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
       const wx = ((tx % n) + n) % n, im = tileImg(B.url(z, wx, ty), B.elev && { z, y: ty });
       const px = X0 + tx * tile, py = Y0 + ty * tile;
@@ -595,7 +595,7 @@
   document.querySelectorAll('#kprojSeg [data-kproj]').forEach(b => b.addEventListener('click', () => setKProj(b.dataset.kproj)));
   $('#bgAlpha').addEventListener('input', e => { S.bgAlpha = +e.target.value; $('#bgAlphaOut').textContent = S.bgAlpha; requestDraw(); saveSoon(); });
   function syncBg() {
-    const ba = $('#bgAlpha'); if (ba) { ba.value = S.bgAlpha ?? 50; $('#bgAlphaOut').textContent = S.bgAlpha ?? 50; $('#bgAlphaRow').classList.toggle('off', S.bg === 'off'); }
+    const ba = $('#bgAlpha'); if (ba) { ba.value = S.bgAlpha ?? 80; $('#bgAlphaOut').textContent = S.bgAlpha ?? 80; $('#bgAlphaRow').classList.toggle('off', S.bg === 'off'); }
     document.querySelectorAll('#bgSeg [data-bg]').forEach(b => b.classList.toggle('sel', b.dataset.bg === S.bg));
     const c = BG[S.bg]; $('#bgCredit').textContent = c ? ' · ' + c.credit : '';
   }
