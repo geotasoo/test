@@ -448,17 +448,69 @@
     osm: { url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`, max: 19, credit: '배경: © OpenStreetMap 기여자' },
     sat: { url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`, max: 18, credit: '배경: Esri, Maxar, Earthstar Geographics' },
     topo: { url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${z}/${y}/${x}`, max: 18, credit: '배경: Esri, HERE, Garmin, © OpenStreetMap 기여자' },
+    elev: { url: (z, x, y) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`, max: 12, elev: true, credit: '고도: Terrain Tiles (AWS Open Data · SRTM, GMTED, ETOPO1)' },
   };
   const tileCache = new Map();
-  function tileImg(src) {
+  function tileImg(src, elev) {
     let im = tileCache.get(src);
     if (!im) {
       im = new Image(); im.decoding = 'async'; im.crossOrigin = 'anonymous';   // 저장할 때 그림에 넣을 수 있게
-      im.onload = () => requestDraw(); im.onerror = () => { im.bad = true; };
+      im.onload = () => { if (elev) { try { im.cv = elevColor(im, elev); } catch (_) { im.bad = true; } } requestDraw(); }; im.onerror = () => { im.bad = true; };
       im.src = src; tileCache.set(src, im);
       if (tileCache.size > 600) tileCache.delete(tileCache.keys().next().value);
     }
     return im;
+  }
+  // ───────── 고도 색칠 (지형 타일의 높이값 → 고도별 색 + 음영 기복) ─────────
+  const ELEV_STOPS = [   // [높이 m, 색]
+    [-8000, '#123F66'], [-4000, '#1E5E8C'], [-1000, '#3A86B4'], [-200, '#6FB3D2'], [-1, '#A9D8EA'],
+    [0, '#6FA463'], [100, '#8DBA6E'], [300, '#C6CC86'], [600, '#E2C57E'], [1000, '#D79E5A'],
+    [1500, '#B97A45'], [2000, '#9C6A4A'], [3000, '#A89488'], [4500, '#EDE8E4'], [6000, '#FFFFFF'],
+  ];
+  const ELEV_LUT = (() => {   // -8000~6000m, 10m 간격
+    const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), lut = new Uint8ClampedArray(1401 * 3);
+    for (let k = 0; k <= 1400; k++) {
+      const e = -8000 + k * 10; let i = 0;
+      while (i < ELEV_STOPS.length - 2 && e > ELEV_STOPS[i + 1][0]) i++;
+      const [e0, c0] = ELEV_STOPS[i], [e1, c1] = ELEV_STOPS[i + 1], t = Math.max(0, Math.min(1, (e - e0) / (e1 - e0)));
+      const a = hex(c0), b = hex(c1); for (let j = 0; j < 3; j++) lut[k * 3 + j] = a[j] + (b[j] - a[j]) * t;
+    }
+    return lut;
+  })();
+  function elevColor(im, { z, y }) {
+    const N = 256, c = document.createElement('canvas'); c.width = c.height = N;
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, N, N), px = d.data, E = new Float32Array(N * N);
+    for (let i = 0; i < N * N; i++) E[i] = px[i * 4] * 256 + px[i * 4 + 1] + px[i * 4 + 2] / 256 - 32768;   // terrarium 높이값
+    const n = 1 << z, lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 0.5) / n)));
+    const mpp = 40075016.686 * Math.cos(lat) / (N * n);                  // 한 칸의 실제 길이(m)
+    const ex = z <= 3 ? 25 : z <= 5 ? 12 : z <= 7 ? 6 : z <= 9 ? 3 : 1.8;  // 작게 볼수록 기복을 과장해야 보여요
+    const az = 315 * RAD, alt = 45 * RAD, sa = Math.sin(alt), ca = Math.cos(alt);
+    const at = (x, yy) => E[Math.max(0, Math.min(N - 1, yy)) * N + Math.max(0, Math.min(N - 1, x))];
+    for (let yy = 0; yy < N; yy++) for (let x = 0; x < N; x++) {
+      const i = yy * N + x, e = E[i];
+      const dx = (at(x + 1, yy) - at(x - 1, yy)) / (2 * mpp) * ex, dy = (at(x, yy + 1) - at(x, yy - 1)) / (2 * mpp) * ex;
+      const slope = Math.atan(Math.hypot(dx, dy)), aspect = Math.atan2(dy, -dx);
+      const sh = Math.max(0, sa * Math.cos(slope) + ca * Math.sin(slope) * Math.cos(az - Math.PI / 2 - aspect));
+      const k = Math.max(0, Math.min(1400, Math.round((e + 8000) / 10))) * 3;
+      const f = e >= 0 ? 0.42 + 0.72 * sh : 0.82 + 0.25 * sh;             // 땅은 음영을 진하게, 바다는 살짝
+      px[i * 4] = ELEV_LUT[k] * f; px[i * 4 + 1] = ELEV_LUT[k + 1] * f; px[i * 4 + 2] = ELEV_LUT[k + 2] * f; px[i * 4 + 3] = 255;
+    }
+    g.putImageData(d, 0, 0);
+    return c;
+  }
+  // 고도 범례 (화면에서만, 왼쪽 아래)
+  function drawElevLegend() {
+    if (S.bg !== 'elev' || EXP) return;
+    const marks = [0, 200, 500, 1000, 2000, 3000], w = 30, h = 9, x0 = 12, y0 = H - 66;
+    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(x0 - 6, y0 - 18, marks.length * w + 12, h + 34);
+    ctx.font = `600 10.5px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#333'; ctx.fillText('높이 (m)', x0, y0 - 6);
+    marks.forEach((m, i) => {
+      const k = Math.round((m + 8000) / 10) * 3; ctx.fillStyle = `rgb(${ELEV_LUT[k]},${ELEV_LUT[k + 1]},${ELEV_LUT[k + 2]})`;
+      ctx.fillRect(x0 + i * w, y0, w, h); ctx.fillStyle = '#333'; ctx.textAlign = 'center'; ctx.fillText(String(m), x0 + i * w, y0 + h + 11);
+    });
+    ctx.restore();
   }
   function drawBackground() {
     const B = BG[S.bg]; if (!B || (EXP && EXP.exam) || isEE()) return false;   // '현재 화면대로' 저장에는 배경도 넣어요
@@ -469,12 +521,13 @@
     const x0 = Math.floor(-X0 / tile), x1 = Math.floor((W - X0) / tile), y0 = Math.max(0, Math.floor(-Y0 / tile)), y1 = Math.min(n - 1, Math.floor((H - Y0) / tile));
     ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingQuality = 'high';
     for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
-      const wx = ((tx % n) + n) % n, im = tileImg(B.url(z, wx, ty));
+      const wx = ((tx % n) + n) % n, im = tileImg(B.url(z, wx, ty), B.elev && { z, y: ty });
       const px = X0 + tx * tile, py = Y0 + ty * tile;
-      if (im.complete && im.naturalWidth) ctx.drawImage(im, px, py, tile + 0.5, tile + 0.5);
+      const ok = o => o && (B.elev ? o.cv : o.complete && o.naturalWidth) ? (B.elev ? o.cv : o) : null;
+      if (ok(im)) ctx.drawImage(ok(im), px, py, tile + 0.5, tile + 0.5);
       else {   // 아직 안 온 타일은 한 단계 위(큰) 타일을 늘려서 임시로
-        const pz = z - 1, pim = tileCache.get(B.url(pz, wx >> 1, ty >> 1));
-        if (pim && pim.complete && pim.naturalWidth) ctx.drawImage(pim, (wx & 1) * 128, (ty & 1) * 128, 128, 128, px, py, tile + 0.5, tile + 0.5);
+        const pz = z - 1, pim = ok(tileCache.get(B.url(pz, wx >> 1, ty >> 1)));
+        if (pim) ctx.drawImage(pim, (wx & 1) * 128, (ty & 1) * 128, 128, 128, px, py, tile + 0.5, tile + 0.5);
       }
     }
     ctx.restore();
@@ -664,6 +717,7 @@
     if (S.show.grid && !(EXP && EXP.exam)) drawGridLabels();
     if (S.show.scale && !EXP) drawScale();
     if (!EXP) drawScreenLegend();
+    drawElevLegend();
   }
 
   // 이퀄 어스를 돌리는 동안: 가벼운 지도를 바로 계산해서 그림

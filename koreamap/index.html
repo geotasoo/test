@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117l">
+<link rel="stylesheet" href="style.css?v=20261117m">
 </head>
 <body>
 <header class="topbar">
@@ -82,6 +82,7 @@
       <div class="mini-seg" id="riverSeg" title="하천 자료: HydroRIVERS (북측 강은 [북측], 주변 나라 강은 [주변 나라]를 켜면 함께 보여요)"><button data-riv="off">끄기</button><button data-riv="major">주요 강</button><button data-riv="all">하계망</button></div></div>
     <div class="row sub-row"><span class="rlabel">하천 굵기</span>
       <div class="inline-range"><input type="range" id="rivW" min="0.3" max="4" step="0.1" aria-label="하천 굵기"><output id="rivWOut"></output></div></div>
+    <div class="row sub-row"><label class="sw small"><input type="checkbox" id="rivNames"><span></span>강 이름</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="nb"><span></span>주변 나라 (중국·일본·러시아)</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="names"><span></span>시도 이름</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="sgnames"><span></span>시군 이름</label></div>
@@ -89,7 +90,7 @@
     <div class="row"><label class="sw"><input type="checkbox" data-layer="grid"><span></span>경위선</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="scale"><span></span>축척</label></div>
     <div class="row"><span class="rlabel">배경 지도</span>
-      <div class="mini-seg" id="bgSeg" title="인터넷 지도를 밑에 깔아요 ('현재 화면대로' 저장에만 들어가요)"><button data-bg="off">끄기</button><button data-bg="osm">일반</button><button data-bg="sat">위성</button><button data-bg="topo">지형</button></div></div>
+      <div class="mini-seg" id="bgSeg" title="인터넷 지도를 밑에 깔아요 ('현재 화면대로' 저장에만 들어가요)"><button data-bg="off">끄기</button><button data-bg="osm">일반</button><button data-bg="sat">위성</button><button data-bg="topo">지형</button><button data-bg="elev">고도</button></div></div>
   </div>
 
   <!-- 오른쪽 위: 확대·축소 -->
@@ -309,9 +310,9 @@
         <ul>
           <li><b>[지도 설정]</b> 맨 위에서 <b>도법</b>(횡축 메르카토르 / 메르카토르)과 <b>전남광주 통합 후 / 통합 전</b>을 골라요. ⓘ에 마우스를 올리면 설명이 나와요.</li>
           <li>기본 도법은 <b>메르카토르</b>예요. <b>횡축 메르카토르</b>로 바꾸면 국토지리정보원 지도처럼(UTM-K) 동경 127.5°가 가운데라 북쪽이 덜 커져요.</li>
-          <li><b>하천</b>: [끄기 | 주요 강 | 하계망]을 골라요. 주요 강은 교과서에 나오는 큰 강줄기, 하계망은 작은 지류까지 보여 줘요. 북측·주변 나라의 강은 [북측]·[주변 나라]를 켜면 함께 보여요. 저장할 때도 들어가요.</li>
+          <li><b>하천</b>: [끄기 | 주요 강 | 하계망]을 골라요. 굵기와 <b>강 이름</b>도 켜고 끌 수 있어요(확대하면 작은 강 이름도 보여요). 주요 강은 교과서에 나오는 큰 강줄기, 하계망은 작은 지류까지 보여 줘요. 북측·주변 나라의 강은 [북측]·[주변 나라]를 켜면 함께 보여요. 저장할 때도 들어가요.</li>
           <li>북측, 휴전선 점선, 시도·시군 경계(실선·점선, 굵기), 주변 나라, 시도·시군 이름, 바다 이름, 경위선, 축척을 켜고 끌 수 있어요. 바다 이름은 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
-          <li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. 도법이 <b>메르카토르</b>일 때만 쓸 수 있고, <b>현재 화면대로</b> 저장할 때는 함께 들어가고, 시험지용에는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요.</li>
+          <li><b>배경 지도</b>(일반·위성·지형·<b>고도</b>)는 화면에서만 보이는 참고용이에요. 도법이 <b>메르카토르</b>일 때만 쓸 수 있고, <b>현재 화면대로</b> 저장할 때는 함께 들어가고, 시험지용에는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요. <b>고도</b>는 높이에 따라 초록(낮은 땅)→노랑→갈색→흰색(높은 산)으로 칠하고 산의 그늘(음영 기복)을 넣어요. 바다도 깊을수록 진한 파랑이에요.</li>
         </ul>
 
         <h4>색칠하기</h4>
@@ -389,7 +390,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117l"></script>
-<script src="app.js?v=20261117l"></script>
+<script src="data/places.js?v=20261117m"></script>
+<script src="app.js?v=20261117m"></script>
 </body>
 </html>

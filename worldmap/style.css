@@ -715,3 +715,6 @@ body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0
 @keyframes hintPulse { 0%, 100% { opacity: 1; } 50% { opacity: .65; } }
 
 .help-steps { margin: 0 0 4px; padding-left: 22px; line-height: 1.7; background: #FFF8DC; border-radius: 10px; padding: 8px 12px 8px 30px; }
+
+/* 아래쪽 출처 줄: 배경 지도(위성·고도) 위에서도 읽히게 */
+.credit { background: rgba(255,255,255,.78); padding: 2px 7px; border-radius: 6px; text-shadow: none; }

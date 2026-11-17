@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=20261117l">
+<link rel="stylesheet" href="style.css?v=20261117m">
 </head>
 <body>
 <header class="topbar">
@@ -80,7 +80,7 @@
     <div class="row"><label class="sw"><input type="checkbox" data-layer="equator"><span></span>적도</label></div>
     <div class="row"><label class="sw"><input type="checkbox" data-layer="scale"><span></span>축척</label></div>
     <div class="row"><span class="rlabel">배경 지도</span>
-      <div class="mini-seg" id="bgSeg"><button data-bg="off">끄기</button><button data-bg="osm">일반</button><button data-bg="sat">위성</button><button data-bg="topo">지형</button></div></div>
+      <div class="mini-seg" id="bgSeg"><button data-bg="off">끄기</button><button data-bg="osm">일반</button><button data-bg="sat">위성</button><button data-bg="topo">지형</button><button data-bg="elev">고도</button></div></div>
   </div>
 
   <!-- 오른쪽 위: 확대·축소 -->
@@ -292,7 +292,7 @@
         <ul>
           <li><b>[지도 설정]</b> 맨 위에서 도법(<b>메르카토르 / 이퀄 어스</b>)을 골라요. 이퀄 어스는 나라의 넓이를 실제 비율대로 보여 줘요.</li>
           <li>국경선(점선·실선, 굵기), 남북한 경계, 나라 이름, 작은 나라 동그라미, 바다 이름, <b>주요 하천</b>(굵기 조절, 강 이름 — 확대할수록 작은 강 이름도 보여요), 호수, 경위선, 적도, 축척을 켜고 끌 수 있어요. 바다 이름과 호수는 <b>[고르기 ›]</b>에서 하나씩 골라요.</li>
-          <li><b>배경 지도</b>(일반·위성·지형)는 화면에서만 보이는 참고용이에요. <b>메르카토르</b>일 때만 쓸 수 있고, <b>현재 화면대로</b> 저장할 때는 함께 들어가고, 시험지용에는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요.</li>
+          <li><b>배경 지도</b>(일반·위성·지형·<b>고도</b>)는 화면에서만 보이는 참고용이에요. <b>메르카토르</b>일 때만 쓸 수 있고, <b>현재 화면대로</b> 저장할 때는 함께 들어가고, 시험지용에는 들어가지 않아요. 위성을 고르면 경계선이 저절로 흰색으로 바뀌어요. <b>고도</b>는 높이에 따라 초록(낮은 땅)→노랑→갈색→흰색(높은 산)으로 칠하고 산의 그늘(음영 기복)을 넣어요. 바다도 깊을수록 진한 파랑이에요.</li>
         </ul>
 
         <h4>색칠하기</h4>
@@ -370,7 +370,7 @@
 
 <script src="lib/d3.min.js"></script>
 <script src="lib/topojson-client.min.js"></script>
-<script src="data/places.js?v=20261117l"></script>
-<script src="app.js?v=20261117l"></script>
+<script src="data/places.js?v=20261117m"></script>
+<script src="app.js?v=20261117m"></script>
 </body>
 </html>

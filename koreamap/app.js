@@ -48,6 +48,7 @@
     lineSd: 1.0, lineSg: 0.6,   // 시도·시군 경계 굵기 (S.line 은 나라 경계·해안선)
     bg: 'off',              // 배경 지도: 'off' | 'osm' | 'sat' | 'topo' (화면에서만)
     rivW: 1.0,              // 하천 굵기 (배수)
+    rivNames: true,         // 강 이름
     rivers: 'off',          // 하천: 'off' 끄기 · 'major' 주요 강 · 'all' 하계망 (HydroRIVERS)
     kproj: 'merc',          // 도법: 'merc' 메르카토르(기본) · 'tm' 횡축 메르카토르(UTM-K처럼 127.5°E 가운데)
     lineLight: false,       // 경계선 색: false 검정 · true 흰색 (위성 배경에서 잘 보이게, 화면에서만)
@@ -434,17 +435,69 @@
     osm: { url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`, max: 19, credit: '배경: © OpenStreetMap 기여자' },
     sat: { url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`, max: 18, credit: '배경: Esri, Maxar, Earthstar Geographics' },
     topo: { url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${z}/${y}/${x}`, max: 18, credit: '배경: Esri, HERE, Garmin, © OpenStreetMap 기여자' },
+    elev: { url: (z, x, y) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`, max: 12, elev: true, credit: '고도: Terrain Tiles (AWS Open Data · SRTM, GMTED, ETOPO1)' },
   };
   const tileCache = new Map();
-  function tileImg(src) {
+  function tileImg(src, elev) {
     let im = tileCache.get(src);
     if (!im) {
       im = new Image(); im.decoding = 'async'; im.crossOrigin = 'anonymous';   // 저장할 때 그림에 넣을 수 있게
-      im.onload = () => requestDraw(); im.onerror = () => { im.bad = true; };
+      im.onload = () => { if (elev) { try { im.cv = elevColor(im, elev); } catch (_) { im.bad = true; } } requestDraw(); }; im.onerror = () => { im.bad = true; };
       im.src = src; tileCache.set(src, im);
       if (tileCache.size > 600) tileCache.delete(tileCache.keys().next().value);
     }
     return im;
+  }
+  // ───────── 고도 색칠 (지형 타일의 높이값 → 고도별 색 + 음영 기복) ─────────
+  const ELEV_STOPS = [   // [높이 m, 색]
+    [-8000, '#123F66'], [-4000, '#1E5E8C'], [-1000, '#3A86B4'], [-200, '#6FB3D2'], [-1, '#A9D8EA'],
+    [0, '#6FA463'], [100, '#8DBA6E'], [300, '#C6CC86'], [600, '#E2C57E'], [1000, '#D79E5A'],
+    [1500, '#B97A45'], [2000, '#9C6A4A'], [3000, '#A89488'], [4500, '#EDE8E4'], [6000, '#FFFFFF'],
+  ];
+  const ELEV_LUT = (() => {   // -8000~6000m, 10m 간격
+    const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), lut = new Uint8ClampedArray(1401 * 3);
+    for (let k = 0; k <= 1400; k++) {
+      const e = -8000 + k * 10; let i = 0;
+      while (i < ELEV_STOPS.length - 2 && e > ELEV_STOPS[i + 1][0]) i++;
+      const [e0, c0] = ELEV_STOPS[i], [e1, c1] = ELEV_STOPS[i + 1], t = Math.max(0, Math.min(1, (e - e0) / (e1 - e0)));
+      const a = hex(c0), b = hex(c1); for (let j = 0; j < 3; j++) lut[k * 3 + j] = a[j] + (b[j] - a[j]) * t;
+    }
+    return lut;
+  })();
+  function elevColor(im, { z, y }) {
+    const N = 256, c = document.createElement('canvas'); c.width = c.height = N;
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, N, N), px = d.data, E = new Float32Array(N * N);
+    for (let i = 0; i < N * N; i++) E[i] = px[i * 4] * 256 + px[i * 4 + 1] + px[i * 4 + 2] / 256 - 32768;   // terrarium 높이값
+    const n = 1 << z, lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 0.5) / n)));
+    const mpp = 40075016.686 * Math.cos(lat) / (N * n);                  // 한 칸의 실제 길이(m)
+    const ex = z <= 3 ? 25 : z <= 5 ? 12 : z <= 7 ? 6 : z <= 9 ? 3 : 1.8;  // 작게 볼수록 기복을 과장해야 보여요
+    const az = 315 * RAD, alt = 45 * RAD, sa = Math.sin(alt), ca = Math.cos(alt);
+    const at = (x, yy) => E[Math.max(0, Math.min(N - 1, yy)) * N + Math.max(0, Math.min(N - 1, x))];
+    for (let yy = 0; yy < N; yy++) for (let x = 0; x < N; x++) {
+      const i = yy * N + x, e = E[i];
+      const dx = (at(x + 1, yy) - at(x - 1, yy)) / (2 * mpp) * ex, dy = (at(x, yy + 1) - at(x, yy - 1)) / (2 * mpp) * ex;
+      const slope = Math.atan(Math.hypot(dx, dy)), aspect = Math.atan2(dy, -dx);
+      const sh = Math.max(0, sa * Math.cos(slope) + ca * Math.sin(slope) * Math.cos(az - Math.PI / 2 - aspect));
+      const k = Math.max(0, Math.min(1400, Math.round((e + 8000) / 10))) * 3;
+      const f = e >= 0 ? 0.42 + 0.72 * sh : 0.82 + 0.25 * sh;             // 땅은 음영을 진하게, 바다는 살짝
+      px[i * 4] = ELEV_LUT[k] * f; px[i * 4 + 1] = ELEV_LUT[k + 1] * f; px[i * 4 + 2] = ELEV_LUT[k + 2] * f; px[i * 4 + 3] = 255;
+    }
+    g.putImageData(d, 0, 0);
+    return c;
+  }
+  // 고도 범례 (화면에서만, 왼쪽 아래)
+  function drawElevLegend() {
+    if (S.bg !== 'elev' || EXP) return;
+    const marks = [0, 200, 500, 1000, 2000, 3000], w = 30, h = 9, x0 = 12, y0 = H - 66;
+    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(x0 - 6, y0 - 18, marks.length * w + 12, h + 34);
+    ctx.font = `600 10.5px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#333'; ctx.fillText('높이 (m)', x0, y0 - 6);
+    marks.forEach((m, i) => {
+      const k = Math.round((m + 8000) / 10) * 3; ctx.fillStyle = `rgb(${ELEV_LUT[k]},${ELEV_LUT[k + 1]},${ELEV_LUT[k + 2]})`;
+      ctx.fillRect(x0 + i * w, y0, w, h); ctx.fillStyle = '#333'; ctx.textAlign = 'center'; ctx.fillText(String(m), x0 + i * w, y0 + h + 11);
+    });
+    ctx.restore();
   }
   function drawBackground() {
     const B = BG[S.bg]; if (!B || (EXP && EXP.exam) || isTM()) return false;   // '현재 화면대로' 저장에는 배경도 넣어요
@@ -455,12 +508,13 @@
     const x0 = Math.floor(-X0 / tile), x1 = Math.floor((W - X0) / tile), y0 = Math.max(0, Math.floor(-Y0 / tile)), y1 = Math.min(n - 1, Math.floor((H - Y0) / tile));
     ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingQuality = 'high';
     for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
-      const wx = ((tx % n) + n) % n, im = tileImg(B.url(z, wx, ty));
+      const wx = ((tx % n) + n) % n, im = tileImg(B.url(z, wx, ty), B.elev && { z, y: ty });
       const px = X0 + tx * tile, py = Y0 + ty * tile;
-      if (im.complete && im.naturalWidth) ctx.drawImage(im, px, py, tile + 0.5, tile + 0.5);
+      const ok = o => o && (B.elev ? o.cv : o.complete && o.naturalWidth) ? (B.elev ? o.cv : o) : null;
+      if (ok(im)) ctx.drawImage(ok(im), px, py, tile + 0.5, tile + 0.5);
       else {   // 아직 안 온 타일은 한 단계 위(큰) 타일을 늘려서 임시로
-        const pz = z - 1, pim = tileCache.get(B.url(pz, wx >> 1, ty >> 1));
-        if (pim && pim.complete && pim.naturalWidth) ctx.drawImage(pim, (wx & 1) * 128, (ty & 1) * 128, 128, 128, px, py, tile + 0.5, tile + 0.5);
+        const pz = z - 1, pim = ok(tileCache.get(B.url(pz, wx >> 1, ty >> 1)));
+        if (pim) ctx.drawImage(pim, (wx & 1) * 128, (ty & 1) * 128, 128, 128, px, py, tile + 0.5, tile + 0.5);
       }
     }
     ctx.restore();
@@ -471,7 +525,7 @@
   function needRivers() {
     if (rivTopo || rivLoading || S.rivers === 'off') return;
     rivLoading = true;
-    fetch('data/rivers.json?v=5').then(r => r.json()).then(t => { rivTopo = t; requestDraw(); })
+    fetch('data/rivers.json?v=5').then(r => r.json()).then(t => { rivTopo = t; rivLabelPts = null; requestDraw(); })
       .catch(() => showToast('하천 자료를 불러오지 못했어요')).finally(() => { rivLoading = false; });
   }
   // 키: 단계(m 주요 · d 지류) + 구역(s 남측 · n 북측 · o 주변 나라) + 굵기(1~3, 지류 0)
@@ -498,9 +552,11 @@
   function syncRivers() {
     document.querySelectorAll('#riverSeg [data-riv]').forEach(b => b.classList.toggle('sel', b.dataset.riv === S.rivers));
     const ri = $('#rivW'); if (ri) { ri.value = S.rivW; $('#rivWOut').textContent = (+S.rivW).toFixed(1); ri.closest('.row').classList.toggle('off', S.rivers === 'off'); }
+    const rn = $('#rivNames'); if (rn) { rn.checked = !!S.rivNames; rn.closest('.row').classList.toggle('off', S.rivers === 'off'); }
     const c = $('#rivCredit'); if (c) c.textContent = S.rivers !== 'off' ? ' · 하천: HydroRIVERS (Lehner & Grill 2013) · 하구 일부: 국가하천 하천망도' : '';
     needRivers();
   }
+  $('#rivNames').addEventListener('change', e => { S.rivNames = e.target.checked; requestDraw(); saveSoon(); });
   $('#rivW').addEventListener('input', e => { S.rivW = +e.target.value; $('#rivWOut').textContent = S.rivW.toFixed(1); requestDraw(); saveSoon(); });
   document.querySelectorAll('#riverSeg [data-riv]').forEach(b => b.addEventListener('click', () => { S.rivers = b.dataset.riv; syncRivers(); requestDraw(); saveSoon(); }));
   // 도법: 횡축 메르카토르 ↔ 메르카토르 (화면 가운데·확대 정도는 그대로)
@@ -750,13 +806,63 @@
     ctx.restore();
   }
 
+  // 강 이름: 대략 자리를 주면 가장 가까운 강줄기에 붙여요 (z: s 남측 · n 북측 · r: 1 늘 · 2 확대하면)
+  const RIV_LABELS = [
+    { n: '한강', p: [126.95, 37.53], z: 's', r: 1 }, { n: '북한강', p: [127.62, 37.80], z: 's', r: 2 }, { n: '남한강', p: [127.72, 37.27], z: 's', r: 2 },
+    { n: '임진강', p: [126.93, 37.97], z: 's', r: 2 }, { n: '낙동강', p: [128.42, 36.15], z: 's', r: 1 }, { n: '남강', p: [128.28, 35.22], z: 's', r: 2 },
+    { n: '금강', p: [127.08, 36.47], z: 's', r: 1 }, { n: '영산강', p: [126.70, 35.00], z: 's', r: 1 }, { n: '섬진강', p: [127.50, 35.22], z: 's', r: 1 },
+    { n: '만경강', p: [127.00, 35.90], z: 's', r: 2 }, { n: '동진강', p: [126.85, 35.72], z: 's', r: 2 }, { n: '삽교천', p: [126.85, 36.70], z: 's', r: 2 },
+    { n: '안성천', p: [127.05, 36.98], z: 's', r: 2 }, { n: '형산강', p: [129.25, 35.95], z: 's', r: 2 }, { n: '태화강', p: [129.20, 35.56], z: 's', r: 2 },
+    { n: '대동강', p: [125.85, 39.05], z: 'n', r: 1 }, { n: '청천강', p: [125.65, 39.72], z: 'n', r: 1 }, { n: '압록강', p: [125.40, 40.45], z: 'n', r: 1 },
+    { n: '두만강', p: [129.75, 42.55], z: 'n', r: 1 }, { n: '예성강', p: [126.25, 38.25], z: 'n', r: 2 },
+  ];
+  let rivLabelPts = null;
+  function riverLabelPts() {   // 강줄기에 붙인 자리·방향 (처음 한 번)
+    if (rivLabelPts || !rivTopo) return rivLabelPts;
+    const lines = [];
+    for (const k of Object.keys(rivTopo.objects)) if (k[0] === 'm') for (const l of topojson.feature(rivTopo, rivTopo.objects[k]).geometry.coordinates) lines.push(l);
+    rivLabelPts = [];
+    for (const L of RIV_LABELS) {
+      let best = null, bd = 0.15 * 0.15;
+      for (const l of lines) for (let i = 1; i < l.length - 1; i++) {
+        const dx = (l[i][0] - L.p[0]) * Math.cos(L.p[1] * RAD), dy = l[i][1] - L.p[1], d = dx * dx + dy * dy;
+        if (d < bd) { bd = d; best = { p: l[i], a: l[Math.max(0, i - 2)], b: l[Math.min(l.length - 1, i + 2)] }; }
+      }
+      if (best) rivLabelPts.push({ ...L, ...best });
+    }
+    return rivLabelPts;
+  }
+  function drawRiverNames() {
+    const pts = riverLabelPts(); if (!pts) return;
+    const z = s / sMin, exam = EXP && EXP.exam, R = EXP && EXP.rect;
+    const nkOn = S.show.nk && !S.lakes.sel;
+    ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    for (const L of pts) {
+      if (L.r > (z >= 1.5 ? 2 : 1)) continue;
+      if (L.z === 'n' ? !nkOn : S.unit === 'none') continue;
+      const p = proj(L.p), a = proj(L.a), b = proj(L.b); if (!p || !a || !b) continue;
+      if (R ? outRect(p) : (p[0] < -50 || p[0] > W + 50 || p[1] < -20 || p[1] > H + 20)) continue;
+      const fs = exam ? Math.round(EXP.font * 0.85) : (L.r === 1 ? 12.5 : 11.5);
+      let ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+      if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;   // 글자가 거꾸로 서지 않게
+      ang = Math.max(-1.1, Math.min(1.1, ang));                                       // 너무 세로로 서지 않게
+      ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(ang); ctx.translate(0, -fs * 0.8);
+      ctx.font = `600 ${fs}px ${LABEL_FONT}`;
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(L.n, 0, 0);
+      ctx.fillStyle = exam ? '#333' : '#1F5F9E'; ctx.fillText(L.n, 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
   function drawTextLayer() {
     if (S.show.seas) drawSeaNames();
+    if (S.rivers !== 'off' && S.rivNames) drawRiverNames();
     drawRegionLabels();
     drawPoints();
     if (S.show.grid && !(EXP && EXP.exam)) drawGridLabels();
     if (S.show.scale && !EXP) drawScale();
     if (!EXP) drawScreenLegend();
+    drawElevLegend();
   }
 
   // 이퀄 어스를 돌리는 동안: 가벼운 지도를 바로 계산해서 그림
@@ -1402,7 +1508,7 @@
   lineInput.addEventListener('input', () => { S.line = +lineInput.value; lineOut.textContent = S.line.toFixed(1); requestDraw(); saveSoon(); });
 
   // ───────── 초기화 (되돌리기로 되살릴 수 있게 전체 상태를 기억) ─────────
-  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'unit', 'kproj', 'bg', 'lineLight', 'rivers', 'rivW', 'lineSd', 'lineSg', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'legend'];
+  const KEEP = ['current', 'palette', 'land', 'ocean', 'line', 'borderDash', 'show', 'seas', 'lakes', 'unit', 'kproj', 'bg', 'lineLight', 'rivers', 'rivW', 'rivNames', 'lineSd', 'lineSg', 'points', 'pstyle', 'fill', 'regions', 'rfill', 'rfont', 'legend'];
   const fullSnap = () => JSON.parse(JSON.stringify({ ...Object.fromEntries(KEEP.map(k => [k, S[k]])), colors: [...S.colors] }));
   function applySnap(sn) {
     const proj0 = S.proj, kp0 = S.kproj;
@@ -2599,7 +2705,7 @@
       localStorage.setItem(STORE_KEY, JSON.stringify({
         colors: [...S.colors], current: S.current, palette: S.palette, land: S.land, ocean: S.ocean,
         line: S.line, show: S.show, dockHidden: S.dockHidden, view: W && !isEE() ? currentView() : S.view, proj: S.proj, eeLon: +S.eeLon.toFixed(2),
-        lakes: S.lakes, seas: S.seas, unit: S.unit, bg: S.bg, rivers: S.rivers, rivW: S.rivW, kproj: S.kproj, lineLight: S.lineLight, era: S.era, lineSd: S.lineSd, lineSg: S.lineSg, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
+        lakes: S.lakes, seas: S.seas, unit: S.unit, bg: S.bg, rivers: S.rivers, rivW: S.rivW, rivNames: S.rivNames, kproj: S.kproj, lineLight: S.lineLight, era: S.era, lineSd: S.lineSd, lineSg: S.lineSg, points: S.points.map(({ _lab, ...p }) => p), pstyle: S.pstyle, fill: S.fill,
         regions: S.regions.map(({ _lab, ...r }) => r), rfill: S.rfill, legend: S.legend, rfont: S.rfont, borderDash: S.borderDash,
       }));
     } catch (_) { /* 저장 공간을 쓸 수 없는 환경이면 조용히 넘어감 */ }
@@ -2621,6 +2727,7 @@
       if (d.kproj === 'tm' || d.kproj === 'merc') S.kproj = d.kproj;
       if (['off', 'major', 'all'].includes(d.rivers)) S.rivers = d.rivers;
       if (isFinite(d.rivW)) S.rivW = Math.max(0.3, Math.min(4, +d.rivW));
+      if (typeof d.rivNames === 'boolean') S.rivNames = d.rivNames;
       if (typeof d.lineLight === 'boolean') S.lineLight = d.lineLight;
       if (S.kproj === 'tm') S.bg = 'off';
       if (Array.isArray(d.points)) S.points = d.points.filter(p => isFinite(p.lon) && isFinite(p.lat))
