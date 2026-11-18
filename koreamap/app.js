@@ -678,7 +678,7 @@
   }
   const shared = sharedShape;
   // 주변 지역 범위(경위도): 주변 나라·주변 하천·고도 타일은 이 안에서만 그려요 (화면 밖은 받지도 그리지도 않아요)
-  const NB_WIN = { lon: [120.5, 134], lat: [31, 43.5] };
+  const NB_WIN = { lon: [120.5, 134], lat: [31.5, 43.5] };
   const nbWinGeo = () => ({ type: 'Polygon', coordinates: [[[NB_WIN.lon[0], NB_WIN.lat[0]], [NB_WIN.lon[1], NB_WIN.lat[0]], [NB_WIN.lon[1], NB_WIN.lat[1]], [NB_WIN.lon[0], NB_WIN.lat[1]], [NB_WIN.lon[0], NB_WIN.lat[0]]]] });
   const nbWin = () => shared('nbwin', nbWinGeo);
   const inNbWin = (lo, la) => lo >= NB_WIN.lon[0] && lo <= NB_WIN.lon[1] && la >= NB_WIN.lat[0] && la <= NB_WIN.lat[1];
