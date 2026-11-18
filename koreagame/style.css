@@ -161,3 +161,5 @@ body.playing #map.dragging { cursor: grabbing; }
 .jump:hover { background: #FFE27A; }
 .jump .short { display: none; }
 @media (max-width: 719px) { .jump { height: 30px; padding: 0 11px; font-size: 12.5px; margin-right: 4px; } .jump .long { display: none; } .jump .short { display: inline; } }
+
+.jump.jump-emoji { padding: 0 12px; font-size: 17px; }
