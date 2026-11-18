@@ -344,7 +344,7 @@
     } catch (_) { }
   }
   const showSetup = () => { endTimers(); G.active = false; document.body.classList.remove('playing'); $('#hud').hidden = true; $('#choices').hidden = true; $('#result').hidden = true; $('#setup').hidden = false; renderSetup(); };
-  $('#setupBtn').onclick = showSetup;
+  $('#setupBtn').onclick = showSetup; $('#toSetup').onclick = showSetup;
   // 제목을 누르면 처음 화면으로: 결과 색칠·이름을 지우고 지도도 처음 위치로
   $('#brand').onclick = () => {
     Object.assign(G, { state: new Map(), showLabels: false, flash: null, reveal: null }); pulse = null;
