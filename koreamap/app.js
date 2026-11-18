@@ -678,7 +678,7 @@
   }
   const shared = sharedShape;
   // 주변 지역 범위(경위도): 주변 나라·주변 하천·고도 타일은 이 안에서만 그려요 (화면 밖은 받지도 그리지도 않아요)
-  const NB_WIN = { lon: [120.5, 134], lat: [32.5, 42.5] };
+  const NB_WIN = { lon: [120.5, 134], lat: [32.5, 43.5] };
   const nbWinGeo = () => ({ type: 'Polygon', coordinates: [[[NB_WIN.lon[0], NB_WIN.lat[0]], [NB_WIN.lon[1], NB_WIN.lat[0]], [NB_WIN.lon[1], NB_WIN.lat[1]], [NB_WIN.lon[0], NB_WIN.lat[1]], [NB_WIN.lon[0], NB_WIN.lat[0]]]] });
   const nbWin = () => shared('nbwin', nbWinGeo);
   const inNbWin = (lo, la) => lo >= NB_WIN.lon[0] && lo <= NB_WIN.lon[1] && la >= NB_WIN.lat[0] && la <= NB_WIN.lat[1];
@@ -798,7 +798,9 @@
           const rings = f.kind === 'sd' || f.kind === 'sk' ? polys.filter(pg => pg[0].length > 4 || d3.geoArea({ type: 'Polygon', coordinates: pg }) > 3e-9).map(pg => pg[0]) : polys.flat();   // 시도는 바깥 테두리만 (자료 틈 구멍 무시)
           f[key] = (isEE() ? makeShapeEE : makeShape)(dropAntimeridian({ coordinates: rings }));
         }
-        ctx.lineWidth = Math.max(1.6, lw * 2.2) * px; ctx.strokeStyle = '#1d2733'; ctx.stroke(f[key]);
+        ctx.lineWidth = Math.max(1.6, lw * 2.2) * px; ctx.strokeStyle = '#1d2733';
+        if (f.kind === 'nb') { ctx.save(); ctx.clip(nbWin()); ctx.stroke(f[key]); ctx.restore(); }   // 주변 나라 롤오버 테두리도 박스 안만
+        else ctx.stroke(f[key]);
       }
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
