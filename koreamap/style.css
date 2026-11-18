@@ -825,4 +825,3 @@ body.point-mode #stage::after { content: ''; position: absolute; top: 0; left: 0
 .layers-panel .row.pair { justify-content: flex-start; }
 .layers-panel .row.pair > .sw { flex: 1 1 0; min-width: 0; }
 
-.jump.jump-emoji { padding: 0 12px; font-size: 17px; }
