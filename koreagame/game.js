@@ -17,7 +17,7 @@
   let W = 0, H = 0, dpr = 1, s = 1, sMin = 1, lon0 = HOME_LON, cy = 0;
   const projM = d3.geoMercator().precision(0);
   let proj = projM;
-  let countries = [], byId = new Map(), tiny = [], borderShape = null, coastShape = null, gridShape = null, eqShape = null;
+  let sdBorderShape = null, countries = [], byId = new Map(), tiny = [], borderShape = null, coastShape = null, gridShape = null, eqShape = null;
 
   function applyProj() { proj = projM.rotate([-lon0, 0]).scale(s).translate([W / 2, cy]); }
   const clampScale = v => Math.max(sMin * MIN_ZOOM, Math.min(sMin * MAX_ZOOM, v));
@@ -116,6 +116,7 @@
         coast: makeShape(topojson.mesh(topo, topo.objects[lv], (a, b) => a === b)),
       };
     }
+    sdBorderShape = makeShape(topojson.mesh(topo, topo.objects.do, (a, b) => a !== b));   // 시도 경계 (굵게)
     gridShape = makeShape(d3.geoGraticule().step([2, 2]).extentMajor([[118, 28], [138, 46]]).stepMajor([2, 2])());
     eqShape = makeShape({ type: 'LineString', coordinates: [[0, 0], [1, 0]] });   // 적도는 한반도 밖이라 그리지 않아요
     useSet('si');
@@ -146,6 +147,7 @@
       ctx.lineWidth = 0.6 * px; ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.stroke(gridShape);
       ctx.lineWidth = 1.1 * px; ctx.strokeStyle = 'rgba(214,40,40,.55)'; ctx.stroke(eqShape);
       ctx.lineWidth = 0.8 * px; ctx.strokeStyle = '#555'; ctx.stroke(borderShape);
+      ctx.lineWidth = 2.4 * px; ctx.strokeStyle = '#333'; ctx.stroke(sdBorderShape);   // 시도 경계는 굵게
       ctx.lineWidth = 1 * px; ctx.strokeStyle = '#1a1a1a'; ctx.stroke(coastShape);
       const out = G.reveal && byId.get(G.reveal);
       if (out) { ctx.lineWidth = 3 * px; ctx.strokeStyle = COL.flash; ctx.stroke(out.shape); }
@@ -275,32 +277,30 @@
   // ───────── 게임 ─────────
   const G = { mode: 'find', active: false, state: new Map(), flash: null, reveal: null, showLabels: false, queue: [], idx: 0, score: 0, timer: 0, intv: 0, wrong: 0, passLeft: PASSES, hintUsed: false, log: [], locked: false };
   const ko = id => (byId.get(id) || { properties: { ko: id } }).properties.ko;
-  let level = 'middle', conts = new Set(CONTS), mode = 'find', sound = true;   // 효과음은 처음엔 켜짐
+  let level = 'high', conts = new Set(CONTS), mode = 'find', sound = true;   // 효과음은 처음엔 켜짐
   const maxWrong = () => G.mode === 'guess' ? 2 : MAX_WRONG;
   function load() {
-    try { const d = JSON.parse(localStorage.getItem(STORE) || '{}'); if (d.level === 'middle' || d.level === 'high') level = d.level; if (d.mode === 'guess') mode = 'guess'; sound = d.sound !== false; if (Array.isArray(d.conts)) conts = new Set(d.conts.filter(c => CONTS.includes(c))); return d; } catch (_) { return {}; }
+    try { const d = JSON.parse(localStorage.getItem(STORE) || '{}');  if (d.mode === 'guess') mode = 'guess'; sound = d.sound !== false; if (Array.isArray(d.conts)) conts = new Set(d.conts.filter(c => CONTS.includes(c))); return d; } catch (_) { return {}; }
   }
   function save(extra) { try { const d = JSON.parse(localStorage.getItem(STORE) || '{}'); localStorage.setItem(STORE, JSON.stringify({ ...d, level, mode, sound, conts: [...conts], ...extra })); } catch (_) { } }
   const rangeKey = () => (mode === 'guess' ? 'guess:' : '') + (level === 'cont' ? 'cont:' + [...conts].sort().join(',') : level);
   const rangeName = () => (mode === 'guess' ? '이 지역은? · ' : '') + rangeName0();
   const rangeName0 = () => level === 'middle' ? '시도' : '시군';
   function pool() {
-    const ids = level === 'middle' ? D.MIDDLE : D.HIGH;
+    const ids = D.HIGH;
     return ids.filter(id => byId.has(id));
   }
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
   // 시작 화면
   const NOTES = {
-    middle: () => '시도 17곳(특별시·광역시·도)을 맞혀요. 전라남도와 광주광역시는 통합 전 경계예요.',
-    high: () => '시군 161곳을 맞혀요. 이름이 같은 곳은 괄호에 도 이름을 붙였어요.',
+    high: () => '시군 161곳을 맞혀요. 굵은 선은 시도 경계예요. 이름이 같은 곳은 괄호에 도 이름을 붙였어요. 전라남도와 광주광역시는 통합 전 경계예요.',
   };
   function listByCont(ids) { return CONTS.map(c => { const l = ids.filter(id => byId.has(id) && byId.get(id).properties.c === c).map(ko); return l.length ? `${c}(${l.join(', ')})` : ''; }).filter(Boolean).join(' · '); }
   function renderSetup() {
     document.querySelectorAll('#levelSeg [data-level]').forEach(b => b.classList.toggle('sel', b.dataset.level === level));
     document.querySelectorAll('#modeSeg [data-mode]').forEach(b => b.classList.toggle('sel', b.dataset.mode === mode));
     syncSound();
-    $('#cntMiddle').textContent = D.MIDDLE.length + '곳'; $('#cntHigh').textContent = D.HIGH.length + '곳';
     $('#levelNote').textContent = byId.size ? NOTES[level]() : '';
     const box = $('#conts'); box.hidden = true;
     if (!box.children.length) for (const c of CONTS) {
@@ -312,7 +312,7 @@
     const best = (load().best || {})[rangeKey()];
     $('#best').textContent = best != null ? `🏆 ${rangeName()} 최고 기록: ${best}개` : '';
   }
-  document.querySelectorAll('#levelSeg [data-level]').forEach(b => b.onclick = () => { level = b.dataset.level; useSet(level === 'middle' ? 'do' : 'si'); save(); renderSetup(); });
+  document.querySelectorAll('#levelSeg [data-level]').forEach(b => b.onclick = () => { level = b.dataset.level; save(); renderSetup(); });
   document.querySelectorAll('#modeSeg [data-mode]').forEach(b => b.onclick = () => { mode = b.dataset.mode; save(); renderSetup(); });
   document.querySelectorAll('[data-snd]').forEach(b => b.onclick = () => { sound = b.dataset.snd === 'on'; save(); syncSound(); if (sound) sfx('ok'); });
   $('#hSound').onclick = () => { sound = !sound; save(); syncSound(); if (sound) sfx('ok'); };
@@ -358,7 +358,7 @@
     G.queue = shuffle(pool()); if (!G.queue.length) return;
     Object.assign(G, { mode, active: true, state: new Map(), flash: null, reveal: null, showLabels: false, idx: 0, score: 0, timer: GAME_SEC, wrong: 0, passLeft: PASSES, hintUsed: false, log: [], locked: false });
     $('#setup').hidden = true; $('#result').hidden = true; $('#hud').hidden = false; document.body.classList.add('playing');
-    useSet(level === 'middle' ? 'do' : 'si');
+    useSet('si');
     if (G.mode === 'find') goHome();
     endTimers();
     G.intv = setInterval(tick, 1000);
